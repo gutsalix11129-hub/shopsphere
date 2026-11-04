@@ -9,14 +9,12 @@ import urllib3
 import ssl
 import socket
 from datetime import datetime, timedelta
-from flask import Flask, request, jsonify, render_template, session, redirect, abort
+from flask import Flask, request, jsonify, render_template, session, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
-
-# --- GÜVENLİK AYARLARI ---
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24).hex())
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
@@ -29,7 +27,7 @@ app.config.update(
 DB_FILE = "siber_karargah.db"
 API_BASE = "https://violetpanel.cc/furkanapi"
 
-# --- RATE LIMIT (Brute Force Koruması) ---
+# --- RATE LIMIT ---
 RATE_LIMIT_DB = {}
 def check_rate_limit(user_id):
     now = time.time()
@@ -44,17 +42,16 @@ def check_rate_limit(user_id):
 def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
     return response
 
-# --- VERİTABANI ---
+# --- DB ---
 def init_db():
     with sqlite3.connect(DB_FILE) as c:
         c.execute("PRAGMA journal_mode=WAL;")
         c.executescript("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL, role TEXT DEFAULT 'user', banned INTEGER DEFAULT 0, created_at TEXT
+            password TEXT NOT NULL, banned INTEGER DEFAULT 0, created_at TEXT
         );
         CREATE TABLE IF NOT EXISTS logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT,
@@ -62,11 +59,8 @@ def init_db():
         );
         CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
         """)
-        # Rol sütunu eski veritabanında yoksa ekle
-        try: c.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'")
-        except: pass
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('maintenance', '0')")
-        c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('broadcast', 'Sisteme hoş geldiniz!')")
+        c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('broadcast', 'Sistemimize hoş geldiniz!')")
         c.commit()
 
 init_db()
@@ -89,29 +83,24 @@ def set_setting(k, v):
         c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?,?)", (k, v))
         c.commit()
 
-# --- SAYFA ROUTE'LARI ---
+# --- ROUTE'LAR ---
 @app.route("/")
 def home():
     if 'user_id' not in session: return redirect('/login')
-    return render_template('index.html')
+    
+    with sqlite3.connect(DB_FILE) as c:
+        total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
+        user_queries = c.execute("SELECT COUNT(*) FROM logs WHERE user_id=?", (session['user_id'],)).fetchone()[0]
+    
+    return render_template('index.html', total_users=total_users, total_queries=total_queries, user_queries=user_queries)
 
 @app.route("/login")
 def login_page():
     if 'user_id' in session: return redirect('/')
     return render_template('login.html')
 
-@app.route("/admin-panel-x9")
-def admin_page():
-    if not session.get("admin"): return redirect('/admin-login-x9')
-    with sqlite3.connect(DB_FILE) as c:
-        logs = c.execute("SELECT * FROM logs ORDER BY id DESC LIMIT 30").fetchall()
-        users = c.execute("SELECT * FROM users ORDER BY id DESC").fetchall()
-        total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
-        total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-    return render_template('admin.html', logs=logs, users=users, total_queries=total_queries, 
-                           total_users=total_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"))
-
-# --- API ROUTE'LARI ---
+# --- API'LER ---
 @app.route("/api/register", methods=["POST"])
 def api_register():
     req = request.json or {}
@@ -119,7 +108,7 @@ def api_register():
     if len(u) < 3 or len(p) < 6: return jsonify({"success": False, "error": "Kullanıcı adı (min 3) veya şifre (min 6) kısa."})
     try:
         with sqlite3.connect(DB_FILE) as c:
-            c.execute("INSERT INTO users (username, password, role, created_at) VALUES (?,?,'user',?)", (u, generate_password_hash(p), datetime.now().strftime("%Y-%m-%d")))
+            c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)", (u, generate_password_hash(p), datetime.now().strftime("%Y-%m-%d")))
             c.commit()
         return jsonify({"success": True})
     except sqlite3.IntegrityError: return jsonify({"success": False, "error": "Bu kullanıcı adı zaten alınmış."})
@@ -130,11 +119,11 @@ def api_login():
     req = request.json or {}
     u, p = req.get("username","").strip(), req.get("password","").strip()
     with sqlite3.connect(DB_FILE) as c:
-        r = c.execute("SELECT id, username, password, banned, role FROM users WHERE username=?", (u,)).fetchone()
+        r = c.execute("SELECT id, username, password, banned FROM users WHERE username=?", (u,)).fetchone()
     if r and check_password_hash(r[2], p):
         if r[3] == 1: return jsonify({"success": False, "error": "Hesabınız askıya alınmış."})
         session.permanent = True
-        session['user_id'] = r[0]; session['username'] = r[1]; session['role'] = r[4]
+        session['user_id'] = r[0]; session['username'] = r[1]
         return jsonify({"success": True})
     return jsonify({"success": False, "error": "Hatalı giriş."})
 
@@ -144,40 +133,31 @@ def api_logout(): session.clear(); return jsonify({"success": True})
 @app.route("/api/me")
 def api_me():
     if 'user_id' not in session: return jsonify({"success": False})
-    return jsonify({"success": True, "username": session['username'], "role": session.get('role', 'user')})
+    return jsonify({"success": True, "username": session['username']})
 
 @app.route("/api/get_broadcast")
 def api_get_broadcast(): return jsonify({"success": True, "broadcast": get_setting("broadcast")})
 
 @app.route("/api/sorgu", methods=["POST"])
 def api_sorgu():
-    if get_setting("maintenance") == "1" and session.get('role') != 'admin': 
-        return jsonify({"success": False, "error": "Sistem bakımda."})
+    if get_setting("maintenance") == "1": return jsonify({"success": False, "error": "Sistem bakımda."})
     if 'user_id' not in session: return jsonify({"success": False, "error": "Giriş yapmalısınız."})
-    if not check_rate_limit(session['user_id']): return jsonify({"success": False, "error": "Çok fazla istek attınız."})
+    if not check_rate_limit(session['user_id']): return jsonify({"success": False, "error": "Çok fazla istek attınız. Lütfen bekleyin."})
 
     req = request.json or {}
     q_type = req.get("type")
     uid, uname, ip = session['user_id'], session['username'], request.remote_addr
-    user_role = session.get('role', 'user')
-
-    # --- VIP KONTROLÜ (Kişisel Sorgular VIP İster) ---
-    vip_only_queries = ["adsoyad", "aile", "adres", "tcgsm", "gsmtc"]
-    if q_type in vip_only_queries and user_role != 'vip' and user_role != 'admin':
-        return jsonify({"success": False, "error": "Bu sorgu VIP üyelere özeldir! VIP olmak için yöneticiye ulaşın."})
 
     try:
-        # OSINT SORGULARI (Herkese Açık)
-        if q_type == "osint_ip":
-            return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=10).json()})
-        elif q_type == "osint_domain":
-            return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=10).json()})
+        # OSINT
+        if q_type == "osint_ip": return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=10).json()})
+        elif q_type == "osint_domain": return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=10).json()})
         elif q_type == "osint_hash":
             txt = req.get('text').encode()
             return jsonify({"success": True, "data": {"MD5": hashlib.md5(txt).hexdigest(), "SHA1": hashlib.sha1(txt).hexdigest(), "SHA256": hashlib.sha256(txt).hexdigest()}})
         elif q_type == "osint_whois":
             r = requests.get(f"https://rdap.org/domain/{req.get('domain')}", timeout=10).json()
-            return jsonify({"success": True, "data": {"Domain": r.get("ldhName"), "Status": r.get("status"), "Events": [e.get("eventAction") for e in r.get("events", [])]}})
+            return jsonify({"success": True, "data": {"Domain": r.get("ldhName"), "Status": r.get("status")}})
         elif q_type == "osint_github":
             r = requests.get(f"https://api.github.com/users/{req.get('user')}", timeout=10).json()
             if r.get('message') == 'Not Found': return jsonify({"success": False, "error": "Kullanıcı yok."})
@@ -207,7 +187,7 @@ def api_sorgu():
             mx = [a["data"] for a in r.get("Answer", []) if a.get("type") == 15]
             return jsonify({"success": True, "data": {"Email": email, "Gecerli": len(mx) > 0, "MX_Kayitlari": mx}})
 
-        # --- KİŞİSEL (VIP) SORGULAR ---
+        # KİŞİSEL (VIP KALDIRILDI, HERKES KULLANABİLİR)
         if q_type in ["aile", "adres", "tcgsm"] and len(req.get("tc","")) != 11:
              return jsonify({"success": False, "error": "TC Kimlik 11 haneli olmalıdır."})
 
@@ -240,7 +220,7 @@ def api_sorgu():
     except Exception as e:
         return jsonify({"success": False, "error": f"Sunucu hatası: {str(e)[:50]}"})
 
-# --- ADMIN ROUTE'LARI ---
+# --- ADMIN ---
 @app.route("/admin-login-x9", methods=["GET", "POST"])
 def secret_login():
     if request.method == "POST":
@@ -248,15 +228,22 @@ def secret_login():
             session["admin"] = True
             return redirect("/admin-panel-x9")
         return "Hatalı Şifre"
-    return """
-    <body style="background:#09090b;color:#fff;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;">
-        <form method="POST" style="background:#18181b;padding:40px;border-radius:12px;text-align:center;border:1px solid #27272a;">
-            <h2 style="margin-bottom:20px;">Admin Girişi</h2>
-            <input type="password" name="pass" placeholder="Şifre" style="padding:12px;border-radius:8px;border:1px solid #27272a;background:#09090b;color:#fff;width:100%;margin-bottom:15px;">
-            <button type="submit" style="padding:12px;background:#6366f1;color:#fff;border:none;border-radius:8px;width:100%;font-weight:bold;cursor:pointer;">Giriş</button>
-        </form>
-    </body>
-    """
+    return """<body style="background:#f8fafc;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;">
+        <form method="POST" style="background:#fff;padding:40px;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.1);text-align:center;">
+            <h2 style="color:#1e293b;margin-bottom:20px;">Yönetici Girişi</h2>
+            <input type="password" name="pass" placeholder="Şifre" style="padding:12px;border:1px solid #cbd5e1;border-radius:8px;width:100%;margin-bottom:15px;">
+            <button type="submit" style="padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;width:100%;font-weight:bold;cursor:pointer;">Giriş Yap</button>
+        </form></body>"""
+
+@app.route("/admin-panel-x9")
+def admin_dashboard():
+    if not session.get("admin"): return redirect("/admin-login-x9")
+    with sqlite3.connect(DB_FILE) as c:
+        logs = c.execute("SELECT * FROM logs ORDER BY id DESC LIMIT 50").fetchall()
+        users = c.execute("SELECT * FROM users ORDER BY id DESC").fetchall()
+        total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
+        total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    return render_template('admin.html', logs=logs, users=users, total_queries=total_queries, total_users=total_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"))
 
 @app.route("/gizli-bakim-degistir")
 def admin_toggle_maint():
@@ -274,27 +261,14 @@ def admin_broadcast():
 def admin_ban_user(uid):
     if not session.get("admin"): return redirect("/")
     with sqlite3.connect(DB_FILE) as c:
-        c.execute("UPDATE users SET banned = CASE WHEN banned=1 THEN 0 ELSE 1 END WHERE id=?", (uid,))
-        c.commit()
-    return redirect("/admin-panel-x9")
-
-@app.route("/admin-vip/<int:uid>")
-def admin_vip_user(uid):
-    if not session.get("admin"): return redirect("/")
-    with sqlite3.connect(DB_FILE) as c:
-        r = c.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
-        new_role = 'user' if r[0] == 'vip' else 'vip'
-        c.execute("UPDATE users SET role=? WHERE id=?", (new_role, uid))
-        c.commit()
+        c.execute("UPDATE users SET banned = CASE WHEN banned=1 THEN 0 ELSE 1 END WHERE id=?", (uid,)); c.commit()
     return redirect("/admin-panel-x9")
 
 @app.route("/admin-delete/<int:uid>")
 def admin_delete_user(uid):
     if not session.get("admin"): return redirect("/")
     with sqlite3.connect(DB_FILE) as c:
-        c.execute("DELETE FROM users WHERE id=?", (uid,))
-        c.execute("DELETE FROM logs WHERE user_id=?", (uid,))
-        c.commit()
+        c.execute("DELETE FROM users WHERE id=?", (uid,)); c.execute("DELETE FROM logs WHERE user_id=?", (uid,)); c.commit()
     return redirect("/admin-panel-x9")
 
 @app.route("/admin-logout-x9")
