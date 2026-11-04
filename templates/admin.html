@@ -13,7 +13,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background: var(--bg); color: var(--text); min-height: 100vh; }
         
-        /* LOGIN EKRANI (show_login) */
         .login-container { display: flex; align-items: center; justify-content: center; height: 100vh; padding: 20px; background: radial-gradient(circle at top right, #7f1d1d 0%, #0f172a 55%, #020617 100%); }
         .login-card { background: #fff; padding: 40px; border-radius: 16px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,.6); }
         .login-card h1 { color: var(--danger); font-size: 24px; font-weight: 800; margin-bottom: 5px; }
@@ -24,7 +23,6 @@
         .login-card button:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(239,68,68,.3); }
         .alert-error { background: #fef2f2; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; border: 1px solid #fecaca; }
 
-        /* PANEL EKRANI (show_login yoksa) */
         .admin-container { max-width: 1280px; margin: 0 auto; padding: 20px; display: none; }
         .admin-container.active { display: block; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; background: var(--card); padding: 18px 24px; border-radius: 14px; border: 1px solid var(--border); }
@@ -83,19 +81,13 @@
     </style>
 </head>
 <body>
-
-    <!-- EĞER GİRİŞ YAPILMAMIŞSA (ŞİFRE EKRANI) -->
     {% if show_login %}
     <div class="login-container">
         <div class="login-card">
             <div style="width: 60px; height: 60px; background: #fef2f2; color: var(--danger); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 15px;"><i class="fa-solid fa-lock"></i></div>
             <h1>Yönetici Girişi</h1>
             <p>Sadece yetkili personel giriş yapabilir</p>
-            
-            {% if login_error %}
-            <div class="alert-error"><i class="fa-solid fa-circle-exclamation"></i> {{ login_error }}</div>
-            {% endif %}
-            
+            {% if login_error %}<div class="alert-error"><i class="fa-solid fa-circle-exclamation"></i> {{ login_error }}</div>{% endif %}
             <form method="POST">
                 <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
                 <input type="password" name="pass" placeholder="Yönetici Şifresi" required autofocus>
@@ -106,7 +98,6 @@
     </div>
     {% endif %}
 
-    <!-- EĞER GİRİŞ YAPILMIŞSA (YÖNETİM PANELİ) -->
     <div class="admin-container {{ 'active' if not show_login else '' }}">
         <div class="header">
             <h1><i class="fa-solid fa-shield-halved"></i> Yönetim Paneli</h1>
@@ -123,24 +114,17 @@
         <div class="banner warn">
             <i class="fa-solid fa-key" style="margin-top:3px;"></i>
             <div><b>Geçici Şifreler (Sadece 1 kez gösterilir):</b><br>
-                {% for uid, pw in temp_passes.items() %}
-                    Kullanıcı #{{ uid }} → <code>{{ pw }}</code><br>
-                {% endfor %}
+                {% for uid, pw in temp_passes.items() %}<span style="margin-right:15px;">Kullanıcı #{{ uid }} → <code>{{ pw }}</code></span>{% endfor %}
             </div>
         </div>
         {% endif %}
-
-        {% if maint == '1' %}
-        <div class="banner danger"><i class="fa-solid fa-triangle-exclamation" style="margin-top:3px;"></i><div>Sistem <b>BAKIM MODUNDA</b>. Kullanıcılar sorgu yapamıyor.</div></div>
-        {% endif %}
+        {% if maint == '1' %}<div class="banner danger"><i class="fa-solid fa-triangle-exclamation" style="margin-top:3px;"></i><div>Sistem <b>BAKIM MODUNDA</b>. Kullanıcılar sorgu yapamıyor.</div></div>{% endif %}
 
         <div class="stats-grid">
             <div class="stat-card"><h3>Toplam Kullanıcı</h3><p>{{ total_users }}</p></div>
             <div class="stat-card green"><h3>Toplam Sorgu</h3><p>{{ total_queries }}</p></div>
             <div class="stat-card red"><h3>Banlı Kullanıcı</h3><p>{{ banned_users }}</p></div>
-            <div class="stat-card {{ 'red' if maint == '1' else 'green' }}">
-                <h3>Sistem Durumu</h3><p style="color: {{ 'var(--danger)' if maint == '1' else 'var(--success)' }}; font-size: 22px;">{{ 'BAKIMDA' if maint == '1' else 'AKTİF' }}</p>
-            </div>
+            <div class="stat-card {{ 'red' if maint == '1' else 'green' }}"><h3>Sistem Durumu</h3><p style="color: {{ 'var(--danger)' if maint == '1' else 'var(--success)' }}; font-size: 22px;">{{ 'BAKIMDA' if maint == '1' else 'AKTİF' }}</p></div>
         </div>
 
         <div class="charts-row">
@@ -230,20 +214,16 @@
 
     <script>
         function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-        
-        // Grafikler (Sadece panel açıksa çiz)
         if (document.getElementById('dailyChart')) {
             new Chart(document.getElementById('dailyChart').getContext('2d'), {
                 type: 'line', data: { labels: {{ daily_labels | safe }}, datasets: [{ label: 'Sorgu', data: {{ daily_data | safe }}, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' }, grid: { display: false } } } }
             });
-
             new Chart(document.getElementById('pieChart').getContext('2d'), {
                 type: 'doughnut', data: { labels: {{ chart_labels | safe }}, datasets: [{ data: {{ chart_data | safe }}, backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6'], borderWidth: 0 }] },
                 options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
             });
         }
-
         async function showHistory(uid, uname) {
             document.getElementById('historyModal').classList.add('show');
             document.getElementById('modalTitle').textContent = uname + ' — Geçmiş';
@@ -252,9 +232,7 @@
                 const res = await fetch('/admin-history/' + uid).then(r => r.json());
                 if (!res.history || res.history.length === 0) { document.getElementById('modalBody').innerHTML = '<p style="text-align:center; color:#94a3b8;">Kayıt yok.</p>'; return; }
                 let html = '<table><thead><tr><th>Zaman</th><th>Tip</th><th>Parametre</th><th>Durum</th></tr></thead><tbody>';
-                res.history.forEach(h => {
-                    html += `<tr><td style="white-space:nowrap;">${escapeHtml(h.time)}</td><td>${escapeHtml(h.type)}</td><td>${escapeHtml(h.param)}</td><td>${escapeHtml(h.status)}</td></tr>`;
-                });
+                res.history.forEach(h => { html += `<tr><td style="white-space:nowrap;">${escapeHtml(h.time)}</td><td>${escapeHtml(h.type)}</td><td>${escapeHtml(h.param)}</td><td>${escapeHtml(h.status)}</td></tr>`; });
                 document.getElementById('modalBody').innerHTML = html + '</tbody></table>';
             } catch (_) { document.getElementById('modalBody').innerHTML = '<p style="color:red; text-align:center;">Hata.</p>'; }
         }
