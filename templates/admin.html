@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Paneli | ShopSphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #09090b; --surface: #18181b; --border: #27272a; --text: #f4f4f5; --muted: #a1a1aa; --primary: #6366f1; --danger: #ef4444; --success: #22c55e; --vip: #eab308; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-box { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 12px; }
+        .stat-box h3 { font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+        .stat-box p { font-size: 28px; font-weight: 700; }
+        .btn { padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; }
+        .btn-danger { background: var(--danger); }
+        .btn-vip { background: var(--vip); color: black; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid var(--border); text-align: left; }
+        th { background: var(--hover); color: var(--muted); }
+        input[type="text"] { width: 100%; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: white; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Yönetim Paneli</h1>
+            <div>
+                <a href="/admin-panel-x9" class="btn">🔄 Yenile</a>
+                <a href="/admin-logout-x9" class="btn btn-danger">Çıkış</a>
+            </div>
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat-box"><h3>Toplam Kullanıcı</h3><p>{{ total_users }}</p></div>
+            <div class="stat-box"><h3>Toplam Sorgu</h3><p>{{ total_queries }}</p></div>
+            <div class="stat-box"><h3>Sistem Durumu</h3><p style="color:{{ 'var(--danger)' if maint == '1' else 'var(--success)' }}">{{ 'BAKIMDA' if maint == '1' else 'AKTİF' }}</p></div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">Canlı Duyuru ve Bakım Modu</h3>
+            <form action="/gizli-duyuru-gonder" method="POST">
+                <input type="text" name="bc_text" value="{{ current_bc }}" placeholder="Duyuru metni girin...">
+                <button type="submit" class="btn">Duyuruyu Yayınla</button>
+                <a href="/gizli-bakim-degistir" class="btn" style="background:var(--muted);">{{ 'Bakımı Kapat' if maint == '1' else 'Bakımı Aç' }}</a>
+            </form>
+        </div>
+
+        <div class="card table-wrap">
+            <h3 style="margin-bottom: 15px;">Kullanıcı Yönetimi</h3>
+            <table>
+                <tr><th>ID</th><th>Kullanıcı</th><th>Rol</th><th>Durum</th><th>İşlemler</th></tr>
+                {% for u in users %}
+                <tr>
+                    <td>#{{ u[0] }}</td>
+                    <td><b>{{ u[1] }}</b></td>
+                    <td>
+                        {% if u[3] == 'vip' %}<span style="color:var(--vip)">👑 VIP</span>
+                        {% elif u[3] == 'admin' %}<span style="color:var(--primary)">ADMIN</span>
+                        {% else %}<span style="color:var(--muted)">USER</span>{% endif %}
+                    </td>
+                    <td style="color:{{ 'var(--danger)' if u[4]==1 else 'var(--success)' }}">{{ 'BANLI' if u[4]==1 else 'AKTİF' }}</td>
+                    <td>
+                        <a href="/admin-vip/{{ u[0] }}" class="btn btn-vip" style="padding:4px 8px;">VIP Yap/Kaldır</a>
+                        <a href="/admin-ban/{{ u[0] }}" class="btn" style="padding:4px 8px; background:{{ 'var(--success)' if u[4]==1 else 'var(--danger)' }};">{{ 'Unban' if u[4]==1 else 'Banla' }}</a>
+                        <a href="/admin-delete/{{ u[0] }}" class="btn btn-danger" style="padding:4px 8px;" onclick="return confirm('Kullanıcı silinsin mi?')">Sil</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div class="card table-wrap">
+            <h3 style="margin-bottom: 15px;">Son 30 Sorgu</h3>
+            <table>
+                <tr><th>Tarih</th><th>Kullanıcı</th><th>Sorgu Tipi</th><th>Parametre</th><th>IP</th><th>Durum</th></tr>
+                {% for log in logs %}
+                <tr>
+                    <td style="color:var(--muted)">{{ log[6] }}</td>
+                    <td>{{ log[2] }}</td>
+                    <td style="color:var(--primary); font-weight:600;">{{ log[3] }}</td>
+                    <td>{{ log[4] }}</td>
+                    <td style="color:var(--muted)">{{ log[5] }}</td>
+                    <td style="color:{{ 'var(--success)' if log[7]=='basarili' else 'var(--danger)' }}">{{ log[7]|upper }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</body>
+</html>
