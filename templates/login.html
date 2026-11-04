@@ -9,10 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body {
-            background: radial-gradient(circle at top left, #1e3a8a 0%, #0f172a 50%, #020617 100%);
-            min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
-        }
+        body { background: radial-gradient(circle at top left, #1e3a8a 0%, #0f172a 50%, #020617 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .container { width: 100%; max-width: 440px; }
         .card { background: #fff; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,.5); overflow: hidden; animation: fadeIn .3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -23,7 +20,6 @@
         .tabs { display: flex; background: #f1f5f9; padding: 4px; border-radius: 10px; margin: 0 30px; }
         .tab { flex: 1; text-align: center; padding: 10px; font-size: 14px; font-weight: 600; color: #64748b; border-radius: 8px; cursor: pointer; transition: .2s; user-select: none; }
         .tab.active { background: #fff; color: #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-        .tab:hover:not(.active) { color: #334155; }
         .form-body { padding: 25px 30px 30px; }
         .form-panel { display: none; }
         .form-panel.active { display: block; animation: fadeIn .2s ease; }
@@ -34,15 +30,13 @@
         .form-group input:focus { outline: none; border-color: #2563eb; background: #fff; }
         .form-group input.invalid { border-color: #ef4444; background: #fef2f2; }
         .form-group input.valid { border-color: #10b981; background: #f0fdf4; }
-        .form-group input:disabled { opacity: .6; cursor: not-allowed; }
         .input-icon, .input-status { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; padding: 4px; }
         .input-icon { color: #94a3b8; cursor: pointer; background: none; border: none; }
-        .input-icon:hover { color: #2563eb; }
         .input-status { pointer-events: none; opacity: 0; transition: opacity .15s; }
         .input-status.show { opacity: 1; }
         .input-status.ok { color: #10b981; }
         .input-status.err { color: #ef4444; }
-        .hint { font-size: 11.5px; color: #94a3b8; margin-top: 5px; line-height: 1.4; }
+        .hint { font-size: 11.5px; color: #94a3b8; margin-top: 5px; }
         .hint.error { color: #ef4444; }
         .hint.success { color: #10b981; }
         .strength-meter { display: flex; gap: 4px; margin-top: 8px; }
@@ -53,20 +47,16 @@
         .strength-text { font-size: 11.5px; color: #64748b; margin-top: 4px; display: flex; justify-content: space-between; }
         .btn { width: 100%; padding: 13px; border: none; border-radius: 10px; font-size: 14.5px; font-weight: 600; color: #fff; background: linear-gradient(135deg, #2563eb, #1d4ed8); cursor: pointer; transition: .2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; }
         .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(37,99,235,.25); }
-        .btn:active:not(:disabled) { transform: translateY(0); }
-        .btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+        .btn:disabled { opacity: .6; cursor: not-allowed; }
         .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: none; }
         .btn.loading .spinner { display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .alert { display: none; padding: 12px 14px; border-radius: 10px; font-size: 13.5px; margin-bottom: 16px; line-height: 1.5; align-items: flex-start; gap: 10px; }
+        .alert { display: none; padding: 12px 14px; border-radius: 10px; font-size: 13.5px; margin-bottom: 16px; align-items: flex-start; gap: 10px; }
         .alert.show { display: flex; }
-        .alert i { margin-top: 2px; flex-shrink: 0; }
         .alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
         .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
         .footer-text { text-align: center; font-size: 13px; color: #64748b; margin-top: 18px; }
         .footer-text a { color: #2563eb; font-weight: 600; text-decoration: none; cursor: pointer; }
-        .footer-text a:hover { text-decoration: underline; }
-        @media (max-width: 480px) { .card-header { padding: 24px 24px 16px; } .tabs { margin: 0 24px; } .form-body { padding: 20px 24px 24px; } .card-header h1 { font-size: 22px; } }
     </style>
 </head>
 <body>
@@ -83,15 +73,11 @@
             </div>
             <div class="form-body">
                 <div class="form-panel active" id="panel-login">
-                    <div class="alert alert-error" id="loginErr" role="alert">
-                        <i class="fa-solid fa-circle-exclamation"></i><span></span>
-                    </div>
+                    <div class="alert alert-error" id="loginErr" role="alert"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
                     <form id="loginForm" novalidate>
                         <div class="form-group">
                             <label for="login-u">Kullanıcı Adı</label>
-                            <div class="input-wrap">
-                                <input type="text" id="login-u" placeholder="Kullanıcı adınızı girin" autocomplete="username" required>
-                            </div>
+                            <div class="input-wrap"><input type="text" id="login-u" placeholder="Kullanıcı adınızı girin" autocomplete="username" required></div>
                         </div>
                         <div class="form-group">
                             <label for="login-p">Şifre</label>
@@ -100,20 +86,14 @@
                                 <button type="button" class="input-icon toggle-pw" data-target="login-p"><i class="fa-solid fa-eye"></i></button>
                             </div>
                         </div>
-                        <button type="submit" class="btn" id="loginBtn">
-                            <span class="spinner"></span><span class="btn-text">Giriş Yap</span>
-                        </button>
+                        <button type="submit" class="btn" id="loginBtn"><span class="spinner"></span><span class="btn-text">Giriş Yap</span></button>
                     </form>
                     <div class="footer-text">Hesabınız yok mu? <a data-tab="register">Kayıt Olun</a></div>
                 </div>
 
                 <div class="form-panel" id="panel-register">
-                    <div class="alert alert-error" id="regErr" role="alert">
-                        <i class="fa-solid fa-circle-exclamation"></i><span></span>
-                    </div>
-                    <div class="alert alert-success" id="regOk" role="status">
-                        <i class="fa-solid fa-circle-check"></i><span></span>
-                    </div>
+                    <div class="alert alert-error" id="regErr" role="alert"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
+                    <div class="alert alert-success" id="regOk" role="status"><i class="fa-solid fa-circle-check"></i><span></span></div>
                     <form id="registerForm" novalidate>
                         <div class="form-group">
                             <label for="reg-u">Kullanıcı Adı</label>
@@ -129,12 +109,8 @@
                                 <input type="password" id="reg-p" placeholder="En az 6 karakter" autocomplete="new-password" minlength="6" required>
                                 <button type="button" class="input-icon toggle-pw" data-target="reg-p"><i class="fa-solid fa-eye"></i></button>
                             </div>
-                            <div class="strength-meter" id="strengthMeter" style="display:none;">
-                                <div class="strength-bar"></div><div class="strength-bar"></div><div class="strength-bar"></div><div class="strength-bar"></div>
-                            </div>
-                            <div class="strength-text" id="strengthText" style="display:none;">
-                                <span>Şifre gücü</span><span id="strengthLabel">—</span>
-                            </div>
+                            <div class="strength-meter" id="strengthMeter" style="display:none;"><div class="strength-bar"></div><div class="strength-bar"></div><div class="strength-bar"></div><div class="strength-bar"></div></div>
+                            <div class="strength-text" id="strengthText" style="display:none;"><span>Şifre gücü</span><span id="strengthLabel">—</span></div>
                         </div>
                         <div class="form-group">
                             <label for="reg-p2">Şifre Tekrar</label>
@@ -143,9 +119,7 @@
                                 <i class="input-status fa-solid" id="reg-p2-status"></i>
                             </div>
                         </div>
-                        <button type="submit" class="btn" id="registerBtn">
-                            <span class="spinner"></span><span class="btn-text">Hesap Oluştur</span>
-                        </button>
+                        <button type="submit" class="btn" id="registerBtn"><span class="spinner"></span><span class="btn-text">Hesap Oluştur</span></button>
                     </form>
                     <div class="footer-text">Zaten üye misiniz? <a data-tab="login">Giriş Yapın</a></div>
                 </div>
@@ -158,77 +132,47 @@
         const CSRF = document.querySelector('meta[name="csrf-token"]').content;
         const HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
         const USERNAME_RE = /^[a-zA-Z0-9_]{3,32}$/;
-
-        let usernameCheckTimer = null;
-        let lastCheckedUsername = '';
+        let usernameCheckTimer = null, lastCheckedUsername = '';
 
         function showAlert(el, msg) { el.querySelector('span').textContent = msg; el.classList.add('show'); }
         function hideAlert(el) { el.classList.remove('show'); }
-        function clearAlerts() { ['loginErr', 'regErr', 'regOk'].forEach(id => hideAlert($(id))); }
-
-        function setLoading(btn, loading, text) {
-            btn.disabled = loading;
-            btn.classList.toggle('loading', loading);
-            if (text) btn.querySelector('.btn-text').textContent = text;
-        }
-
+        function setLoading(btn, loading, text) { btn.disabled = loading; btn.classList.toggle('loading', loading); if (text) btn.querySelector('.btn-text').textContent = text; }
         function switchTab(name) {
-            clearAlerts();
+            ['loginErr', 'regErr', 'regOk'].forEach(id => hideAlert($(id)));
             document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
             document.querySelectorAll('.form-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
             history.replaceState(null, '', '#' + name);
-            setTimeout(() => {
-                const first = name === 'login' ? $('login-u') : $('reg-u');
-                if (first) first.focus();
-            }, 100);
         }
-
         document.querySelectorAll('[data-tab]').forEach(el => el.addEventListener('click', () => switchTab(el.dataset.tab)));
         if (location.hash === '#register') switchTab('register');
 
         document.querySelectorAll('.toggle-pw').forEach(btn => {
             btn.addEventListener('click', () => {
-                const inp = $(btn.dataset.target);
-                const show = inp.type === 'password';
-                inp.type = show ? 'text' : 'password';
-                btn.innerHTML = show ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
+                const inp = $(btn.dataset.target); const show = inp.type === 'password';
+                inp.type = show ? 'text' : 'password'; btn.innerHTML = show ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
             });
         });
 
         $('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            hideAlert($('loginErr'));
+            e.preventDefault(); hideAlert($('loginErr'));
             const u = $('login-u').value.trim(), p = $('login-p').value;
             if (!u || !p) return showAlert($('loginErr'), 'Kullanıcı adı ve şifre zorunludur.');
-            if (u.length < 3) return showAlert($('loginErr'), 'Kullanıcı adı en az 3 karakter olmalı.');
-            if (p.length < 6) return showAlert($('loginErr'), 'Şifre en az 6 karakter olmalı.');
-
-            const btn = $('loginBtn');
-            setLoading(btn, true, 'Giriş yapılıyor…');
+            const btn = $('loginBtn'); setLoading(btn, true, 'Giriş yapılıyor…');
             try {
                 const res = await fetch('/api/login', { method: 'POST', headers: HEADERS, credentials: 'same-origin', body: JSON.stringify({ username: u, password: p }) }).then(r => r.json());
                 if (res.success) window.location.href = '/';
-                else { showAlert($('loginErr'), res.error || 'Giriş başarısız.'); setLoading(btn, false, 'Giriş Yap'); }
-            } catch (_) {
-                showAlert($('loginErr'), 'Bağlantı hatası. Tekrar deneyin.');
-                setLoading(btn, false, 'Giriş Yap');
-            }
+                else { showAlert($('loginErr'), res.error); setLoading(btn, false, 'Giriş Yap'); }
+            } catch (_) { showAlert($('loginErr'), 'Bağlantı hatası.'); setLoading(btn, false, 'Giriş Yap'); }
         });
 
         $('reg-u').addEventListener('input', () => {
-            const v = $('reg-u').value.trim();
-            const status = $('reg-u-status'), hint = $('reg-u-hint'), inp = $('reg-u');
-            inp.classList.remove('invalid', 'valid');
-            status.className = 'input-status fa-solid';
-            hint.classList.remove('error', 'success');
+            const v = $('reg-u').value.trim(), status = $('reg-u-status'), hint = $('reg-u-hint'), inp = $('reg-u');
+            inp.classList.remove('invalid', 'valid'); status.className = 'input-status fa-solid'; hint.classList.remove('error', 'success');
             hint.textContent = '3-32 karakter · harf, rakam, alt çizgi';
             if (!v) return;
             if (!USERNAME_RE.test(v)) {
-                inp.classList.add('invalid');
-                status.className = 'input-status fa-solid fa-circle-xmark show err';
-                hint.classList.add('error');
-                hint.textContent = v.length < 3 ? 'En az 3 karakter' : 'Sadece harf, rakam ve _ kullanın';
-                return;
+                inp.classList.add('invalid'); status.className = 'input-status fa-solid fa-circle-xmark show err';
+                hint.classList.add('error'); hint.textContent = 'Sadece harf, rakam ve _ kullanın'; return;
             }
             clearTimeout(usernameCheckTimer);
             if (v === lastCheckedUsername) return;
@@ -238,96 +182,49 @@
                     const r = await fetch('/api/check_username?u=' + encodeURIComponent(v), { credentials: 'same-origin' }).then(x => x.json());
                     if (v !== $('reg-u').value.trim()) return;
                     lastCheckedUsername = v;
-                    if (r.available === true) {
-                        inp.classList.add('valid');
-                        status.className = 'input-status fa-solid fa-circle-check show ok';
-                        hint.classList.add('success');
-                        hint.textContent = 'Bu kullanıcı adı müsait';
-                    } else if (r.available === false) {
-                        inp.classList.add('invalid');
-                        status.className = 'input-status fa-solid fa-circle-xmark show err';
-                        hint.classList.add('error');
-                        hint.textContent = r.reason === 'format' ? 'Geçersiz format' : 'Bu kullanıcı adı alınmış';
-                    }
+                    if (r.available === true) { inp.classList.add('valid'); status.className = 'input-status fa-solid fa-circle-check show ok'; hint.classList.add('success'); hint.textContent = 'Müsait'; }
+                    else if (r.available === false) { inp.classList.add('invalid'); status.className = 'input-status fa-solid fa-circle-xmark show err'; hint.classList.add('error'); hint.textContent = 'Alınmış'; }
                 } catch (_) {}
             }, 500);
         });
 
-        function calcStrength(pw) {
-            let s = 0;
-            if (pw.length >= 6) s++;
-            if (pw.length >= 10) s++;
-            if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) s++;
-            if (/\d/.test(pw)) s++;
-            if (/[^A-Za-z0-9]/.test(pw)) s++;
-            return Math.min(s, 4);
-        }
-
         $('reg-p').addEventListener('input', () => {
-            const pw = $('reg-p').value;
-            const meter = $('strengthMeter'), text = $('strengthText'), label = $('strengthLabel');
-            const bars = meter.querySelectorAll('.strength-bar');
+            const pw = $('reg-p').value, meter = $('strengthMeter'), text = $('strengthText'), label = $('strengthLabel'), bars = meter.querySelectorAll('.strength-bar');
             if (!pw) { meter.style.display = 'none'; text.style.display = 'none'; return; }
             meter.style.display = 'flex'; text.style.display = 'flex';
-            const s = calcStrength(pw);
-            const labels = ['Çok zayıf', 'Zayıf', 'Orta', 'İyi', 'Güçlü'];
-            const colors = ['weak', 'weak', 'medium', 'strong', 'strong'];
+            let s = 0;
+            if (pw.length >= 6) s++; if (pw.length >= 10) s++; if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) s++; if (/\d/.test(pw)) s++; if (/[^A-Za-z0-9]/.test(pw)) s++;
+            s = Math.min(s, 4);
+            const labels = ['Çok zayıf', 'Zayıf', 'Orta', 'İyi', 'Güçlü'], colors = ['weak', 'weak', 'medium', 'strong', 'strong'];
             bars.forEach((bar, i) => { bar.className = 'strength-bar' + (i < s ? ' ' + colors[s] : ''); });
             label.textContent = labels[s];
             $('reg-p2').dispatchEvent(new Event('input'));
         });
 
         $('reg-p2').addEventListener('input', () => {
-            const p1 = $('reg-p').value, p2 = $('reg-p2').value;
-            const inp = $('reg-p2'), status = $('reg-p2-status');
-            inp.classList.remove('invalid', 'valid');
-            status.classList.remove('show', 'ok', 'err');
+            const p1 = $('reg-p').value, p2 = $('reg-p2').value, inp = $('reg-p2'), status = $('reg-p2-status');
+            inp.classList.remove('invalid', 'valid'); status.classList.remove('show', 'ok', 'err');
             if (!p2) return;
-            if (p1 === p2 && p2.length >= 6) {
-                inp.classList.add('valid');
-                status.className = 'input-status fa-solid fa-circle-check show ok';
-            } else if (p2.length >= 6) {
-                inp.classList.add('invalid');
-                status.className = 'input-status fa-solid fa-circle-xmark show err';
-            }
+            if (p1 === p2 && p2.length >= 6) { inp.classList.add('valid'); status.className = 'input-status fa-solid fa-circle-check show ok'; }
+            else if (p2.length >= 6) { inp.classList.add('invalid'); status.className = 'input-status fa-solid fa-circle-xmark show err'; }
         });
 
         $('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            hideAlert($('regErr')); hideAlert($('regOk'));
-            const u = $('reg-u').value.trim();
-            const p = $('reg-p').value;
-            const p2 = $('reg-p2').value;
+            e.preventDefault(); hideAlert($('regErr')); hideAlert($('regOk'));
+            const u = $('reg-u').value.trim(), p = $('reg-p').value, p2 = $('reg-p2').value;
             if (!u || !p || !p2) return showAlert($('regErr'), 'Tüm alanları doldurun.');
-            if (!USERNAME_RE.test(u)) return showAlert($('regErr'), 'Geçersiz kullanıcı adı (3-32 karakter, harf/rakam/_).');
+            if (!USERNAME_RE.test(u)) return showAlert($('regErr'), 'Geçersiz kullanıcı adı.');
             if (p.length < 6) return showAlert($('regErr'), 'Şifre en az 6 karakter olmalı.');
-            if (p.length > 128) return showAlert($('regErr'), 'Şifre çok uzun.');
             if (p !== p2) return showAlert($('regErr'), 'Şifreler eşleşmiyor.');
 
-            const btn = $('registerBtn');
-            setLoading(btn, true, 'Hesap oluşturuluyor…');
+            const btn = $('registerBtn'); setLoading(btn, true, 'Hesap oluşturuluyor…');
             try {
                 const res = await fetch('/api/register', { method: 'POST', headers: HEADERS, credentials: 'same-origin', body: JSON.stringify({ username: u, password: p }) }).then(r => r.json());
                 if (res.success) {
-                    showAlert($('regOk'), res.auto_login ? 'Hesap oluşturuldu! Yönlendiriliyorsunuz…' : 'Kayıt başarılı! Giriş yapabilirsiniz.');
-                    if (res.auto_login) {
-                        setTimeout(() => { window.location.href = '/'; }, 700);
-                    } else {
-                        setTimeout(() => {
-                            switchTab('login');
-                            $('login-u').value = u;
-                            $('login-p').focus();
-                        }, 1200);
-                        setLoading(btn, false, 'Hesap Oluştur');
-                    }
-                } else {
-                    showAlert($('regErr'), res.error || 'Kayıt başarısız.');
-                    setLoading(btn, false, 'Hesap Oluştur');
-                }
-            } catch (_) {
-                showAlert($('regErr'), 'Bağlantı hatası. Tekrar deneyin.');
-                setLoading(btn, false, 'Hesap Oluştur');
-            }
+                    showAlert($('regOk'), 'Hesap oluşturuldu! Yönlendiriliyorsunuz…');
+                    setTimeout(() => { window.location.href = '/'; }, 700);
+                } else { showAlert($('regErr'), res.error); setLoading(btn, false, 'Hesap Oluştur'); }
+            } catch (_) { showAlert($('regErr'), 'Bağlantı hatası.'); setLoading(btn, false, 'Hesap Oluştur'); }
         });
     </script>
 </body>
