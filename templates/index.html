@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopSphere | Sorgu Paneli</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #09090b; --surface: #18181b; --hover: #27272a; --border: #27272a; --text: #f4f4f5; --muted: #a1a1aa; --primary: #6366f1; --vip: #eab308; --success: #22c55e; --danger: #ef4444; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+        
+        /* SIDEBAR */
+        .sidebar { width: 280px; background: var(--surface); border-right: 1px solid var(--border); position: fixed; height: 100vh; left: 0; top: 0; transform: translateX(-100%); transition: 0.3s; z-index: 1000; overflow-y: auto; display: flex; flex-direction: column; }
+        .sidebar.open { transform: translateX(0); }
+        .sidebar-header { padding: 24px; border-bottom: 1px solid var(--border); }
+        .sidebar-header h1 { font-size: 20px; font-weight: 700; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-section { padding: 20px 15px; border-bottom: 1px solid var(--border); }
+        .nav-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; padding-left: 10px; }
+        .nav-item { display: flex; align-items: center; padding: 12px 15px; border-radius: 10px; color: var(--muted); font-size: 14px; font-weight: 500; cursor: pointer; transition: 0.2s; margin-bottom: 4px; }
+        .nav-item:hover, .nav-item.active { background: var(--hover); color: var(--text); }
+        .nav-item.active { border-left: 3px solid var(--primary); background: rgba(99,102,241,0.1); color: var(--primary); }
+        .badge-vip { background: var(--vip); color: black; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: auto; }
+
+        /* MAIN */
+        .main { flex: 1; display: flex; flex-direction: column; margin-left: 0; transition: 0.3s; }
+        .topbar { height: 70px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: sticky; top: 0; z-index: 50; }
+        .menu-btn { font-size: 24px; cursor: pointer; color: var(--text); }
+        .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; }
+        .role-tag { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        .role-vip { background: rgba(234,179,8,0.2); color: var(--vip); border: 1px solid var(--vip); }
+        .role-user { background: rgba(161,161,170,0.2); color: var(--muted); }
+        
+        /* CONTENT */
+        .content { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 30px; }
+        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .panel-header { font-size: 20px; font-weight: 700; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+        .input-group input { width: 100%; padding: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: white; font-size: 15px; transition: 0.2s; }
+        .input-group input:focus { border-color: var(--primary); outline: none; }
+        .btn { background: var(--primary); color: white; border: none; padding: 14px 24px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%; }
+        .btn:hover { background: #4f46e5; }
+        
+        /* RESULTS */
+        .data-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .data-card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .data-header { background: var(--hover); padding: 12px 20px; font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .data-row { display: grid; grid-template-columns: 1fr 2fr; padding: 15px 20px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .data-row:last-child { border-bottom: none; }
+        .data-label { color: var(--muted); font-weight: 600; font-size: 12px; }
+        .data-val { font-family: 'JetBrains Mono', monospace; word-break: break-all; color: #e2e8f0; }
+        
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 40px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+        .overlay.show { display: block; }
+        
+        @media (min-width: 992px) {
+            .sidebar { transform: none; }
+            .main { margin-left: 280px; }
+            .menu-btn { display: none; }
+            .data-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1>ShopSphere v4</h1>
+            <p style="color:var(--muted); font-size:12px; margin-top:5px;">Sorgu ve İstihbarat Paneli</p>
+        </div>
+        <div class="nav-section">
+            <div class="nav-title">🌟 VIP Sorgular</div>
+            <div class="nav-item" onclick="loadTool('adsoyad', this)">👤 Ad Soyad Sorgu</div>
+            <div class="nav-item" onclick="loadTool('aile', this)">👨‍👩‍👧‍👦 Aile Sorgu</div>
+            <div class="nav-item" onclick="loadTool('adres', this)">📍 Adres Sorgu</div>
+            <div class="nav-item" onclick="loadTool('tcgsm', this)">📱 TC → GSM</div>
+            <div class="nav-item" onclick="loadTool('gsmtc', this)">📞 GSM → TC</div>
+        </div>
+        <div class="nav-section">
+            <div class="nav-title">🌐 OSINT Araçları</div>
+            <div class="nav-item" onclick="loadTool('osint_ip', this)">📍 IP Sorgu</div>
+            <div class="nav-item" onclick="loadTool('osint_domain', this)">🔗 DNS Sorgu</div>
+            <div class="nav-item" onclick="loadTool('osint_whois', this)">🌍 WHOIS</div>
+            <div class="nav-item" onclick="loadTool('osint_github', this)">🐙 GitHub</div>
+            <div class="nav-item" onclick="loadTool('osint_mac', this)">📡 MAC</div>
+            <div class="nav-item" onclick="loadTool('osint_url', this)">🕸️ URL Çözücü</div>
+            <div class="nav-item" onclick="loadTool('osint_cve', this)">🚨 CVE</div>
+            <div class="nav-item" onclick="loadTool('osint_hash', this)">🧬 Hash</div>
+            <div class="nav-item" onclick="loadTool('osint_ssl', this)">🛡️ SSL</div>
+            <div class="nav-item" onclick="loadTool('osint_subdomain', this)">🌳 Subdomain</div>
+            <div class="nav-item" onclick="loadTool('osint_email', this)">✉️ E-Posta Doğrula</div>
+        </div>
+        <div style="padding: 20px; margin-top: auto;">
+            <button onclick="logout()" style="width:100%; padding:12px; background:transparent; border:1px solid var(--danger); color:var(--danger); border-radius:10px; cursor:pointer; font-weight:600;">Sistemden Çıkış</button>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div class="menu-btn" onclick="toggleMenu()">☰</div>
+            <div style="font-weight:600; color:var(--primary); font-size:14px;" id="broadcast">Duyuru yükleniyor...</div>
+            <div class="user-info">
+                <span id="username">Kullanıcı</span>
+                <span id="roleTag" class="role-tag role-user">USER</span>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="panel" id="queryPanel">
+                <div class="panel-header">
+                    <span id="toolTitle">İşlem Seçin</span>
+                    <span id="toolTag" style="font-size:12px; color:var(--muted);">Bekleniyor</span>
+                </div>
+                <div id="formInputs">
+                    <div style="text-align:center; padding:40px; color:var(--muted);">Sol menüden bir sorgu aracı seçin.</div>
+                </div>
+                <button class="btn" id="submitBtn" onclick="runQuery()" style="display:none;">Sorguyu Başlat</button>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <span>Sorgu Sonuçları</span>
+                    <button onclick="copyResult()" style="background:transparent; border:none; color:var(--primary); cursor:pointer; font-weight:600;">📋 Kopyala</button>
+                </div>
+                <div id="results">
+                    <div style="text-align:center; padding:40px; color:var(--muted);">Sonuçlar burada görünecek.</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentType = null;
+        let lastData = null;
+        
+        const TOOLS = {
+            'adsoyad': { title: 'Ad Soyad Sorgu', fields: [{id:'ad', label:'Ad'}, {id:'soyad', label:'Soyad'}], vip: true },
+            'aile': { title: 'Aile Sorgu', fields: [{id:'tc', label:'TC Kimlik No (11 Hane)'}], vip: true },
+            'adres': { title: 'Adres Sorgu', fields: [{id:'tc', label:'TC Kimlik No (11 Hane)'}], vip: true },
+            'tcgsm': { title: 'TC → GSM Sorgu', fields: [{id:'tc', label:'TC Kimlik No (11 Hane)'}], vip: true },
+            'gsmtc': { title: 'GSM → TC Sorgu', fields: [{id:'gsm', label:'GSM Numarası'}], vip: true },
+            
+            'osint_ip': { title: 'IP Adresi Sorgu', fields: [{id:'ip', label:'IP Adresi (Örn: 8.8.8.8)'}] },
+            'osint_domain': { title: 'DNS Sorgu', fields: [{id:'domain', label:'Domain (Örn: google.com)'}] },
+            'osint_whois': { title: 'WHOIS Sorgu', fields: [{id:'domain', label:'Domain (Örn: google.com)'}] },
+            'osint_github': { title: 'GitHub Kullanıcı', fields: [{id:'user', label:'Kullanıcı Adı'}] },
+            'osint_mac': { title: 'MAC Adresi Sorgu', fields: [{id:'mac', label:'MAC Adresi'}] },
+            'osint_url': { title: 'URL Çözücü', fields: [{id:'url', label:'Kısa Link'}] },
+            'osint_cve': { title: 'CVE Zafiyet Ara', fields: [{id:'keyword', label:'Yazılım (Örn: apache)'}] },
+            'osint_hash': { title: 'Hash Oluşturucu', fields: [{id:'text', label:'Şifrelenecek Metin'}] },
+            'osint_ssl': { title: 'SSL Sertifika Sorgu', fields: [{id:'domain', label:'Domain (Örn: google.com)'}] },
+            'osint_subdomain': { title: 'Subdomain Bulucu', fields: [{id:'domain', label:'Domain (Örn: google.com)'}] },
+            'osint_email': { title: 'E-Posta Doğrula', fields: [{id:'email', label:'E-Posta Adresi'}] }
+        };
+
+        async function init() {
+            let res = await fetch('/api/me').then(r=>r.json());
+            if(!res.success) return window.location.href = '/login';
+            document.getElementById('username').innerText = res.username;
+            let tag = document.getElementById('roleTag');
+            if(res.role === 'vip' || res.role === 'admin') {
+                tag.className = 'role-tag role-vip'; tag.innerText = 'VIP ÜYE';
+            } else {
+                tag.className = 'role-tag role-user'; tag.innerText = 'STANDART ÜYE';
+            }
+
+            setInterval(async () => {
+                let b = await fetch('/api/get_broadcast').then(r=>r.json());
+                if(b.success) document.getElementById('broadcast').innerText = b.broadcast;
+            }, 10000);
+        }
+        init();
+
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+
+        function loadTool(type, el) {
+            currentType = type;
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+            if(window.innerWidth < 992) toggleMenu();
+
+            let tool = TOOLS[type];
+            document.getElementById('toolTitle').innerText = tool.title;
+            document.getElementById('toolTag').innerText = tool.vip ? '👑 VIP Özel' : '🌐 Herkese Açık';
+            document.getElementById('toolTag').style.color = tool.vip ? 'var(--vip)' : 'var(--success)';
+            
+            let html = '';
+            tool.fields.forEach(f => {
+                html += `<div class="input-group"><label>${f.label}</label><input type="text" id="inp_${f.id}"></div>`;
+            });
+            document.getElementById('formInputs').innerHTML = html;
+            document.getElementById('submitBtn').style.display = 'block';
+            document.getElementById('results').innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted);">Sorgu bekleniyor...</div>';
+            lastData = null;
+        }
+
+        async function runQuery() {
+            if(!currentType) return;
+            let payload = { type: currentType };
+            let fields = TOOLS[currentType].fields;
+            for(let f of fields) {
+                let val = document.getElementById(`inp_${f.id}`).value.trim();
+                if(!val) return alert('Lütfen tüm alanları doldurun.');
+                payload[f.id] = val;
+            }
+
+            document.getElementById('submitBtn').innerText = 'İşleniyor...';
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('results').innerHTML = '<div class="spinner"></div>';
+
+            try {
+                let req = await fetch('/api/sorgu', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                let res = await req.json();
+                
+                if(!res.success) {
+                    document.getElementById('results').innerHTML = `<div style="text-align:center; padding:30px; color:var(--danger); font-weight:600;">❌ ${res.error}</div>`;
+                } else {
+                    lastData = res.data;
+                    renderData(res.data);
+                }
+            } catch(e) {
+                document.getElementById('results').innerHTML = `<div style="text-align:center; padding:30px; color:var(--danger);">Sunucu Hatası</div>`;
+            }
+            
+            document.getElementById('submitBtn').innerText = 'Sorguyu Başlat';
+            document.getElementById('submitBtn').disabled = false;
+        }
+
+        function renderData(data) {
+            let items = Array.isArray(data) ? data : [data];
+            let html = '<div class="data-grid">';
+            
+            items.forEach((item, idx) => {
+                html += `<div class="data-card"><div class="data-header">KAYIT #${idx+1}</div>`;
+                for(let [key, val] of Object.entries(item)) {
+                    if(!val || val === 'YOK' || val === 'NULL') continue;
+                    let displayVal = typeof val === 'object' ? JSON.stringify(val) : val;
+                    html += `<div class="data-row"><div class="data-label">${key.toUpperCase()}</div><div class="data-val">${displayVal}</div></div>`;
+                }
+                html += `</div>`;
+            });
+            html += '</div>';
+            document.getElementById('results').innerHTML = html;
+        }
+
+        function copyResult() {
+            if(!lastData) return alert('Kopyalanacak veri yok.');
+            navigator.clipboard.writeText(JSON.stringify(lastData, null, 2));
+            alert('Veriler kopyalandı!');
+        }
+
+        async function logout() {
+            await fetch('/api/logout');
+            window.location.href = '/login';
+        }
+    </script>
+</body>
+</html>
