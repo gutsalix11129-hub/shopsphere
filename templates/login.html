@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopSphere | Giriş</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #6366f1; --bg: #09090b; --surface: rgba(24, 24, 27, 0.8); --border: rgba(255,255,255,0.1); --text: #f4f4f5; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; background-image: radial-gradient(circle at 10% 20%, rgba(99,102,241,0.2) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(99,102,241,0.15) 0%, transparent 40%); }
+        .glass-panel { background: var(--surface); backdrop-filter: blur(16px); border: 1px solid var(--border); padding: 40px; border-radius: 24px; width: 100%; max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); transition: 0.3s; }
+        .logo { text-align: center; margin-bottom: 30px; }
+        .logo h1 { font-size: 32px; font-weight: 700; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .logo p { color: #a1a1aa; font-size: 14px; margin-top: 5px; }
+        .form-group { margin-bottom: 20px; position: relative; }
+        .form-group label { display: block; font-size: 13px; color: #a1a1aa; margin-bottom: 8px; font-weight: 600; }
+        .form-group input { width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; color: white; font-size: 15px; transition: 0.2s; }
+        .form-group input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        .btn:hover { background: #4f46e5; transform: translateY(-1px); }
+        .switch { text-align: center; margin-top: 25px; font-size: 14px; color: #a1a1aa; }
+        .switch span { color: #818cf8; cursor: pointer; font-weight: 600; }
+        .toast { position: fixed; top: 20px; background: #ef4444; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 600; transform: translateY(-150%); transition: 0.3s; }
+        .toast.show { transform: translateY(0); }
+    </style>
+</head>
+<body>
+    <div class="toast" id="toast"></div>
+    <div class="glass-panel" id="loginBox">
+        <div class="logo">
+            <h1>ShopSphere</h1>
+            <p>Gelişmiş Sorgu ve OSINT Paneli</p>
+        </div>
+        <div class="form-group"><label>KULLANICI ADI</label><input type="text" id="u" placeholder="kullanici_adi"></div>
+        <div class="form-group"><label>ŞİFRE</label><input type="password" id="p" placeholder="••••••••"></div>
+        <button class="btn" onclick="login()">Sisteme Giriş Yap</button>
+        <div class="switch">Hesabınız yok mu? <span onclick="toggle()">Kayıt Olun</span></div>
+    </div>
+
+    <div class="glass-panel" id="registerBox" style="display:none;">
+        <div class="logo">
+            <h1>Kayıt Ol</h1>
+            <p>Hemen aramıza katılın</p>
+        </div>
+        <div class="form-group"><label>KULLANICI ADI</label><input type="text" id="ru" placeholder="yeni_kullanici"></div>
+        <div class="form-group"><label>ŞİFRE</label><input type="password" id="rp" placeholder="En az 6 karakter"></div>
+        <button class="btn" onclick="register()">Hesap Oluştur</button>
+        <div class="switch">Zaten hesabınız var mı? <span onclick="toggle()">Giriş Yapın</span></div>
+    </div>
+
+    <script>
+        function toggle() { 
+            let l=document.getElementById('loginBox'), r=document.getElementById('registerBox');
+            l.style.display = l.style.display==='none'?'block':'none'; r.style.display = r.style.display==='none'?'block':'none'; 
+        }
+        function showToast(m) { let t=document.getElementById('toast'); t.innerText=m; t.className='toast show'; setTimeout(()=>t.className='toast',3000); }
+        async function login() {
+            let res = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:document.getElementById('u').value, password:document.getElementById('p').value})}).then(r=>r.json());
+            if(res.success) window.location.href = '/'; else showToast(res.error);
+        }
+        async function register() {
+            let res = await fetch('/api/register', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:document.getElementById('ru').value, password:document.getElementById('rp').value})}).then(r=>r.json());
+            if(res.success) { showToast('Kayıt başarılı! Giriş yapabilirsiniz.'); toggle(); } else showToast(res.error);
+        }
+    </script>
+</body>
+</html>
