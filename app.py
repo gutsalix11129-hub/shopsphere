@@ -4,6 +4,7 @@ import sqlite3
 import hashlib
 import time
 import re
+import json
 import requests
 import urllib3
 import ssl
@@ -87,12 +88,10 @@ def set_setting(k, v):
 @app.route("/")
 def home():
     if 'user_id' not in session: return redirect('/login')
-    
     with sqlite3.connect(DB_FILE) as c:
         total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
         user_queries = c.execute("SELECT COUNT(*) FROM logs WHERE user_id=?", (session['user_id'],)).fetchone()[0]
-    
     return render_template('index.html', total_users=total_users, total_queries=total_queries, user_queries=user_queries)
 
 @app.route("/login")
@@ -100,7 +99,34 @@ def login_page():
     if 'user_id' in session: return redirect('/')
     return render_template('login.html')
 
-# --- API'LER ---
+# --- KULLANICI API'LERİ ---
+@app.route("/api/me")
+def api_me():
+    if 'user_id' not in session: return jsonify({"success": False})
+    with sqlite3.connect(DB_FILE) as c:
+        created = c.execute("SELECT created_at FROM users WHERE id=?", (session['user_id'],)).fetchone()[0]
+    return jsonify({"success": True, "username": session['username'], "created": created})
+
+@app.route("/api/change_password", methods=["POST"])
+def api_change_password():
+    if 'user_id' not in session: return jsonify({"success": False})
+    req = request.json or {}
+    old, new = req.get("old",""), req.get("new","")
+    if len(new) < 6: return jsonify({"success": False, "error": "Yeni şifre en az 6 karakter olmalı."})
+    with sqlite3.connect(DB_FILE) as c:
+        r = c.execute("SELECT password FROM users WHERE id=?", (session['user_id'],)).fetchone()
+        if not r or not check_password_hash(r[0], old): return jsonify({"success": False, "error": "Mevcut şifre yanlış."})
+        c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(new), session['user_id']))
+        c.commit()
+    return jsonify({"success": True})
+
+@app.route("/api/my_history")
+def api_my_history():
+    if 'user_id' not in session: return jsonify({"success": False})
+    with sqlite3.connect(DB_FILE) as c:
+        logs = c.execute("SELECT query_type, query_param, timestamp, status FROM logs WHERE user_id=? ORDER BY id DESC LIMIT 50", (session['user_id'],)).fetchall()
+    return jsonify({"success": True, "history": [{"type": l[0], "param": l[1], "time": l[2], "status": l[3]} for l in logs]})
+
 @app.route("/api/register", methods=["POST"])
 def api_register():
     req = request.json or {}
@@ -130,11 +156,6 @@ def api_login():
 @app.route("/api/logout")
 def api_logout(): session.clear(); return jsonify({"success": True})
 
-@app.route("/api/me")
-def api_me():
-    if 'user_id' not in session: return jsonify({"success": False})
-    return jsonify({"success": True, "username": session['username']})
-
 @app.route("/api/get_broadcast")
 def api_get_broadcast(): return jsonify({"success": True, "broadcast": get_setting("broadcast")})
 
@@ -142,14 +163,13 @@ def api_get_broadcast(): return jsonify({"success": True, "broadcast": get_setti
 def api_sorgu():
     if get_setting("maintenance") == "1": return jsonify({"success": False, "error": "Sistem bakımda."})
     if 'user_id' not in session: return jsonify({"success": False, "error": "Giriş yapmalısınız."})
-    if not check_rate_limit(session['user_id']): return jsonify({"success": False, "error": "Çok fazla istek attınız. Lütfen bekleyin."})
+    if not check_rate_limit(session['user_id']): return jsonify({"success": False, "error": "Çok fazla istek attınız."})
 
     req = request.json or {}
     q_type = req.get("type")
     uid, uname, ip = session['user_id'], session['username'], request.remote_addr
 
     try:
-        # OSINT
         if q_type == "osint_ip": return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=10).json()})
         elif q_type == "osint_domain": return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=10).json()})
         elif q_type == "osint_hash":
@@ -187,7 +207,6 @@ def api_sorgu():
             mx = [a["data"] for a in r.get("Answer", []) if a.get("type") == 15]
             return jsonify({"success": True, "data": {"Email": email, "Gecerli": len(mx) > 0, "MX_Kayitlari": mx}})
 
-        # KİŞİSEL (VIP KALDIRILDI, HERKES KULLANABİLİR)
         if q_type in ["aile", "adres", "tcgsm"] and len(req.get("tc","")) != 11:
              return jsonify({"success": False, "error": "TC Kimlik 11 haneli olmalıdır."})
 
@@ -220,7 +239,7 @@ def api_sorgu():
     except Exception as e:
         return jsonify({"success": False, "error": f"Sunucu hatası: {str(e)[:50]}"})
 
-# --- ADMIN ---
+# --- ADMIN ROUTE'LARI ---
 @app.route("/admin-login-x9", methods=["GET", "POST"])
 def secret_login():
     if request.method == "POST":
@@ -239,11 +258,43 @@ def secret_login():
 def admin_dashboard():
     if not session.get("admin"): return redirect("/admin-login-x9")
     with sqlite3.connect(DB_FILE) as c:
-        logs = c.execute("SELECT * FROM logs ORDER BY id DESC LIMIT 50").fetchall()
+        logs = c.execute("SELECT * FROM logs ORDER BY id DESC LIMIT 100").fetchall()
         users = c.execute("SELECT * FROM users ORDER BY id DESC").fetchall()
         total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
         total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-    return render_template('admin.html', logs=logs, users=users, total_queries=total_queries, total_users=total_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"))
+        
+        # Grafik Verileri
+        q_stats = c.execute("SELECT query_type, COUNT(*) FROM logs GROUP BY query_type").fetchall()
+        chart_labels = json.dumps([q[0] for q in q_stats])
+        chart_data = json.dumps([q[1] for q in q_stats])
+        
+        # Son 7 günün sorguları
+        dates = [(datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(6, -1, -1)]
+        daily_counts = []
+        for d in dates:
+            cnt = c.execute("SELECT COUNT(*) FROM logs WHERE timestamp LIKE ?", (f"{d}%",)).fetchone()[0]
+            daily_counts.append(cnt)
+        daily_labels = json.dumps(dates)
+        daily_data = json.dumps(daily_counts)
+
+    return render_template('admin.html', logs=logs, users=users, total_queries=total_queries, total_users=total_users, 
+                           maint=get_setting("maintenance"), current_bc=get_setting("broadcast"),
+                           chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data)
+
+@app.route("/admin-history/<int:uid>")
+def admin_user_history(uid):
+    if not session.get("admin"): return jsonify({"success": False})
+    with sqlite3.connect(DB_FILE) as c:
+        logs = c.execute("SELECT query_type, query_param, timestamp, status FROM logs WHERE user_id=? ORDER BY id DESC LIMIT 30", (uid,)).fetchall()
+    return jsonify({"success": True, "history": [{"type": l[0], "param": l[1], "time": l[2], "status": l[3]} for l in logs]})
+
+@app.route("/admin-reset-pass/<int:uid>")
+def admin_reset_pass(uid):
+    if not session.get("admin"): return redirect("/")
+    with sqlite3.connect(DB_FILE) as c:
+        c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash("123456"), uid))
+        c.commit()
+    return redirect("/admin-panel-x9")
 
 @app.route("/gizli-bakim-degistir")
 def admin_toggle_maint():
