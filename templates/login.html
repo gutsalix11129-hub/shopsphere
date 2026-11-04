@@ -9,54 +9,53 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background: radial-gradient(circle at top left, #1e3a8a 0%, #0f172a 50%, #020617 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        body { background: #0f172a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background-image: radial-gradient(circle at 10% 20%, rgba(37,99,235,0.15) 0%, transparent 40%); }
         .container { width: 100%; max-width: 440px; }
-        .card { background: #fff; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,.5); overflow: hidden; animation: fadeIn .3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-        .card-header { padding: 30px 30px 20px; text-align: center; }
-        .logo-icon { width: 56px; height: 56px; background: linear-gradient(135deg, #2563eb, #1d4ed8); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; margin-bottom: 14px; box-shadow: 0 8px 20px rgba(37,99,235,.3); }
-        .card-header h1 { font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
-        .card-header p { font-size: 13.5px; color: #64748b; margin-top: 4px; }
-        .tabs { display: flex; background: #f1f5f9; padding: 4px; border-radius: 10px; margin: 0 30px; }
-        .tab { flex: 1; text-align: center; padding: 10px; font-size: 14px; font-weight: 600; color: #64748b; border-radius: 8px; cursor: pointer; transition: .2s; user-select: none; }
-        .tab.active { background: #fff; color: #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-        .form-body { padding: 25px 30px 30px; }
-        .form-panel { display: none; }
-        .form-panel.active { display: block; animation: fadeIn .2s ease; }
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .3px; }
+        .card { background: #fff; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,.5); overflow: hidden; animation: slideUp .4s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+        .card-header { padding: 35px 30px 25px; text-align: center; background: #fff; }
+        .logo-icon { width: 60px; height: 60px; background: linear-gradient(135deg, #2563eb, #1d4ed8); border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; color: #fff; margin-bottom: 16px; box-shadow: 0 10px 20px rgba(37,99,235,.3); }
+        .card-header h1 { font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+        .card-header p { font-size: 14px; color: #64748b; margin-top: 6px; }
+        .tabs { display: flex; background: #f1f5f9; padding: 5px; border-radius: 12px; margin: 0 30px; }
+        .tab { flex: 1; text-align: center; padding: 12px; font-size: 14px; font-weight: 600; color: #64748b; border-radius: 9px; cursor: pointer; transition: .2s; user-select: none; }
+        .tab.active { background: #fff; color: #2563eb; box-shadow: 0 2px 5px rgba(0,0,0,.08); }
+        .form-body { padding: 30px; }
+        .form-panel { display: none; animation: fadeIn .3s ease; }
+        .form-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 12.5px; font-weight: 700; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
         .input-wrap { position: relative; }
-        .form-group input { width: 100%; padding: 12px 42px 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14.5px; color: #1e293b; background: #f8fafc; transition: .15s; }
-        .form-group input:focus { outline: none; border-color: #2563eb; background: #fff; }
+        .form-group input { width: 100%; padding: 14px 45px 14px 15px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 15px; color: #1e293b; background: #f8fafc; transition: .2s; }
+        .form-group input:focus { outline: none; border-color: #2563eb; background: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
         .form-group input.invalid { border-color: #ef4444; background: #fef2f2; }
         .form-group input.valid { border-color: #10b981; background: #f0fdf4; }
-        .input-icon, .input-status { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; padding: 4px; }
-        .input-icon { color: #94a3b8; cursor: pointer; background: none; border: none; }
-        .input-status { pointer-events: none; opacity: 0; transition: opacity .15s; }
+        .input-icon, .input-status { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); font-size: 16px; }
+        .input-icon { color: #94a3b8; cursor: pointer; background: none; border: none; padding: 5px; }
+        .input-icon:hover { color: #2563eb; }
+        .input-status { pointer-events: none; opacity: 0; transition: opacity .2s; }
         .input-status.show { opacity: 1; }
         .input-status.ok { color: #10b981; }
         .input-status.err { color: #ef4444; }
-        .hint { font-size: 11.5px; color: #94a3b8; margin-top: 5px; }
-        .hint.error { color: #ef4444; }
-        .hint.success { color: #10b981; }
-        .strength-meter { display: flex; gap: 4px; margin-top: 8px; }
-        .strength-bar { flex: 1; height: 4px; background: #e2e8f0; border-radius: 2px; transition: background .2s; }
-        .strength-bar.weak { background: #ef4444; }
-        .strength-bar.medium { background: #f59e0b; }
-        .strength-bar.strong { background: #10b981; }
-        .strength-text { font-size: 11.5px; color: #64748b; margin-top: 4px; display: flex; justify-content: space-between; }
-        .btn { width: 100%; padding: 13px; border: none; border-radius: 10px; font-size: 14.5px; font-weight: 600; color: #fff; background: linear-gradient(135deg, #2563eb, #1d4ed8); cursor: pointer; transition: .2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; }
-        .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(37,99,235,.25); }
-        .btn:disabled { opacity: .6; cursor: not-allowed; }
-        .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: none; }
+        .hint { font-size: 12px; color: #94a3b8; margin-top: 6px; }
+        .hint.error { color: #ef4444; } .hint.success { color: #10b981; }
+        .strength-meter { display: flex; gap: 5px; margin-top: 10px; }
+        .strength-bar { flex: 1; height: 5px; background: #e2e8f0; border-radius: 3px; transition: .3s; }
+        .strength-bar.weak { background: #ef4444; } .strength-bar.medium { background: #f59e0b; } .strength-bar.strong { background: #10b981; }
+        .strength-text { font-size: 12px; color: #64748b; margin-top: 5px; display: flex; justify-content: space-between; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #2563eb, #1d4ed8); cursor: pointer; transition: .2s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(37,99,235,.3); }
+        .btn:disabled { opacity: .7; cursor: not-allowed; }
+        .spinner { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: none; }
         .btn.loading .spinner { display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .alert { display: none; padding: 12px 14px; border-radius: 10px; font-size: 13.5px; margin-bottom: 16px; align-items: flex-start; gap: 10px; }
+        .alert { display: none; padding: 14px; border-radius: 10px; font-size: 13.5px; margin-bottom: 20px; align-items: flex-start; gap: 10px; }
         .alert.show { display: flex; }
         .alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
         .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-        .footer-text { text-align: center; font-size: 13px; color: #64748b; margin-top: 18px; }
-        .footer-text a { color: #2563eb; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .footer-text { text-align: center; font-size: 13.5px; color: #64748b; margin-top: 25px; }
+        .footer-text a { color: #2563eb; font-weight: 700; text-decoration: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -72,15 +71,16 @@
                 <div class="tab" data-tab="register">Kayıt Ol</div>
             </div>
             <div class="form-body">
+                <!-- LOGIN -->
                 <div class="form-panel active" id="panel-login">
-                    <div class="alert alert-error" id="loginErr" role="alert"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
+                    <div class="alert alert-error" id="loginErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
                     <form id="loginForm" novalidate>
                         <div class="form-group">
-                            <label for="login-u">Kullanıcı Adı</label>
-                            <div class="input-wrap"><input type="text" id="login-u" placeholder="Kullanıcı adınızı girin" autocomplete="username" required></div>
+                            <label>Kullanıcı Adı</label>
+                            <div class="input-wrap"><input type="text" id="login-u" placeholder="Kullanıcı adınız" autocomplete="username" required></div>
                         </div>
                         <div class="form-group">
-                            <label for="login-p">Şifre</label>
+                            <label>Şifre</label>
                             <div class="input-wrap">
                                 <input type="password" id="login-p" placeholder="••••••••" autocomplete="current-password" required>
                                 <button type="button" class="input-icon toggle-pw" data-target="login-p"><i class="fa-solid fa-eye"></i></button>
@@ -88,32 +88,33 @@
                         </div>
                         <button type="submit" class="btn" id="loginBtn"><span class="spinner"></span><span class="btn-text">Giriş Yap</span></button>
                     </form>
-                    <div class="footer-text">Hesabınız yok mu? <a data-tab="register">Kayıt Olun</a></div>
+                    <div class="footer-text">Hesabınız yok mu? <a data-tab="register">Hemen Kayıt Olun</a></div>
                 </div>
 
+                <!-- REGISTER -->
                 <div class="form-panel" id="panel-register">
-                    <div class="alert alert-error" id="regErr" role="alert"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
-                    <div class="alert alert-success" id="regOk" role="status"><i class="fa-solid fa-circle-check"></i><span></span></div>
+                    <div class="alert alert-error" id="regErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
+                    <div class="alert alert-success" id="regOk"><i class="fa-solid fa-circle-check"></i><span></span></div>
                     <form id="registerForm" novalidate>
                         <div class="form-group">
-                            <label for="reg-u">Kullanıcı Adı</label>
+                            <label>Kullanıcı Adı</label>
                             <div class="input-wrap">
                                 <input type="text" id="reg-u" placeholder="en_az_3_karakter" autocomplete="username" minlength="3" maxlength="32" required>
                                 <i class="input-status fa-solid" id="reg-u-status"></i>
                             </div>
-                            <div class="hint" id="reg-u-hint">3-32 karakter · harf, rakam, alt çizgi</div>
+                            <div class="hint" id="reg-u-hint">Harf, rakam ve alt çizgi kullanın.</div>
                         </div>
                         <div class="form-group">
-                            <label for="reg-p">Şifre</label>
+                            <label>Şifre</label>
                             <div class="input-wrap">
                                 <input type="password" id="reg-p" placeholder="En az 6 karakter" autocomplete="new-password" minlength="6" required>
                                 <button type="button" class="input-icon toggle-pw" data-target="reg-p"><i class="fa-solid fa-eye"></i></button>
                             </div>
                             <div class="strength-meter" id="strengthMeter" style="display:none;"><div class="strength-bar"></div><div class="strength-bar"></div><div class="strength-bar"></div><div class="strength-bar"></div></div>
-                            <div class="strength-text" id="strengthText" style="display:none;"><span>Şifre gücü</span><span id="strengthLabel">—</span></div>
+                            <div class="strength-text" id="strengthText" style="display:none;"><span>Güvenlik</span><span id="strengthLabel">—</span></div>
                         </div>
                         <div class="form-group">
-                            <label for="reg-p2">Şifre Tekrar</label>
+                            <label>Şifre Tekrar</label>
                             <div class="input-wrap">
                                 <input type="password" id="reg-p2" placeholder="Şifrenizi tekrar girin" autocomplete="new-password" required>
                                 <i class="input-status fa-solid" id="reg-p2-status"></i>
@@ -156,7 +157,7 @@
         $('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault(); hideAlert($('loginErr'));
             const u = $('login-u').value.trim(), p = $('login-p').value;
-            if (!u || !p) return showAlert($('loginErr'), 'Kullanıcı adı ve şifre zorunludur.');
+            if (!u || !p) return showAlert($('loginErr'), 'Alanları doldurun.');
             const btn = $('loginBtn'); setLoading(btn, true, 'Giriş yapılıyor…');
             try {
                 const res = await fetch('/api/login', { method: 'POST', headers: HEADERS, credentials: 'same-origin', body: JSON.stringify({ username: u, password: p }) }).then(r => r.json());
@@ -168,18 +169,15 @@
         $('reg-u').addEventListener('input', () => {
             const v = $('reg-u').value.trim(), status = $('reg-u-status'), hint = $('reg-u-hint'), inp = $('reg-u');
             inp.classList.remove('invalid', 'valid'); status.className = 'input-status fa-solid'; hint.classList.remove('error', 'success');
-            hint.textContent = '3-32 karakter · harf, rakam, alt çizgi';
+            hint.textContent = '3-32 karakter, harf/rakam/_';
             if (!v) return;
-            if (!USERNAME_RE.test(v)) {
-                inp.classList.add('invalid'); status.className = 'input-status fa-solid fa-circle-xmark show err';
-                hint.classList.add('error'); hint.textContent = 'Sadece harf, rakam ve _ kullanın'; return;
-            }
+            if (!USERNAME_RE.test(v)) { inp.classList.add('invalid'); status.className = 'input-status fa-solid fa-circle-xmark show err'; hint.classList.add('error'); hint.textContent = 'Geçersiz karakterler'; return; }
             clearTimeout(usernameCheckTimer);
             if (v === lastCheckedUsername) return;
             status.className = 'input-status fa-solid fa-spinner fa-spin show';
             usernameCheckTimer = setTimeout(async () => {
                 try {
-                    const r = await fetch('/api/check_username?u=' + encodeURIComponent(v), { credentials: 'same-origin' }).then(x => x.json());
+                    const r = await fetch('/api/check_username?u=' + encodeURIComponent(v)).then(x => x.json());
                     if (v !== $('reg-u').value.trim()) return;
                     lastCheckedUsername = v;
                     if (r.available === true) { inp.classList.add('valid'); status.className = 'input-status fa-solid fa-circle-check show ok'; hint.classList.add('success'); hint.textContent = 'Müsait'; }
@@ -192,13 +190,11 @@
             const pw = $('reg-p').value, meter = $('strengthMeter'), text = $('strengthText'), label = $('strengthLabel'), bars = meter.querySelectorAll('.strength-bar');
             if (!pw) { meter.style.display = 'none'; text.style.display = 'none'; return; }
             meter.style.display = 'flex'; text.style.display = 'flex';
-            let s = 0;
-            if (pw.length >= 6) s++; if (pw.length >= 10) s++; if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) s++; if (/\d/.test(pw)) s++; if (/[^A-Za-z0-9]/.test(pw)) s++;
+            let s = 0; if (pw.length >= 6) s++; if (pw.length >= 10) s++; if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) s++; if (/\d/.test(pw)) s++; if (/[^A-Za-z0-9]/.test(pw)) s++;
             s = Math.min(s, 4);
             const labels = ['Çok zayıf', 'Zayıf', 'Orta', 'İyi', 'Güçlü'], colors = ['weak', 'weak', 'medium', 'strong', 'strong'];
             bars.forEach((bar, i) => { bar.className = 'strength-bar' + (i < s ? ' ' + colors[s] : ''); });
-            label.textContent = labels[s];
-            $('reg-p2').dispatchEvent(new Event('input'));
+            label.textContent = labels[s]; $('reg-p2').dispatchEvent(new Event('input'));
         });
 
         $('reg-p2').addEventListener('input', () => {
@@ -213,17 +209,12 @@
             e.preventDefault(); hideAlert($('regErr')); hideAlert($('regOk'));
             const u = $('reg-u').value.trim(), p = $('reg-p').value, p2 = $('reg-p2').value;
             if (!u || !p || !p2) return showAlert($('regErr'), 'Tüm alanları doldurun.');
-            if (!USERNAME_RE.test(u)) return showAlert($('regErr'), 'Geçersiz kullanıcı adı.');
-            if (p.length < 6) return showAlert($('regErr'), 'Şifre en az 6 karakter olmalı.');
             if (p !== p2) return showAlert($('regErr'), 'Şifreler eşleşmiyor.');
-
-            const btn = $('registerBtn'); setLoading(btn, true, 'Hesap oluşturuluyor…');
+            const btn = $('registerBtn'); setLoading(btn, true, 'Kayıt yapılıyor…');
             try {
                 const res = await fetch('/api/register', { method: 'POST', headers: HEADERS, credentials: 'same-origin', body: JSON.stringify({ username: u, password: p }) }).then(r => r.json());
-                if (res.success) {
-                    showAlert($('regOk'), 'Hesap oluşturuldu! Yönlendiriliyorsunuz…');
-                    setTimeout(() => { window.location.href = '/'; }, 700);
-                } else { showAlert($('regErr'), res.error); setLoading(btn, false, 'Hesap Oluştur'); }
+                if (res.success) { showAlert($('regOk'), 'Hesap açıldı! Yönlendiriliyorsunuz…'); setTimeout(() => window.location.href = '/', 800); }
+                else { showAlert($('regErr'), res.error); setLoading(btn, false, 'Hesap Oluştur'); }
             } catch (_) { showAlert($('regErr'), 'Bağlantı hatası.'); setLoading(btn, false, 'Hesap Oluştur'); }
         });
     </script>
