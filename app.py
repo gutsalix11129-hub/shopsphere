@@ -21,19 +21,17 @@ app = Flask(__name__)
 SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
     SECRET_KEY = secrets.token_hex(32)
-    print("[WARN] SECRET_KEY env yok, geçici üretildi. Üretimde 'export SECRET_KEY=...' yapın!")
+    print("[WARN] SECRET_KEY env yok, geçici üretildi.")
 app.secret_key = SECRET_KEY
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 if ADMIN_PASSWORD == "admin123":
-    print("[WARN] ADMIN_PASSWORD default 'admin123'. Üretimde 'export ADMIN_PASSWORD=...' yapın!")
-
-IS_PROD = os.environ.get("FLASK_ENV") == "production"
+    print("[WARN] ADMIN_PASSWORD default. Üretimde 'export ADMIN_PASSWORD=...' yapın!")
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
-    SESSION_COOKIE_SECURE=IS_PROD,
+    SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "0") == "1",
     PERMANENT_SESSION_LIFETIME=timedelta(hours=12)
 )
 
@@ -169,6 +167,18 @@ def login_page():
     return render_template('login.html')
 
 # ================== AUTH API ==================
+@app.route("/api/check_username")
+def api_check_username():
+    ip = request.remote_addr or "?"
+    if not check_rate_limit(f"checku_{ip}", max_req=30, window=60):
+        return jsonify({"available": None}), 429
+    u = (request.args.get("u") or "").strip()
+    if not USERNAME_RE.match(u):
+        return jsonify({"available": False, "reason": "format"})
+    with get_db() as c:
+        exists = c.execute("SELECT 1 FROM users WHERE username=?", (u,)).fetchone()
+    return jsonify({"available": not exists})
+
 @app.route("/api/change_password", methods=["POST"])
 def api_change_password():
     if 'user_id' not in session:
@@ -206,8 +216,12 @@ def api_register():
             c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)",
                       (u, generate_password_hash(p),
                        datetime.now(timezone.utc).strftime("%Y-%m-%d")))
+            row = c.execute("SELECT id FROM users WHERE username=?", (u,)).fetchone()
             c.commit()
-        return jsonify({"success": True})
+        session.permanent = True
+        session['user_id'] = row[0]
+        session['username'] = u
+        return jsonify({"success": True, "auto_login": True})
     except sqlite3.IntegrityError:
         return jsonify({"success": False, "error": "Bu kullanıcı adı alınmış."})
 
@@ -228,7 +242,7 @@ def api_login():
         session['user_id'] = r[0]
         session['username'] = r[1]
         return jsonify({"success": True})
-    return jsonify({"success": False, "error": "Hatalı giriş."})
+    return jsonify({"success": False, "error": "Kullanıcı adı veya şifre hatalı."})
 
 @app.route("/api/logout", methods=["POST"])
 def api_logout():
@@ -346,12 +360,12 @@ def secret_login():
     ip = request.remote_addr or "?"
     if request.method == "POST":
         if not check_rate_limit(f"adminlogin_{ip}", max_req=5, window=60):
-            return "Çok fazla deneme.", 429
+            return render_template("admin_login.html", error="Çok fazla deneme. 1 dakika bekleyin."), 429
         if secrets.compare_digest(request.form.get("pass", ""), ADMIN_PASSWORD):
             session["admin"] = True
             session["admin_since"] = time.time()
             return redirect("/admin-panel-x9")
-        return "Hatalı Şifre", 401
+        return render_template("admin_login.html", error="Hatalı şifre."), 401
     return render_template("admin_login.html")
 
 @app.route("/admin-panel-x9")
@@ -366,7 +380,8 @@ def admin_dashboard():
         users = c.execute("SELECT * FROM users ORDER BY id DESC").fetchall()
         total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
         total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-        q_stats = c.execute("SELECT query_type, COUNT(*) FROM logs GROUP BY query_type").fetchall()
+        banned_users = c.execute("SELECT COUNT(*) FROM users WHERE banned=1").fetchone()[0]
+        q_stats = c.execute("SELECT query_type, COUNT(*) FROM logs GROUP BY query_type ORDER BY 2 DESC").fetchall()
         chart_labels = json.dumps([q[0] for q in q_stats])
         chart_data = json.dumps([q[1] for q in q_stats])
         dates = [(datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(6, -1, -1)]
@@ -376,7 +391,7 @@ def admin_dashboard():
 
     return render_template('admin.html',
         logs=logs, users=users,
-        total_queries=total_queries, total_users=total_users,
+        total_queries=total_queries, total_users=total_users, banned_users=banned_users,
         maint=get_setting("maintenance"),
         current_bc=get_setting("broadcast"),
         chart_labels=chart_labels, chart_data=chart_data,
