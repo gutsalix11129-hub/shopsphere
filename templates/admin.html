@@ -27,7 +27,6 @@
         .admin-container.active { display: block; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; background: var(--card); padding: 18px 24px; border-radius: 14px; border: 1px solid var(--border); }
         .header h1 { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-        .header h1 i { color: var(--primary); }
         .btn { padding: 10px 16px; border-radius: 9px; font-size: 13.5px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px; transition: .2s; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-danger { background: var(--danger); color: white; }
@@ -50,17 +49,14 @@
         .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
         @media(max-width: 768px) { .charts-row { grid-template-columns: 1fr; } }
         .chart-card { background: var(--card); padding: 22px; border-radius: 14px; border: 1px solid var(--border); min-height: 280px; }
-        .chart-card h3 { font-size: 14px; margin-bottom: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
         
         .card { background: var(--card); border-radius: 14px; padding: 22px; margin-bottom: 22px; border: 1px solid var(--border); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
-        .card h2 { font-size: 17px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
         
         .table-wrap { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
         th, td { padding: 12px 14px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
         th { background: #0f172a; color: #94a3b8; font-weight: 600; font-size: 11.5px; text-transform: uppercase; }
-        tr:hover td { background: rgba(255,255,255,0.02); }
         
         .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 10.5px; font-weight: 700; }
         .badge-ok { background: rgba(16,185,129,0.15); color: #34d399; }
@@ -76,7 +72,6 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(4px); }
         .modal.show { display: flex; }
         .modal-content { background: var(--card); padding: 24px; border-radius: 14px; max-width: 760px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; border: 1px solid var(--border); }
-        .modal-body { overflow-y: auto; margin: 15px 0; flex: 1; }
         code { background: #0f172a; padding: 2px 7px; border-radius: 5px; font-family: monospace; color: #f87171; }
     </style>
 </head>
@@ -113,12 +108,12 @@
         {% if temp_passes %}
         <div class="banner warn">
             <i class="fa-solid fa-key" style="margin-top:3px;"></i>
-            <div><b>Geçici Şifreler (Sadece 1 kez gösterilir):</b><br>
+            <div><b>Geçici Şifreler:</b><br>
                 {% for uid, pw in temp_passes.items() %}<span style="margin-right:15px;">Kullanıcı #{{ uid }} → <code>{{ pw }}</code></span>{% endfor %}
             </div>
         </div>
         {% endif %}
-        {% if maint == '1' %}<div class="banner danger"><i class="fa-solid fa-triangle-exclamation" style="margin-top:3px;"></i><div>Sistem <b>BAKIM MODUNDA</b>. Kullanıcılar sorgu yapamıyor.</div></div>{% endif %}
+        {% if maint == '1' %}<div class="banner danger"><i class="fa-solid fa-triangle-exclamation" style="margin-top:3px;"></i><div>Sistem <b>BAKIM MODUNDA</b>.</div></div>{% endif %}
 
         <div class="stats-grid">
             <div class="stat-card"><h3>Toplam Kullanıcı</h3><p>{{ total_users }}</p></div>
@@ -128,8 +123,8 @@
         </div>
 
         <div class="charts-row">
-            <div class="chart-card"><h3><i class="fa-solid fa-chart-line" style="color:var(--primary);"></i> Son 7 Günün Sorgu Trafiği</h3><canvas id="dailyChart" height="200"></canvas></div>
-            <div class="chart-card"><h3><i class="fa-solid fa-chart-pie" style="color:var(--primary);"></i> Sorgu Tipi Dağılımı</h3><canvas id="pieChart" height="200"></canvas></div>
+            <div class="chart-card"><canvas id="dailyChart" height="200"></canvas></div>
+            <div class="chart-card"><canvas id="pieChart" height="200"></canvas></div>
         </div>
 
         <div class="card">
@@ -137,43 +132,31 @@
                 <h2><i class="fa-solid fa-bullhorn"></i> Duyuru & Bakım</h2>
                 <form method="POST" action="/gizli-bakim-degistir" style="margin:0;">
                     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn {{ 'btn-success' if maint == '1' else 'btn-warn' }}"><i class="fa-solid {{ 'fa-play' if maint == '1' else 'fa-pause' }}"></i> {{ 'Bakımı Kapat' if maint == '1' else 'Bakımı Aç' }}</button>
+                    <button type="submit" class="btn {{ 'btn-success' if maint == '1' else 'btn-warn' }}">{{ 'Bakımı Kapat' if maint == '1' else 'Bakımı Aç' }}</button>
                 </form>
             </div>
             <form action="/gizli-duyuru-gonder" method="POST" class="bc-form">
                 <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
                 <input type="text" name="bc_text" value="{{ current_bc }}" placeholder="Duyuru metnini yazın..." maxlength="500">
-                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Yayınla</button>
+                <button type="submit" class="btn btn-primary">Yayınla</button>
             </form>
         </div>
 
         <div class="card">
-            <div class="card-header"><h2><i class="fa-solid fa-users-gear"></i> Kullanıcı Yönetimi</h2></div>
+            <div class="card-header"><h2>Kullanıcı Yönetimi</h2></div>
             <div class="table-wrap">
                 <table>
                     <thead><tr><th>ID</th><th>Kullanıcı</th><th>Kayıt</th><th>Durum</th><th style="text-align:right;">İşlemler</th></tr></thead>
                     <tbody>
                         {% for u in users %}
                         <tr>
-                            <td style="color:#64748b;">#{{ u[0] }}</td>
-                            <td><b>{{ u[1] }}</b></td>
-                            <td style="color:#64748b;">{{ u[4] }}</td>
+                            <td>#{{ u[0] }}</td><td><b>{{ u[1] }}</b></td><td>{{ u[4] }}</td>
                             <td><span class="badge {{ 'badge-bad' if u[3]==1 else 'badge-ok' }}">{{ 'BANLI' if u[3]==1 else 'AKTİF' }}</span></td>
                             <td>
                                 <div class="actions">
-                                    <form method="POST" action="/admin-ban/{{ u[0] }}" onsubmit="return confirm('{{ u[1] }} için işlem yapılsın mı?')">
-                                        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-                                        <button type="submit" class="btn btn-sm {{ 'btn-success' if u[3]==1 else 'btn-danger' }}">{{ 'Unban' if u[3]==1 else 'Banla' }}</button>
-                                    </form>
-                                    <form method="POST" action="/admin-reset-pass/{{ u[0] }}" onsubmit="return confirm('{{ u[1] }} şifresi sıfırlansın mı?')">
-                                        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-                                        <button type="submit" class="btn btn-sm btn-warn">Sıfırla</button>
-                                    </form>
-                                    <button class="btn btn-sm btn-primary" onclick="showHistory({{ u[0] }}, '{{ u[1] }}')">Geçmiş</button>
-                                    <form method="POST" action="/admin-delete/{{ u[0] }}" onsubmit="return confirm('{{ u[1] }} kalıcı olarak silinsin mi?')">
-                                        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-                                        <button type="submit" class="btn btn-sm btn-danger">Sil</button>
-                                    </form>
+                                    <form method="POST" action="/admin-ban/{{ u[0] }}" onsubmit="return confirm('Emin misiniz?')"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="btn btn-sm {{ 'btn-success' if u[3]==1 else 'btn-danger' }}">{{ 'Unban' if u[3]==1 else 'Banla' }}</button></form>
+                                    <form method="POST" action="/admin-reset-pass/{{ u[0] }}" onsubmit="return confirm('Şifre sıfırlansın mı?')"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="btn btn-sm btn-warn">Sıfırla</button></form>
+                                    <form method="POST" action="/admin-delete/{{ u[0] }}" onsubmit="return confirm('Silinsin mi?')"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="btn btn-sm btn-danger">Sil</button></form>
                                 </div>
                             </td>
                         </tr>
@@ -182,59 +165,25 @@
                 </table>
             </div>
         </div>
-
-        <div class="card">
-            <div class="card-header"><h2><i class="fa-solid fa-list-ul"></i> Son 100 Sorgu Kaydı</h2></div>
-            <div class="table-wrap">
-                <table>
-                    <thead><tr><th>Tarih</th><th>Kullanıcı</th><th>Tip</th><th>Parametre</th><th>IP</th><th>Durum</th></tr></thead>
-                    <tbody>
-                        {% for log in logs %}
-                        <tr>
-                            <td style="color:#64748b;">{{ log[6] }}</td>
-                            <td><b>{{ log[2] }}</b></td>
-                            <td><span class="badge badge-info">{{ log[3] }}</span></td>
-                            <td style="max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ log[4] }}</td>
-                            <td style="color:#64748b;">{{ log[5] }}</td>
-                            <td><span class="badge {{ 'badge-ok' if log[7]=='basarili' else 'badge-bad' }}">{{ log[7]|upper }}</span></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="historyModal">
-        <div class="modal-content">
-            <div style="display:flex; align-items:center;"><h2 id="modalTitle" style="font-size:17px;">Kullanıcı Geçmişi</h2><button class="modal-close" style="margin-left:auto; background:none; border:none; color:white; font-size:24px; cursor:pointer;" onclick="document.getElementById('historyModal').classList.remove('show')">&times;</button></div>
-            <div class="modal-body" id="modalBody"></div>
-        </div>
     </div>
 
     <script>
-        function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-        if (document.getElementById('dailyChart')) {
+        const dailyLabels = JSON.parse('{{ daily_labels | safe }}');
+        const dailyData = JSON.parse('{{ daily_data | safe }}');
+        const chartLabels = JSON.parse('{{ chart_labels | safe }}');
+        const chartData = JSON.parse('{{ chart_data | safe }}');
+
+        if (document.getElementById('dailyChart') && dailyLabels.length > 0) {
             new Chart(document.getElementById('dailyChart').getContext('2d'), {
-                type: 'line', data: { labels: {{ daily_labels | safe }}, datasets: [{ label: 'Sorgu', data: {{ daily_data | safe }}, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' }, grid: { display: false } } } }
-            });
-            new Chart(document.getElementById('pieChart').getContext('2d'), {
-                type: 'doughnut', data: { labels: {{ chart_labels | safe }}, datasets: [{ data: {{ chart_data | safe }}, backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
+                type: 'line', data: { labels: dailyLabels, datasets: [{ label: 'Sorgu', data: dailyData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } }
             });
         }
-        async function showHistory(uid, uname) {
-            document.getElementById('historyModal').classList.add('show');
-            document.getElementById('modalTitle').textContent = uname + ' — Geçmiş';
-            document.getElementById('modalBody').innerHTML = '<p style="text-align:center; color:#94a3b8;">Yükleniyor...</p>';
-            try {
-                const res = await fetch('/admin-history/' + uid).then(r => r.json());
-                if (!res.history || res.history.length === 0) { document.getElementById('modalBody').innerHTML = '<p style="text-align:center; color:#94a3b8;">Kayıt yok.</p>'; return; }
-                let html = '<table><thead><tr><th>Zaman</th><th>Tip</th><th>Parametre</th><th>Durum</th></tr></thead><tbody>';
-                res.history.forEach(h => { html += `<tr><td style="white-space:nowrap;">${escapeHtml(h.time)}</td><td>${escapeHtml(h.type)}</td><td>${escapeHtml(h.param)}</td><td>${escapeHtml(h.status)}</td></tr>`; });
-                document.getElementById('modalBody').innerHTML = html + '</tbody></table>';
-            } catch (_) { document.getElementById('modalBody').innerHTML = '<p style="color:red; text-align:center;">Hata.</p>'; }
+        if (document.getElementById('pieChart') && chartLabels.length > 0) {
+            new Chart(document.getElementById('pieChart').getContext('2d'), {
+                type: 'doughnut', data: { labels: chartLabels, datasets: [{ data: chartData, backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
+            });
         }
     </script>
 </body>
