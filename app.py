@@ -31,8 +31,45 @@ app.config.update(
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
+# Render üzerinde 500 hatası vermemesi için /tmp dizini kullanılıyor
 DB_FILE = os.path.join(os.environ.get("DB_DIR", "/tmp" if os.name != 'nt' else "."), "siber_karargah.db")
 API_BASE = "https://violetpanel.cc/furkanapi"
+
+# --- GÜVENLİK DUVARI (WAF) & IP BAN SİSTEMİ ---
+BANNED_IPS = {} # {ip: unban_timestamp}
+WAF_PATTERNS = [
+    re.compile(r"(?i)(union\s+select|select\s+.*\s+from|insert\s+into|drop\s+table|update\s+.*\s+set)"), # SQL Injection
+    re.compile(r"(?i)(<script>|javascript:|onerror=|onload=|eval\()"), # XSS
+    re.compile(r"(\.\./|\.\.\\)"), # Path Traversal
+    re.compile(r"(?i)(wget\s+|curl\s+|bash\s+-i|nc\s+-e|/etc/passwd)") # Command Injection
+]
+
+@app.before_request
+def firewall():
+    ip = request.remote_addr or "0.0.0.0"
+    now = time.time()
+    
+    # 1. IP Ban Kontrolü
+    if ip in BANNED_IPS:
+        if now < BANNED_IPS[ip]:
+            return jsonify({"success": False, "error": "Çok fazla kural ihlali. IP adresiniz geçici olarak engellendi."}), 403
+        else:
+            del BANNED_IPS[ip]
+
+    # 2. WAF Kontrolü (Zararlı istekleri engelle)
+    data_str = str(request.args) + str(request.form) + str(request.json if request.is_json else "")
+    for pattern in WAF_PATTERNS:
+        if pattern.search(data_str):
+            BANNED_IPS[ip] = now + 900 # 15 dakika banla
+            return jsonify({"success": False, "error": "Güvenlik duvarı zararlı bir istek tespit etti! IP'niz banlandı."}), 403
+
+    # 3. CSRF Kontrolü (Sadece POST isteklerinde)
+    if request.method in ("POST", "PUT", "DELETE"):
+        token = request.headers.get("X-CSRF-Token") or request.form.get("_csrf")
+        stored = session.get("_csrf")
+        if not token or not stored or not secrets.compare_digest(token, stored):
+            if request.path.startswith("/api/"): return jsonify({"success": False, "error": "CSRF doğrulama hatası."}), 403
+            return "CSRF doğrulaması başarısız.", 403
 
 # --- VERİTABANI ---
 def get_db():
@@ -51,25 +88,14 @@ def init_db():
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('maintenance', '0')")
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('broadcast', 'Sistemimize hoş geldiniz!')")
         c.commit()
-
 init_db()
 
-# --- CSRF KORUMASI ---
 def csrf_token():
     if "_csrf" not in session: session["_csrf"] = secrets.token_urlsafe(32)
     return session["_csrf"]
 app.jinja_env.globals["csrf_token"] = csrf_token
 
-@app.before_request
-def csrf_protect():
-    if request.method in ("GET", "HEAD", "OPTIONS"): return
-    token = request.headers.get("X-CSRF-Token") or request.form.get("_csrf")
-    stored = session.get("_csrf")
-    if not token or not stored or not secrets.compare_digest(token, stored):
-        if request.path.startswith("/api/"): return jsonify({"success": False, "error": "Oturum hatası. Sayfayı yenileyin."}), 403
-        return "CSRF doğrulaması başarısız.", 403
-
-# --- RATE LIMIT ---
+# --- RATE LIMIT (İstek Sınırlandırma) ---
 RATE_LIMIT = {}
 _rl_lock = Lock()
 def check_rate_limit(key, max_req=30, window=60):
@@ -86,6 +112,7 @@ def check_rate_limit(key, max_req=30, window=60):
 def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
     return response
 
 def log_query(uid, uname, q_type, param, ip, status):
@@ -144,8 +171,7 @@ def api_register():
     if len(p) < 6: return jsonify({"success": False, "error": "Şifre çok kısa."})
     try:
         with get_db() as c:
-            c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)",
-                      (u, generate_password_hash(p), datetime.now(timezone.utc).strftime("%Y-%m-%d")))
+            c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)", (u, generate_password_hash(p), datetime.now(timezone.utc).strftime("%Y-%m-%d")))
             row = c.execute("SELECT id FROM users WHERE username=?", (u,)).fetchone()
             c.commit()
         session.permanent = True; session['user_id'] = row[0]; session['username'] = u
@@ -240,35 +266,22 @@ def api_sorgu():
         return jsonify({"success": True, "data": result})
     except Exception: return jsonify({"success": False, "error": "Dış API hatası."})
 
-# --- ADMIN (TEK SAYFA MANTIĞI) ---
+# --- ADMIN ---
 @app.route("/admin-panel-x9", methods=["GET", "POST"])
 def admin_dashboard():
     ip = request.remote_addr or "?"
-    # Eğer giriş yapılmamışsa, şifre formunu aynı sayfada göster
     if not session.get("admin"):
         error = None
         if request.method == "POST":
-            if not check_rate_limit(f"adminlogin_{ip}", max_req=5):
-                error = "Çok fazla deneme. 1 dakika bekleyin."
+            if not check_rate_limit(f"adminlogin_{ip}", max_req=5): error = "Çok fazla deneme. 1 dakika bekleyin."
             elif secrets.compare_digest(request.form.get("pass", ""), ADMIN_PASSWORD):
-                session["admin"] = True
-                session["admin_since"] = time.time()
-                return redirect("/admin-panel-x9")
-            else:
-                error = "Hatalı şifre."
-        
-        # Boş verilerle login formunu render et
-        return render_template('admin.html', show_login=True, login_error=error, 
-                               total_users=0, total_queries=0, banned_users=0, users=[], logs=[], 
-                               maint="0", current_bc="", chart_labels="[]", chart_data="[]", 
-                               daily_labels="[]", daily_data="[]", temp_passes={})
+                session["admin"] = True; session["admin_since"] = time.time(); return redirect("/admin-panel-x9")
+            else: error = "Hatalı şifre."
+        return render_template('admin.html', show_login=True, login_error=error, total_users=0, total_queries=0, banned_users=0, users=[], logs=[], maint="0", current_bc="", chart_labels="[]", chart_data="[]", daily_labels="[]", daily_data="[]", temp_passes={})
 
-    # Oturum süresi kontrolü (1 saat)
     if time.time() - session.get("admin_since", 0) > 3600:
-        session.pop("admin", None)
-        return redirect("/admin-panel-x9")
+        session.pop("admin", None); return redirect("/admin-panel-x9")
 
-    # Giriş yapılmışsa asıl paneli göster
     temp_passes = session.pop("_temp_passes", {})
     with get_db() as c:
         logs = c.execute("SELECT * FROM logs ORDER BY id DESC LIMIT 100").fetchall()
@@ -277,25 +290,15 @@ def admin_dashboard():
         total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         banned_users = c.execute("SELECT COUNT(*) FROM users WHERE banned=1").fetchone()[0]
         q_stats = c.execute("SELECT query_type, COUNT(*) FROM logs GROUP BY query_type ORDER BY 2 DESC").fetchall()
-        
-        chart_labels = json.dumps([q[0] for q in q_stats])
-        chart_data = json.dumps([q[1] for q in q_stats])
+        chart_labels = json.dumps([q[0] for q in q_stats]); chart_data = json.dumps([q[1] for q in q_stats])
         dates = [(datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(6, -1, -1)]
         daily_counts = [c.execute("SELECT COUNT(*) FROM logs WHERE timestamp LIKE ?", (f"{d}%",)).fetchone()[0] for d in dates]
-        daily_labels = json.dumps(dates)
-        daily_data = json.dumps(daily_counts)
+        daily_labels = json.dumps(dates); daily_data = json.dumps(daily_counts)
 
-    return render_template('admin.html', show_login=False,
-        logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users,
-        maint=get_setting("maintenance"), current_bc=get_setting("broadcast"),
-        chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data,
-        temp_passes=temp_passes)
+    return render_template('admin.html', show_login=False, logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"), chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, temp_passes=temp_passes)
 
-# --- ADMIN İŞLEMLERİ ---
 @app.route("/admin-logout-x9", methods=["POST"])
-def admin_logout():
-    session.pop("admin", None)
-    return redirect("/admin-panel-x9")
+def admin_logout(): session.pop("admin", None); return redirect("/admin-panel-x9")
 
 @app.route("/admin-history/<int:uid>")
 def admin_history(uid):
@@ -311,8 +314,7 @@ def admin_reset_pass(uid):
     with get_db() as c:
         c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(tmp), uid))
         c.commit()
-    tp = session.get("_temp_passes", {}); tp[str(uid)] = tmp
-    session["_temp_passes"] = dict(list(tp.items())[-5:])
+    tp = session.get("_temp_passes", {}); tp[str(uid)] = tmp; session["_temp_passes"] = dict(list(tp.items())[-5:])
     return redirect("/admin-panel-x9")
 
 @app.route("/gizli-bakim-degistir", methods=["POST"])
@@ -330,27 +332,21 @@ def admin_broadcast():
 @app.route("/admin-ban/<int:uid>", methods=["POST"])
 def admin_ban_user(uid):
     if not session.get("admin"): return redirect("/")
-    with get_db() as c:
-        c.execute("UPDATE users SET banned = CASE WHEN banned=1 THEN 0 ELSE 1 END WHERE id=?", (uid,))
-        c.commit()
+    with get_db() as c: c.execute("UPDATE users SET banned = CASE WHEN banned=1 THEN 0 ELSE 1 END WHERE id=?", (uid,)); c.commit()
     return redirect("/admin-panel-x9")
 
 @app.route("/admin-delete/<int:uid>", methods=["POST"])
 def admin_delete_user(uid):
     if not session.get("admin"): return redirect("/")
     with get_db() as c:
-        c.execute("DELETE FROM users WHERE id=?", (uid,))
-        c.execute("DELETE FROM logs WHERE user_id=?", (uid,))
-        c.commit()
+        c.execute("DELETE FROM users WHERE id=?", (uid,)); c.execute("DELETE FROM logs WHERE user_id=?", (uid,)); c.commit()
     return redirect("/admin-panel-x9")
 
 # --- HATA YÖNETİMİ ---
 @app.errorhandler(404)
-def not_found(e): return render_template('login.html'), 404 # 404 olursa logine at
-
+def not_found(e): return redirect('/')
 @app.errorhandler(500)
-def server_error(e): return "<h1>500 - Sunucu Hatası</h1><p>Lütfen daha sonra tekrar deneyin.</p>", 500
+def server_error(e): return "<h1 style='text-align:center; margin-top:50px;'>500 - Sunucu Hatası</h1><p style='text-align:center;'>Sistem yöneticisi bilgilendirildi.</p>", 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
