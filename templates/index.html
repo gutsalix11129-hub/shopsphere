@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Dashboard | ShopSphere</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -10,8 +11,6 @@
         :root { --sidebar-bg: #0b1120; --sidebar-text: #94a3b8; --bg: #f1f5f9; --card-bg: #ffffff; --text: #1e293b; --primary: #2563eb; --border: #e2e8f0; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
-
-        /* SIDEBAR */
         .sidebar { width: 280px; background: var(--sidebar-bg); color: white; position: fixed; height: 100vh; left: -280px; top: 0; transition: 0.3s; z-index: 1000; display: flex; flex-direction: column; overflow-y: auto; border-right: 1px solid rgba(255,255,255,0.05); }
         .sidebar.open { left: 0; }
         .logo-area { padding: 25px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -23,7 +22,6 @@
         .user-info h3 { font-size: 14px; font-weight: 600; color: #f8fafc; word-break: break-all; }
         .user-info p { font-size: 12px; color: #3b82f6; margin-top: 2px; background: rgba(59,130,246,0.1); padding: 2px 8px; border-radius: 20px; display: inline-block; }
         .user-info .balance { font-size: 12px; color: #fbbf24; margin-top: 5px; font-weight: 600; }
-
         .nav-section { padding: 10px 15px 30px; }
         .nav-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin: 15px 0 10px 10px; }
         .nav-item { display: flex; align-items: center; padding: 12px 15px; border-radius: 8px; color: var(--sidebar-text); font-size: 14px; font-weight: 500; cursor: pointer; transition: 0.2s; margin-bottom: 2px; }
@@ -32,33 +30,20 @@
         .nav-item .arrow { margin-left: auto; font-size: 12px; color: #475569; }
         .nav-item.dead { cursor: not-allowed; opacity: 0.6; }
         .nav-item.dead:hover { background: transparent; color: var(--sidebar-text); }
-
-        /* MAIN */
         .main { flex: 1; transition: 0.3s; padding: 20px; width: 100%; }
         .topbar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 15px 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .menu-btn { font-size: 24px; cursor: pointer; color: var(--text); display: block; }
         .broadcast { font-size: 13px; color: #64748b; font-weight: 500; }
-
-        /* DASHBOARD */
         .dashboard-content { display: none; }
-        .promo-banner { background: linear-gradient(90deg, #0f172a, #1e3a8a); border-radius: 12px; padding: 20px; color: white; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .promo-banner { background: linear-gradient(90deg, #0f172a, #1e3a8a); border-radius: 12px; padding: 20px; color: white; margin-bottom: 25px; }
         .promo-banner h2 { font-size: 18px; font-weight: 700; }
         .stats-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 25px; }
         .stat-card { background: var(--card-bg); padding: 25px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid var(--border); }
         .stat-card h4 { font-size: 15px; color: #64748b; margin-bottom: 15px; font-weight: 600; }
         .stat-card .value-row { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
         .stat-card .value { font-size: 32px; font-weight: 800; color: var(--text); }
-        .stat-card .percent { font-size: 13px; color: #10b981; background: #d1fae5; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
         .stat-card p { font-size: 13px; color: #94a3b8; }
-
-        @media (min-width: 992px) {
-            .sidebar { left: 0; }
-            .main { margin-left: 280px; width: calc(100% - 280px); }
-            .menu-btn { display: none; }
-            .stats-grid { grid-template-columns: repeat(3, 1fr); }
-        }
-
-        /* QUERY / PROFILE AREA */
+        @media (min-width: 992px) { .sidebar { left: 0; } .main { margin-left: 280px; width: calc(100% - 280px); } .menu-btn { display: none; } .stats-grid { grid-template-columns: repeat(3, 1fr); } }
         .query-area { display: none; background: var(--card-bg); border-radius: 12px; padding: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 25px; }
         .query-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; gap: 10px; }
         .query-header h2 { font-size: 20px; color: var(--text); }
@@ -70,32 +55,24 @@
         .form-group input:focus { outline: none; border-color: var(--primary); background: #fff; }
         .form-group input.invalid { border-color: #ef4444; background: #fef2f2; }
         .form-group .hint { font-size: 11.5px; color: #94a3b8; margin-top: 6px; }
-
         .btn-primary { background: var(--primary); color: white; border: none; padding: 14px 24px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; transition: background .2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-primary:hover:not(:disabled) { background: #1d4ed8; }
         .btn-primary:disabled { background: #93b4f8; cursor: not-allowed; }
         .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid var(--border); padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
         .btn-secondary:hover { background: #e2e8f0; }
-
         .data-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 12px; border-radius: 8px; overflow: hidden; }
         .data-table th, .data-table td { padding: 12px 15px; border-bottom: 1px solid var(--border); text-align: left; }
         .data-table th { background: #f8fafc; color: #64748b; font-weight: 600; width: 35%; }
         .data-table td { color: var(--text); word-break: break-all; font-weight: 500; }
-        .data-table tr:last-child th, .data-table tr:last-child td { border-bottom: none; }
-
         .spinner { width: 30px; height: 30px; border: 3px solid #e2e8f0; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; backdrop-filter: blur(3px); }
         .overlay.show { display: block; }
-
-        .toast-wrap { position: fixed; top: 20px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-        .toast { padding: 12px 18px; border-radius: 8px; font-size: 14px; font-weight: 500; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn .25s; pointer-events: auto; min-width: 220px; display: flex; align-items: center; gap: 10px; }
+        .toast-wrap { position: fixed; top: 20px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 8px; }
+        .toast { padding: 12px 18px; border-radius: 8px; font-size: 14px; font-weight: 500; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 220px; display: flex; align-items: center; gap: 10px; }
         .toast.success { background: #10b981; }
         .toast.error { background: #ef4444; }
         .toast.info { background: #2563eb; }
-        @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
-
         .result-toolbar { display: flex; gap: 8px; margin: 15px 0 8px; flex-wrap: wrap; }
         .empty-result { padding: 20px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; text-align: center; color: #64748b; font-size: 14px; margin-top: 15px; }
     </style>
@@ -105,10 +82,7 @@
     <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
 
     <aside class="sidebar" id="sidebar">
-        <div class="logo-area">
-            <i class="fa-solid fa-magnifying-glass-location logo-icon"></i>
-            <h2>NO<span>PANEL</span></h2>
-        </div>
+        <div class="logo-area"><i class="fa-solid fa-magnifying-glass-location logo-icon"></i><h2>NO<span>PANEL</span></h2></div>
         <div class="user-profile">
             <img src="https://ui-avatars.com/api/?name={{ username }}&background=2563eb&color=fff&rounded=true&bold=true" class="avatar" alt="Profil">
             <div class="user-info">
@@ -120,13 +94,11 @@
         <div class="nav-section">
             <div class="nav-item active" onclick="showView('dashboard', this)"><div class="icon"><i class="fa-solid fa-house"></i></div> Ana Sayfa</div>
             <div class="nav-item" onclick="showView('profile', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Profilim</div>
-            <div class="nav-item dead" title="Yakında"><div class="icon"><i class="fa-solid fa-bullseye"></i></div> Kullanıcı Sıralaması</div>
-            <div class="nav-item dead" title="Yakında"><div class="icon"><i class="fa-solid fa-layer-group"></i></div> Referans Sıralaması</div>
-
+            <div class="nav-item dead"><div class="icon"><i class="fa-solid fa-bullseye"></i></div> Kullanıcı Sıralaması</div>
+            <div class="nav-item dead"><div class="icon"><i class="fa-solid fa-layer-group"></i></div> Referans Sıralaması</div>
             <div class="nav-title">MARKET</div>
-            <div class="nav-item dead" title="Yakında"><div class="icon"><i class="fa-solid fa-basket-shopping"></i></div> Market</div>
-            <div class="nav-item dead" title="Yakında"><div class="icon"><i class="fa-solid fa-wallet"></i></div> Bakiye Yükle</div>
-
+            <div class="nav-item dead"><div class="icon"><i class="fa-solid fa-basket-shopping"></i></div> Market</div>
+            <div class="nav-item dead"><div class="icon"><i class="fa-solid fa-wallet"></i></div> Bakiye Yükle</div>
             <div class="nav-title">SORGU ÇÖZÜMLERİ</div>
             <div class="nav-item" onclick="loadTool('adsoyad', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Mernis 2026 <i class="fa-solid fa-chevron-right arrow"></i></div>
             <div class="nav-item" onclick="loadTool('adsoyad_proxy', this)"><div class="icon"><i class="fa-solid fa-user-shield"></i></div> Mernis Proxy <i class="fa-solid fa-chevron-right arrow"></i></div>
@@ -134,15 +106,13 @@
             <div class="nav-item" onclick="loadTool('tcgsm', this)"><div class="icon"><i class="fa-solid fa-phone"></i></div> GSM Çözümleri <i class="fa-solid fa-chevron-right arrow"></i></div>
             <div class="nav-item" onclick="loadTool('gsmtc', this)"><div class="icon"><i class="fa-solid fa-phone-flip"></i></div> GSM → TC <i class="fa-solid fa-chevron-right arrow"></i></div>
             <div class="nav-item" onclick="loadTool('adres', this)"><div class="icon"><i class="fa-solid fa-location-dot"></i></div> Adres Çözümleri <i class="fa-solid fa-chevron-right arrow"></i></div>
-
             <div class="nav-title">OSINT</div>
             <div class="nav-item" onclick="loadTool('osint_ip', this)"><div class="icon"><i class="fa-solid fa-network-wired"></i></div> IP Sorgu <i class="fa-solid fa-chevron-right arrow"></i></div>
             <div class="nav-item" onclick="loadTool('osint_domain', this)"><div class="icon"><i class="fa-solid fa-globe"></i></div> Domain Sorgu <i class="fa-solid fa-chevron-right arrow"></i></div>
             <div class="nav-item" onclick="loadTool('osint_hash', this)"><div class="icon"><i class="fa-solid fa-hashtag"></i></div> Hash Üret <i class="fa-solid fa-chevron-right arrow"></i></div>
-
-            <div class="nav-title">DESTEK SİSTEMİ</div>
-            <div class="nav-item dead" title="Yakında"><div class="icon"><i class="fa-solid fa-headset"></i></div> Destek Sistemi</div>
-            <div class="nav-item dead" title="Yakında"><div class="icon"><i class="fa-brands fa-telegram"></i></div> Telegram</div>
+            <div class="nav-title">DESTEK</div>
+            <div class="nav-item dead"><div class="icon"><i class="fa-solid fa-headset"></i></div> Destek Sistemi</div>
+            <div class="nav-item dead"><div class="icon"><i class="fa-brands fa-telegram"></i></div> Telegram</div>
             <div class="nav-item" onclick="logout()" style="color:#ef4444; margin-top:10px;"><div class="icon"><i class="fa-solid fa-right-from-bracket"></i></div> Çıkış Yap</div>
         </div>
     </aside>
@@ -155,35 +125,13 @@
 
         <div id="dashboardView" class="dashboard-content" style="display:block;">
             <div class="promo-banner">
-                <div>
-                    <h2 style="display:flex; align-items:center; gap:10px;"><i class="fa-solid fa-bolt" style="color:#fbbf24;"></i> Sistemimize Hoş Geldiniz!</h2>
-                    <p style="color:#94a3b8; margin-top:5px; font-size:14px;">Tüm sorgu çözümleri ve OSINT araçları aktif olarak çalışmaktadır.</p>
-                </div>
+                <h2><i class="fa-solid fa-bolt" style="color:#fbbf24;"></i> Sistemimize Hoş Geldiniz!</h2>
+                <p style="color:#94a3b8; margin-top:5px; font-size:14px;">Tüm sorgu çözümleri ve OSINT araçları aktif olarak çalışmaktadır.</p>
             </div>
-
             <div class="stats-grid">
-                <div class="stat-card">
-                    <h4>Toplam Kullanıcı</h4>
-                    <div class="value-row">
-                        <div class="value">{{ total_users }}</div>
-                        <div class="percent"><i class="fa-solid fa-arrow-trend-up"></i> 100%</div>
-                    </div>
-                    <p>Sistemde kayıtlı toplam üye</p>
-                </div>
-                <div class="stat-card">
-                    <h4>Toplam Sorgu</h4>
-                    <div class="value-row">
-                        <div class="value">{{ total_queries }}</div>
-                    </div>
-                    <p>Sistem genelinde yapılan sorgu</p>
-                </div>
-                <div class="stat-card">
-                    <h4>Sizin Sorgularınız</h4>
-                    <div class="value-row">
-                        <div class="value">{{ user_queries }}</div>
-                    </div>
-                    <p>Hesabınızla yaptığınız sorgular</p>
-                </div>
+                <div class="stat-card"><h4>Toplam Kullanıcı</h4><div class="value-row"><div class="value">{{ total_users }}</div></div><p>Sistemde kayıtlı toplam üye</p></div>
+                <div class="stat-card"><h4>Toplam Sorgu</h4><div class="value-row"><div class="value">{{ total_queries }}</div></div><p>Sistem genelinde yapılan sorgu</p></div>
+                <div class="stat-card"><h4>Sizin Sorgularınız</h4><div class="value-row"><div class="value">{{ user_queries }}</div></div><p>Hesabınızla yaptığınız sorgular</p></div>
             </div>
         </div>
 
@@ -213,7 +161,7 @@
                     <p style="color:#10b981; font-size:14px; font-weight:600;">Üyelik: Standart</p>
                 </div>
             </div>
-            <h3 style="font-size:16px; margin-bottom:15px; color:#1e293b;"><i class="fa-solid fa-key"></i> Şifre Değiştir</h3>
+            <h3 style="font-size:16px; margin-bottom:15px;"><i class="fa-solid fa-key"></i> Şifre Değiştir</h3>
             <div class="form-group"><label for="old_pass">Mevcut Şifreniz</label><input type="password" id="old_pass" autocomplete="current-password"></div>
             <div class="form-group"><label for="new_pass">Yeni Şifreniz</label><input type="password" id="new_pass" autocomplete="new-password" minlength="6" placeholder="En az 6 karakter"></div>
             <button class="btn-primary" id="changePassBtn" onclick="changePass()"><i class="fa-solid fa-floppy-disk"></i> Şifreyi Güncelle</button>
@@ -221,74 +169,41 @@
     </main>
 
     <script>
-        // === Yardımcılar ===
         function $(id) { return document.getElementById(id); }
+        const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+        const JSON_HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
 
         function escapeHtml(s) {
-            return String(s).replace(/[&<>"']/g, c => ({
-                '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-            }[c]));
+            return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
         }
-
         function toast(msg, type = 'info') {
             const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' };
             const el = document.createElement('div');
             el.className = `toast ${type}`;
-            el.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><span>${escapeHtml(msg)}</span>`;
+            el.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span>${escapeHtml(msg)}</span>`;
             $('toastWrap').appendChild(el);
             setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; }, 3000);
             setTimeout(() => el.remove(), 3400);
         }
+        function setLoading(btn, loading, html) { btn.disabled = loading; btn.innerHTML = html; }
 
-        function setLoading(btn, loading, html) {
-            btn.disabled = loading;
-            btn.innerHTML = html;
-        }
-
-        // === Tool tanımları ===
         const TOOLS = {
-            'adsoyad': {
-                title: 'Mernis 2026',
-                fields: [
-                    { id: 'ad',    label: 'Ad',    required: true },
-                    { id: 'soyad', label: 'Soyad', required: true }
-                ]
-            },
-            'adsoyad_proxy': {
-                title: 'Mernis Proxy',
-                fields: [
-                    { id: 'ad',    label: 'Ad',             required: true },
-                    { id: 'soyad', label: 'Soyad',          required: true },
-                    { id: 'il',    label: 'İl (opsiyonel)', required: false }
-                ]
-            },
-            'aile':  { title: 'Aile Çözümleri', fields: [
-                { id: 'tc', label: 'TC Kimlik (11 Hane)', required: true, pattern: /^\d{11}$/, hint: '11 haneli sayı' }
+            'adsoyad': { title: 'Mernis 2026', fields: [{ id:'ad', label:'Ad', required:true }, { id:'soyad', label:'Soyad', required:true }] },
+            'adsoyad_proxy': { title: 'Mernis Proxy', fields: [
+                { id:'ad', label:'Ad', required:true }, { id:'soyad', label:'Soyad', required:true }, { id:'il', label:'İl (opsiyonel)', required:false }
             ]},
-            'adres': { title: 'Adres Çözümleri', fields: [
-                { id: 'tc', label: 'TC Kimlik (11 Hane)', required: true, pattern: /^\d{11}$/, hint: '11 haneli sayı' }
-            ]},
-            'tcgsm': { title: 'GSM Çözümleri', fields: [
-                { id: 'tc', label: 'TC Kimlik (11 Hane)', required: true, pattern: /^\d{11}$/, hint: '11 haneli sayı' }
-            ]},
-            'gsmtc': { title: 'GSM → TC', fields: [
-                { id: 'gsm', label: 'GSM Numarası', required: true, pattern: /^\d{10,11}$/, hint: 'Örn. 5xxxxxxxxx' }
-            ]},
-            'osint_ip': { title: 'IP Sorgu', fields: [
-                { id: 'ip', label: 'IP Adresi', required: true }
-            ]},
-            'osint_domain': { title: 'Domain Sorgu', fields: [
-                { id: 'domain', label: 'Domain', required: true, hint: 'örn. example.com' }
-            ]},
-            'osint_hash': { title: 'Hash Üret', fields: [
-                { id: 'text', label: 'Metin', required: true, hint: 'MD5 / SHA1 / SHA256 üretilir' }
-            ]}
+            'aile':  { title:'Aile Çözümleri', fields:[{ id:'tc', label:'TC Kimlik (11 Hane)', required:true, pattern:/^\d{11}$/, hint:'11 haneli sayı' }] },
+            'adres': { title:'Adres Çözümleri', fields:[{ id:'tc', label:'TC Kimlik (11 Hane)', required:true, pattern:/^\d{11}$/, hint:'11 haneli sayı' }] },
+            'tcgsm': { title:'GSM Çözümleri', fields:[{ id:'tc', label:'TC Kimlik (11 Hane)', required:true, pattern:/^\d{11}$/, hint:'11 haneli sayı' }] },
+            'gsmtc': { title:'GSM → TC', fields:[{ id:'gsm', label:'GSM Numarası', required:true, pattern:/^\d{10,11}$/, hint:'Örn. 5xxxxxxxxx' }] },
+            'osint_ip': { title:'IP Sorgu', fields:[{ id:'ip', label:'IP Adresi', required:true }] },
+            'osint_domain': { title:'Domain Sorgu', fields:[{ id:'domain', label:'Domain', required:true, hint:'örn. example.com' }] },
+            'osint_hash': { title:'Hash Üret', fields:[{ id:'text', label:'Metin', required:true, hint:'MD5 / SHA1 / SHA256 üretilir' }] }
         };
 
         let currentType = null;
         let lastResult = null;
 
-        // === Broadcast (ilk açılışta hemen) ===
         async function refreshBroadcast() {
             try {
                 const b = await fetch('/api/get_broadcast', { credentials: 'same-origin' }).then(r => r.json());
@@ -298,193 +213,117 @@
         refreshBroadcast();
         setInterval(refreshBroadcast, 15000);
 
-        // === Menü ===
-        function toggleMenu() {
-            $('sidebar').classList.toggle('open');
-            $('overlay').classList.toggle('show');
-        }
-        function closeMenuOnMobile() {
-            if (window.innerWidth < 992 && $('sidebar').classList.contains('open')) toggleMenu();
-        }
+        function toggleMenu() { $('sidebar').classList.toggle('open'); $('overlay').classList.toggle('show'); }
+        function closeMenuOnMobile() { if (window.innerWidth < 992 && $('sidebar').classList.contains('open')) toggleMenu(); }
 
         function showView(view, el) {
-            if (el) {
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                el.classList.add('active');
-            }
+            if (el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
             ['dashboardView', 'queryView', 'profileView'].forEach(v => $(v).style.display = 'none');
             if (view === 'dashboard') $('dashboardView').style.display = 'block';
             if (view === 'profile')   $('profileView').style.display = 'block';
-            if (view !== 'query') { $('queryView').style.display = 'none'; }
             closeMenuOnMobile();
         }
 
-        // === Tool yükle ===
         function loadTool(type, el) {
             const tool = TOOLS[type];
             if (!tool) return toast('Bilinmeyen araç', 'error');
-            currentType = type;
-            lastResult = null;
+            currentType = type; lastResult = null;
             showView('query', el);
             $('queryView').style.display = 'block';
             $('qTitle').innerText = tool.title;
             $('qResults').innerHTML = '';
             $('resultToolbar').innerHTML = '';
-
             let html = '';
             tool.fields.forEach(f => {
                 const req = f.required !== false;
                 html += `<div class="form-group">
-                    <label for="inp_${f.id}">${escapeHtml(f.label)}${req ? '' : ''}</label>
-                    <input type="text" id="inp_${f.id}" placeholder="${escapeHtml(f.label)} girin..."
-                           ${req ? 'required' : ''} autocomplete="off">
-                    ${f.hint ? `<div class="hint">${escapeHtml(f.hint)}</div>` : ''}
+                    <label for="inp_${f.id}">${escapeHtml(f.label)}</label>
+                    <input type="text" id="inp_${f.id}" placeholder="${escapeHtml(f.label)} girin..." ${req?'required':''} autocomplete="off">
+                    ${f.hint?`<div class="hint">${escapeHtml(f.hint)}</div>`:''}
                 </div>`;
             });
             $('qInputs').innerHTML = html;
-
-            // İlk inputa focus
             const first = tool.fields[0];
             if (first) setTimeout(() => { const el2 = $('inp_' + first.id); if (el2) el2.focus(); }, 100);
         }
 
-        // === Input doğrulama ===
         function validateFields() {
             const tool = TOOLS[currentType];
             const payload = { type: currentType };
             let firstInvalid = null;
-
             for (const f of tool.fields) {
-                const inp = $('inp_' + f.id);
-                if (!inp) continue;
+                const inp = $('inp_' + f.id); if (!inp) continue;
                 inp.classList.remove('invalid');
                 const val = inp.value.trim();
                 const req = f.required !== false;
-
-                if (req && !val) {
-                    inp.classList.add('invalid');
-                    if (!firstInvalid) firstInvalid = { inp, msg: `${f.label} zorunludur.` };
-                    continue;
-                }
-                if (val && f.pattern && !f.pattern.test(val)) {
-                    inp.classList.add('invalid');
-                    if (!firstInvalid) firstInvalid = { inp, msg: `${f.label} formatı hatalı.` };
-                    continue;
-                }
+                if (req && !val) { inp.classList.add('invalid'); if (!firstInvalid) firstInvalid = { inp, msg: `${f.label} zorunludur.` }; continue; }
+                if (val && f.pattern && !f.pattern.test(val)) { inp.classList.add('invalid'); if (!firstInvalid) firstInvalid = { inp, msg: `${f.label} formatı hatalı.` }; continue; }
                 if (val) payload[f.id] = val;
             }
-            if (firstInvalid) {
-                toast(firstInvalid.msg, 'error');
-                firstInvalid.inp.focus();
-                return null;
-            }
+            if (firstInvalid) { toast(firstInvalid.msg, 'error'); firstInvalid.inp.focus(); return null; }
             return payload;
         }
 
-        // === Sorgu çalıştır ===
         async function runQuery() {
             if (!currentType) return;
-            const payload = validateFields();
-            if (!payload) return;
-
+            const payload = validateFields(); if (!payload) return;
             const btn = $('submitBtn');
             setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Sorgulanıyor...');
             $('qResults').innerHTML = '<div class="spinner"></div>';
-            $('resultToolbar').innerHTML = '';
-            lastResult = null;
-
+            $('resultToolbar').innerHTML = ''; lastResult = null;
             try {
                 const req = await fetch('/api/sorgu', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    method: 'POST', credentials: 'same-origin',
+                    headers: JSON_HEADERS, body: JSON.stringify(payload)
                 });
                 const res = await req.json();
                 if (!res.success) {
-                    $('qResults').innerHTML = `<div class="empty-result" style="color:#ef4444; background:#fef2f2; border-color:#fecaca;">
-                        <i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(res.error || 'Sorgu başarısız.')}
-                    </div>`;
-                } else {
-                    lastResult = res.data;
-                    renderData(res.data);
-                }
+                    $('qResults').innerHTML = `<div class="empty-result" style="color:#ef4444; background:#fef2f2; border-color:#fecaca;"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(res.error || 'Sorgu başarısız.')}</div>`;
+                } else { lastResult = res.data; renderData(res.data); }
             } catch (e) {
-                $('qResults').innerHTML = `<div class="empty-result" style="color:#ef4444; background:#fef2f2; border-color:#fecaca;">
-                    <i class="fa-solid fa-circle-exclamation"></i> Sunucu hatası. Lütfen tekrar deneyin.
-                </div>`;
+                $('qResults').innerHTML = `<div class="empty-result" style="color:#ef4444; background:#fef2f2; border-color:#fecaca;"><i class="fa-solid fa-circle-exclamation"></i> Sunucu hatası.</div>`;
             } finally {
                 setLoading(btn, false, '<i class="fa-solid fa-magnifying-glass"></i> Sorgula');
             }
         }
 
-        // === Nested objeyi düzleştir ===
         function flatten(obj, prefix = '') {
             const out = [];
             if (obj === null || obj === undefined) return out;
             for (const [k, v] of Object.entries(obj)) {
                 const key = prefix ? `${prefix}.${k}` : k;
-                if (v && typeof v === 'object' && !Array.isArray(v)) {
-                    out.push(...flatten(v, key));
-                } else if (Array.isArray(v)) {
-                    out.push([key, v.map(x => typeof x === 'object' ? JSON.stringify(x) : x).join(', ')]);
-                } else {
-                    out.push([key, v]);
-                }
+                if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flatten(v, key));
+                else if (Array.isArray(v)) out.push([key, v.map(x => typeof x === 'object' ? JSON.stringify(x) : x).join(', ')]);
+                else out.push([key, v]);
             }
             return out;
         }
-
         function isEmpty(v) {
             return v === null || v === undefined || v === '' ||
-                   String(v).toUpperCase() === 'YOK' ||
-                   String(v).toUpperCase() === 'NULL';
+                String(v).toUpperCase() === 'YOK' || String(v).toUpperCase() === 'NULL';
         }
-
-        // === Sonuç render (XSS-safe) ===
         function renderData(data) {
             const items = Array.isArray(data) ? data : [data];
-
-            // Toolbar: kopyala
             $('resultToolbar').innerHTML = `
-                <button class="btn-secondary" onclick="copyResult()">
-                    <i class="fa-solid fa-copy"></i> JSON Kopyala
-                </button>
-                <button class="btn-secondary" onclick="downloadResult()">
-                    <i class="fa-solid fa-download"></i> İndir
-                </button>
-            `;
-
-            if (items.length === 0) {
-                $('qResults').innerHTML = '<div class="empty-result">Kayıt bulunamadı.</div>';
-                return;
-            }
-
+                <button class="btn-secondary" onclick="copyResult()"><i class="fa-solid fa-copy"></i> JSON Kopyala</button>
+                <button class="btn-secondary" onclick="downloadResult()"><i class="fa-solid fa-download"></i> İndir</button>`;
+            if (items.length === 0) { $('qResults').innerHTML = '<div class="empty-result">Kayıt bulunamadı.</div>'; return; }
             let html = '';
             items.forEach((item, idx) => {
-                if (items.length > 1) {
-                    html += `<h4 style="margin-top:18px; color:#475569; font-size:14px;">Sonuç #${idx + 1}</h4>`;
-                }
+                if (items.length > 1) html += `<h4 style="margin-top:18px; color:#475569; font-size:14px;">Sonuç #${idx + 1}</h4>`;
                 const rows = flatten(item).filter(([, v]) => !isEmpty(v));
-                if (rows.length === 0) {
-                    html += `<div class="empty-result">Bu sonuç boş.</div>`;
-                    return;
-                }
+                if (rows.length === 0) { html += `<div class="empty-result">Bu sonuç boş.</div>`; return; }
                 html += `<table class="data-table"><tbody>`;
-                for (const [key, val] of rows) {
-                    html += `<tr><th>${escapeHtml(String(key).toUpperCase())}</th><td>${escapeHtml(String(val))}</td></tr>`;
-                }
+                for (const [key, val] of rows) html += `<tr><th>${escapeHtml(String(key).toUpperCase())}</th><td>${escapeHtml(String(val))}</td></tr>`;
                 html += `</tbody></table>`;
             });
             $('qResults').innerHTML = html;
         }
-
         function copyResult() {
             if (!lastResult) return;
-            const txt = JSON.stringify(lastResult, null, 2);
-            navigator.clipboard.writeText(txt).then(
+            navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(
                 () => toast('JSON kopyalandı', 'success'),
-                () => toast('Kopyalama başarısız', 'error')
+                () => toast('Kopyalanamadı', 'error')
             );
         }
         function downloadResult() {
@@ -497,47 +336,31 @@
             URL.revokeObjectURL(a.href);
         }
 
-        // === Şifre değiştir ===
         async function changePass() {
-            const oldP = $('old_pass').value;
-            const newP = $('new_pass').value;
+            const oldP = $('old_pass').value, newP = $('new_pass').value;
             if (!oldP || !newP) return toast('Tüm alanları doldurun', 'error');
             if (newP.length < 6) return toast('Yeni şifre en az 6 karakter olmalı', 'error');
-
             const btn = $('changePassBtn');
             setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Güncelleniyor...');
             try {
                 const r = await fetch('/api/change_password', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', credentials: 'same-origin', headers: JSON_HEADERS,
                     body: JSON.stringify({ old: oldP, new: newP })
                 }).then(x => x.json());
-                if (r.success) {
-                    toast('Şifre güncellendi', 'success');
-                    $('old_pass').value = '';
-                    $('new_pass').value = '';
-                } else {
-                    toast(r.error || 'Şifre değiştirilemedi', 'error');
-                }
-            } catch (_) {
-                toast('Bağlantı hatası', 'error');
-            } finally {
-                setLoading(btn, false, '<i class="fa-solid fa-floppy-disk"></i> Şifreyi Güncelle');
-            }
+                if (r.success) { toast('Şifre güncellendi', 'success'); $('old_pass').value = ''; $('new_pass').value = ''; }
+                else toast(r.error || 'Şifre değiştirilemedi', 'error');
+            } catch (_) { toast('Bağlantı hatası', 'error'); }
+            finally { setLoading(btn, false, '<i class="fa-solid fa-floppy-disk"></i> Şifreyi Güncelle'); }
         }
 
-        // === Çıkış ===
         async function logout() {
-            try { await fetch('/api/logout', { credentials: 'same-origin' }); } catch (_) {}
+            try { await fetch('/api/logout', { method: 'POST', credentials: 'same-origin', headers: JSON_HEADERS }); } catch (_) {}
             window.location.href = '/login';
         }
 
-        // === Klavye kısayolları ===
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'Enter' && currentType && $('queryView').style.display === 'block') {
-                e.preventDefault();
-                runQuery();
+                e.preventDefault(); runQuery();
             }
         });
     </script>
