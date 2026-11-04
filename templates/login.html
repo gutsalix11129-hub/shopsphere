@@ -3,21 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Giriş | ShopSphere</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body {
-            background: radial-gradient(circle at top, #1e293b 0%, #0f172a 60%);
-            display: flex; align-items: center; justify-content: center;
-            min-height: 100vh; padding: 20px;
-        }
-        .login-card {
-            background: #ffffff; width: 100%; max-width: 420px;
-            padding: 40px; border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-            animation: fadeIn .25s ease;
-        }
+        body { background: radial-gradient(circle at top, #1e293b 0%, #0f172a 60%); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .login-card { background: #ffffff; width: 100%; max-width: 420px; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); animation: fadeIn .25s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
         .logo { text-align: center; margin-bottom: 28px; }
         .logo h1 { color: #2563eb; font-size: 28px; font-weight: 800; letter-spacing: -1px; }
@@ -25,117 +17,74 @@
         .form-group { margin-bottom: 18px; }
         .form-group label { display: block; font-size: 13px; color: #475569; font-weight: 600; margin-bottom: 8px; }
         .input-wrap { position: relative; }
-        .form-group input {
-            width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1;
-            border-radius: 8px; font-size: 15px; color: #1e293b;
-            background: #f8fafc; transition: border-color .15s, background .15s;
-        }
+        .form-group input { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; color: #1e293b; background: #f8fafc; transition: border-color .15s, background .15s; }
         .form-group input:focus { outline: none; border-color: #2563eb; background: #fff; }
         .form-group input:disabled { opacity: .6; cursor: not-allowed; }
         .form-group input[aria-invalid="true"] { border-color: #ef4444; background: #fef2f2; }
-        .toggle-pw {
-            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; cursor: pointer; padding: 6px;
-            color: #64748b; font-size: 14px; line-height: 1;
-        }
-        .toggle-pw:hover { color: #2563eb; }
-        .alert {
-            display: none; padding: 10px 14px; border-radius: 8px;
-            font-size: 13.5px; margin-bottom: 16px; line-height: 1.4;
-        }
+        .toggle-pw { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 6px; font-size: 14px; line-height: 1; }
+        .alert { display: none; padding: 10px 14px; border-radius: 8px; font-size: 13.5px; margin-bottom: 16px; line-height: 1.4; }
         .alert.show { display: block; }
         .alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
         .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-        .btn {
-            width: 100%; padding: 14px; background: #2563eb; color: white;
-            border: none; border-radius: 8px; font-size: 15px; font-weight: 600;
-            cursor: pointer; transition: background .2s, transform .05s;
-            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-        }
+        .btn { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         .btn:hover:not(:disabled) { background: #1d4ed8; }
-        .btn:active:not(:disabled) { transform: translateY(1px); }
         .btn:disabled { background: #93b4f8; cursor: not-allowed; }
-        .spinner {
-            width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4);
-            border-top-color: #fff; border-radius: 50%;
-            animation: spin .7s linear infinite; display: none;
-        }
+        .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: none; }
         .btn.loading .spinner { display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .switch { text-align: center; margin-top: 20px; font-size: 14px; color: #64748b; }
         .switch span { color: #2563eb; cursor: pointer; font-weight: 600; user-select: none; }
-        .switch span:hover { text-decoration: underline; }
         .hint { font-size: 11.5px; color: #94a3b8; margin-top: 6px; }
-        @media (max-width: 480px) {
-            .login-card { padding: 28px 22px; }
-            .logo h1 { font-size: 24px; }
-        }
+        @media (max-width: 480px) { .login-card { padding: 28px 22px; } .logo h1 { font-size: 24px; } }
     </style>
 </head>
 <body>
-    <!-- GİRİŞ -->
     <form class="login-card" id="loginBox" novalidate>
         <div class="logo"><h1>ShopSphere</h1><p>Sorgu ve İstihbarat Paneli</p></div>
         <div class="alert alert-error" id="loginErr" role="alert" aria-live="polite"></div>
         <div class="form-group">
             <label for="u">KULLANICI ADI</label>
-            <input type="text" id="u" name="username" placeholder="Kullanıcı adınızı girin"
-                   autocomplete="username" autofocus required>
+            <input type="text" id="u" placeholder="Kullanıcı adınızı girin" autocomplete="username" autofocus required>
         </div>
         <div class="form-group">
             <label for="p">ŞİFRE</label>
             <div class="input-wrap">
-                <input type="password" id="p" name="password" placeholder="••••••••"
-                       autocomplete="current-password" required>
+                <input type="password" id="p" placeholder="••••••••" autocomplete="current-password" required>
                 <button type="button" class="toggle-pw" data-target="p" aria-label="Şifreyi göster">👁️</button>
             </div>
         </div>
-        <button type="submit" class="btn" id="loginBtn">
-            <span class="spinner"></span><span class="btn-text">Giriş Yap</span>
-        </button>
+        <button type="submit" class="btn" id="loginBtn"><span class="spinner"></span><span class="btn-text">Giriş Yap</span></button>
         <div class="switch">Hesabınız yok mu? <span data-switch="register">Kayıt Olun</span></div>
     </form>
 
-    <!-- KAYIT -->
     <form class="login-card" id="registerBox" style="display:none;" novalidate>
         <div class="logo"><h1>Kayıt Ol</h1><p>Sisteme katılmak için formu doldurun</p></div>
         <div class="alert alert-success" id="regOk" role="status" aria-live="polite"></div>
         <div class="alert alert-error" id="regErr" role="alert" aria-live="polite"></div>
         <div class="form-group">
             <label for="ru">KULLANICI ADI</label>
-            <input type="text" id="ru" name="username" placeholder="En az 3 karakter"
-                   autocomplete="username" minlength="3" maxlength="32" required>
+            <input type="text" id="ru" placeholder="En az 3 karakter" autocomplete="username" minlength="3" maxlength="32" required>
             <div class="hint">Harf, rakam ve alt çizgi kullanabilirsiniz.</div>
         </div>
         <div class="form-group">
             <label for="rp">ŞİFRE</label>
             <div class="input-wrap">
-                <input type="password" id="rp" name="password" placeholder="En az 6 karakter"
-                       autocomplete="new-password" minlength="6" required>
+                <input type="password" id="rp" placeholder="En az 6 karakter" autocomplete="new-password" minlength="6" required>
                 <button type="button" class="toggle-pw" data-target="rp" aria-label="Şifreyi göster">👁️</button>
             </div>
         </div>
-        <button type="submit" class="btn" id="registerBtn">
-            <span class="spinner"></span><span class="btn-text">Hesap Oluştur</span>
-        </button>
+        <button type="submit" class="btn" id="registerBtn"><span class="spinner"></span><span class="btn-text">Hesap Oluştur</span></button>
         <div class="switch">Zaten üye misiniz? <span data-switch="login">Giriş Yapın</span></div>
     </form>
 
     <script>
         const $ = id => document.getElementById(id);
+        const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+        const HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
 
-        function showAlert(el, msg) {
-            el.textContent = msg;
-            el.classList.add('show');
-        }
-        function hideAlert(el) {
-            el.textContent = '';
-            el.classList.remove('show');
-        }
-        function clearAlerts() {
-            ['loginErr','regErr','regOk'].forEach(id => hideAlert($(id)));
-        }
-
+        function showAlert(el, msg) { el.textContent = msg; el.classList.add('show'); }
+        function hideAlert(el) { el.textContent = ''; el.classList.remove('show'); }
+        function clearAlerts() { ['loginErr','regErr','regOk'].forEach(id => hideAlert($(id))); }
         function setLoading(btn, loading, text) {
             btn.disabled = loading;
             btn.classList.toggle('loading', loading);
@@ -146,103 +95,70 @@
             clearAlerts();
             const login = $('loginBox'), reg = $('registerBox');
             if (which === 'register') {
-                login.style.display = 'none';
-                reg.style.display = 'block';
+                login.style.display = 'none'; reg.style.display = 'block';
                 history.replaceState(null, '', '#register');
                 setTimeout(() => $('ru').focus(), 50);
             } else {
-                reg.style.display = 'none';
-                login.style.display = 'block';
+                reg.style.display = 'none'; login.style.display = 'block';
                 history.replaceState(null, '', '#login');
                 setTimeout(() => $('u').focus(), 50);
             }
         }
-        document.querySelectorAll('[data-switch]').forEach(el => {
-            el.addEventListener('click', () => switchTab(el.dataset.switch));
-        });
-        // URL hash → açılışta doğru sekme
+        document.querySelectorAll('[data-switch]').forEach(el =>
+            el.addEventListener('click', () => switchTab(el.dataset.switch)));
         if (location.hash === '#register') switchTab('register');
 
-        // Şifre göster/gizle
         document.querySelectorAll('.toggle-pw').forEach(btn => {
             btn.addEventListener('click', () => {
                 const inp = $(btn.dataset.target);
                 const show = inp.type === 'password';
                 inp.type = show ? 'text' : 'password';
                 btn.textContent = show ? '🙈' : '👁️';
-                btn.setAttribute('aria-label', show ? 'Şifreyi gizle' : 'Şifreyi göster');
             });
         });
 
-        function validate(username, password) {
-            if (!username || !password) return 'Kullanıcı adı ve şifre zorunludur.';
-            if (username.length < 3) return 'Kullanıcı adı en az 3 karakter olmalı.';
-            if (username.length > 32) return 'Kullanıcı adı en fazla 32 karakter olabilir.';
-            if (!/^[a-zA-Z0-9_]+$/.test(username)) return 'Kullanıcı adı sadece harf, rakam ve _ içerebilir.';
-            if (password.length < 6) return 'Şifre en az 6 karakter olmalı.';
-            if (password.length > 128) return 'Şifre çok uzun.';
+        function validate(u, p) {
+            if (!u || !p) return 'Kullanıcı adı ve şifre zorunludur.';
+            if (u.length < 3) return 'Kullanıcı adı en az 3 karakter olmalı.';
+            if (u.length > 32) return 'Kullanıcı adı en fazla 32 karakter olabilir.';
+            if (!/^[a-zA-Z0-9_]+$/.test(u)) return 'Kullanıcı adı sadece harf, rakam ve _ içerebilir.';
+            if (p.length < 6) return 'Şifre en az 6 karakter olmalı.';
+            if (p.length > 128) return 'Şifre çok uzun.';
             return null;
         }
-
         async function postJSON(url, data) {
             const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: HEADERS,
                 credentials: 'same-origin',
                 body: JSON.stringify(data)
             });
-            if (!res.ok) throw new Error('Sunucu hatası (' + res.status + ')');
             return res.json();
         }
 
-        // === GİRİŞ ===
         $('loginBox').addEventListener('submit', async (e) => {
             e.preventDefault();
             clearAlerts();
-            const u = $('u').value.trim();
-            const p = $('p').value;
-            $('u').setAttribute('aria-invalid', 'false');
-            $('p').setAttribute('aria-invalid', 'false');
-
+            const u = $('u').value.trim(), p = $('p').value;
             const err = validate(u, p);
-            if (err) {
-                if (u.length < 3) $('u').setAttribute('aria-invalid', 'true');
-                if (p.length < 6) $('p').setAttribute('aria-invalid', 'true');
-                return showAlert($('loginErr'), err);
-            }
-
+            if (err) return showAlert($('loginErr'), err);
             const btn = $('loginBtn');
             setLoading(btn, true, 'Giriş yapılıyor…');
             try {
                 const res = await postJSON('/api/login', { username: u, password: p });
-                if (res.success) {
-                    window.location.href = '/';
-                } else {
-                    showAlert($('loginErr'), res.error || 'Giriş başarısız.');
-                    setLoading(btn, false, 'Giriş Yap');
-                }
+                if (res.success) window.location.href = '/';
+                else { showAlert($('loginErr'), res.error || 'Giriş başarısız.'); setLoading(btn, false, 'Giriş Yap'); }
             } catch (ex) {
-                showAlert($('loginErr'), 'Bağlantı hatası. Lütfen tekrar deneyin.');
+                showAlert($('loginErr'), 'Bağlantı hatası.');
                 setLoading(btn, false, 'Giriş Yap');
             }
         });
 
-        // === KAYIT ===
         $('registerBox').addEventListener('submit', async (e) => {
             e.preventDefault();
             clearAlerts();
-            const u = $('ru').value.trim();
-            const p = $('rp').value;
-            $('ru').setAttribute('aria-invalid', 'false');
-            $('rp').setAttribute('aria-invalid', 'false');
-
+            const u = $('ru').value.trim(), p = $('rp').value;
             const err = validate(u, p);
-            if (err) {
-                if (u.length < 3 || !/^[a-zA-Z0-9_]+$/.test(u)) $('ru').setAttribute('aria-invalid', 'true');
-                if (p.length < 6) $('rp').setAttribute('aria-invalid', 'true');
-                return showAlert($('regErr'), err);
-            }
-
+            if (err) return showAlert($('regErr'), err);
             const btn = $('registerBtn');
             setLoading(btn, true, 'Kayıt yapılıyor…');
             try {
@@ -252,14 +168,11 @@
                     setTimeout(() => {
                         $('ru').value = ''; $('rp').value = '';
                         switchTab('login');
-                        $('u').value = u;
-                        $('p').focus();
+                        $('u').value = u; $('p').focus();
                     }, 900);
-                } else {
-                    showAlert($('regErr'), res.error || 'Kayıt başarısız.');
-                }
+                } else showAlert($('regErr'), res.error || 'Kayıt başarısız.');
             } catch (ex) {
-                showAlert($('regErr'), 'Bağlantı hatası. Lütfen tekrar deneyin.');
+                showAlert($('regErr'), 'Bağlantı hatası.');
             } finally {
                 setLoading(btn, false, 'Hesap Oluştur');
             }
