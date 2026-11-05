@@ -8,10 +8,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --sidebar-bg: #0f172a; --sidebar-text: #94a3b8; --bg: #f8fafc; --card-bg: #ffffff; --text: #1e293b; --primary: #2563eb; --border: #e2e8f0; --success: #10b981; --danger: #ef4444; }
+        :root { --sidebar-bg: #0f172a; --sidebar-text: #94a3b8; --bg: #f8fafc; --card-bg: #ffffff; --text: #1e293b; --primary: #2563eb; --border: #e2e8f0; --success: #10b981; --danger: #ef4444; --telegram: #229ED9; }
         [data-theme="dark"] { --sidebar-bg: #020617; --sidebar-text: #94a3b8; --bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc; --border: #334155; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; transition: background-color .3s, border-color .3s; }
         body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
+        
+        /* SIDEBAR */
         .sidebar { width: 280px; background: var(--sidebar-bg); color: white; position: fixed; height: 100vh; left: -280px; top: 0; transition: transform .3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; display: flex; flex-direction: column; overflow-y: auto; border-right: 1px solid rgba(255,255,255,.05); }
         .sidebar.open { left: 0; }
         .logo-area { padding: 24px 22px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.05); }
@@ -27,6 +29,8 @@
         .nav-item:hover, .nav-item.active { background: rgba(59,130,246,.12); color: #93c5fd; }
         .nav-item .icon { width: 22px; font-size: 15px; margin-right: 10px; text-align: center; }
         .nav-item .badge-new { background: #10b981; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-left: auto; }
+        
+        /* MAIN */
         .main { flex: 1; padding: 20px; width: 100%; transition: margin-left .3s; }
         .topbar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 14px 22px; border-radius: 14px; margin-bottom: 22px; box-shadow: 0 1px 3px rgba(0,0,0,.04); border: 1px solid var(--border); gap: 12px; }
         .menu-btn { font-size: 22px; cursor: pointer; color: var(--text); background: none; border: none; padding: 6px; }
@@ -35,15 +39,24 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         .view { display: none; animation: fadeIn .3s ease; } .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-        .promo-banner { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1d4ed8 100%); border-radius: 16px; padding: 30px; color: white; margin-bottom: 22px; box-shadow: 0 10px 25px rgba(29,78,216,.3); }
+        
+        /* DASHBOARD */
+        .promo-banner { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1d4ed8 100%); border-radius: 16px; padding: 30px; color: white; margin-bottom: 22px; box-shadow: 0 10px 25px rgba(29,78,216,.3); position: relative; overflow: hidden; }
         .promo-banner h2 { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .tg-buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        .tg-btn { background: var(--telegram); color: white; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-size: 13.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: .2s; box-shadow: 0 4px 10px rgba(34,158,217,.3); border: none; cursor: pointer; }
+        .tg-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(34,158,217,.4); }
+        
         .stats-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 22px; }
         .stat-card { background: var(--card-bg); padding: 24px; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.04); border: 1px solid var(--border); position: relative; }
         .stat-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 14px 0 0 14px; background: var(--primary); }
         .stat-card.green::before { background: var(--success); } .stat-card.orange::before { background: #f59e0b; }
         .stat-card h4 { font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; }
         .stat-card .value { font-size: 36px; font-weight: 800; color: var(--text); margin-top: 10px; line-height: 1.2; }
+        
         @media (min-width: 992px) { .sidebar { left: 0; } .main { margin-left: 280px; width: calc(100% - 280px); } .menu-btn { display: none; } .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+        
+        /* PANEL & QUERY */
         .panel { background: var(--card-bg); border-radius: 16px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,.05); border: 1px solid var(--border); margin-bottom: 22px; max-width: 800px; margin-left: auto; margin-right: auto; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 18px; margin-bottom: 25px; }
         .panel-header h2 { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
@@ -74,9 +87,14 @@
         .profile-card img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--card-bg); box-shadow: 0 4px 10px rgba(0,0,0,.1); background: #fff; }
         .profile-card h3 { font-size: 22px; font-weight: 800; }
         
-        /* Yardımcı Asistan */
-        .assistant-btn { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 10px 25px rgba(37,99,235,.4); z-index: 2500; transition: transform .2s; }
-        .assistant-btn:hover { transform: scale(1.1); }
+        /* YÜZEN BUTONLAR (ASİSTAN VE TELEGRAM) */
+        .float-container { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 15px; z-index: 2500; }
+        
+        .assistant-btn, .telegram-btn { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer; color: #fff; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: transform .2s; text-decoration: none; }
+        .assistant-btn { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+        .telegram-btn { background: var(--telegram); box-shadow: 0 10px 25px rgba(34,158,217,.4); }
+        .assistant-btn:hover, .telegram-btn:hover { transform: scale(1.1); }
+        
         .assistant-window { position: fixed; bottom: 100px; right: 25px; width: 320px; background: var(--card-bg); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,.2); border: 1px solid var(--border); z-index: 2500; display: none; flex-direction: column; overflow: hidden; animation: slideUp .3s ease; }
         .assistant-window.show { display: flex; }
         .assistant-header { background: var(--primary); color: #fff; padding: 15px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
@@ -90,8 +108,15 @@
     <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
     <div class="toast-wrap" id="toastWrap"></div>
     
-    <!-- YARDIMCI ASİSTAN -->
-    <div class="assistant-btn" onclick="toggleAssistant()"><i class="fa-solid fa-robot"></i></div>
+    <!-- YÜZEN BUTONLAR -->
+    <div class="float-container">
+        <!-- Telegram Yüzen Buton -->
+        <a href="https://t.me/genelmerkezkanal" target="_blank" class="telegram-btn" title="Telegram Kanalımız"><i class="fa-brands fa-telegram"></i></a>
+        <!-- Asistan Butonu -->
+        <div class="assistant-btn" onclick="toggleAssistant()"><i class="fa-solid fa-robot"></i></div>
+    </div>
+
+    <!-- YARDIMCI ASİSTAN PENCERESİ -->
     <div class="assistant-window" id="assistantWindow">
         <div class="assistant-header">
             <span><i class="fa-solid fa-headset"></i> Canlı Asistan</span>
@@ -106,6 +131,7 @@
         </div>
     </div>
 
+    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="logo-area"><div class="logo-icon-wrap"><i class="fa-solid fa-shield-halved"></i></div><h2>SHOP<span>SPHERE</span></h2></div>
         <div class="user-profile">
@@ -115,6 +141,7 @@
         <div class="nav-section">
             <div class="nav-item active" data-view="dashboard" onclick="showView('dashboard', this)"><div class="icon"><i class="fa-solid fa-house"></i></div> Ana Sayfa</div>
             <div class="nav-item" data-view="profile" onclick="showView('profile', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Profilim</div>
+            
             <div class="nav-title">SORGU ÇÖZÜMLERİ</div>
             <div class="nav-item" onclick="loadTool('adsoyad', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Mernis 2026</div>
             <div class="nav-item" onclick="loadTool('adsoyad_proxy', this)"><div class="icon"><i class="fa-solid fa-user-shield"></i></div> Mernis Proxy <span class="badge-new">YENİ</span></div>
@@ -122,29 +149,57 @@
             <div class="nav-item" onclick="loadTool('tcgsm', this)"><div class="icon"><i class="fa-solid fa-phone"></i></div> GSM Çözümleri</div>
             <div class="nav-item" onclick="loadTool('gsmtc', this)"><div class="icon"><i class="fa-solid fa-phone-flip"></i></div> GSM → TC</div>
             <div class="nav-item" onclick="loadTool('adres', this)"><div class="icon"><i class="fa-solid fa-location-dot"></i></div> Adres Çözümleri</div>
+            
             <div class="nav-title">OSINT ARAÇLARI</div>
             <div class="nav-item" onclick="loadTool('osint_ip', this)"><div class="icon"><i class="fa-solid fa-network-wired"></i></div> IP Sorgu</div>
             <div class="nav-item" onclick="loadTool('osint_domain', this)"><div class="icon"><i class="fa-solid fa-globe"></i></div> Domain Sorgu</div>
             <div class="nav-item" onclick="loadTool('osint_hash', this)"><div class="icon"><i class="fa-solid fa-hashtag"></i></div> Hash Üret</div>
             <div class="nav-item" onclick="loadTool('social_tiktok', this)"><div class="icon"><i class="fa-brands fa-tiktok"></i></div> Sosyal Medya (TikTok/IG) <span class="badge-new">YENİ</span></div>
+            
             <div class="nav-title">DESTEK</div>
-            <div class="nav-item" onclick="logout()" style="color:#ef4444; margin-top:10px;"><div class="icon"><i class="fa-solid fa-right-from-bracket"></i></div> Çıkış Yap</div>
+            <!-- TELEGRAM MENÜ BUTONLARI -->
+            <div class="nav-item" onclick="window.open('https://t.me/genelmerkezkanal', '_blank')">
+                <div class="icon"><i class="fa-brands fa-telegram" style="color:var(--telegram);"></i></div> Genel Merkez Kanalı
+            </div>
+            <div class="nav-item" onclick="window.open('https://t.me/markettchats', '_blank')">
+                <div class="icon"><i class="fa-brands fa-telegram" style="color:var(--telegram);"></i></div> Market Chat
+            </div>
+            
+            <div class="nav-item" onclick="logout()" style="color:#ef4444; margin-top:15px;"><div class="icon"><i class="fa-solid fa-right-from-bracket"></i></div> Çıkış Yap</div>
         </div>
     </aside>
+
+    <!-- MAIN -->
     <main class="main">
         <header class="topbar">
             <button class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
             <div class="broadcast" id="broadcast"><span class="dot"></span> Duyurular yükleniyor...</div>
             <button class="theme-toggle" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="themeIcon"></i></button>
         </header>
+        
         <div id="view-dashboard" class="view active">
-            <div class="promo-banner"><h2><i class="fa-solid fa-bolt"></i> Hoş Geldiniz!</h2><p style="margin-top:6px; font-size:14px; color:#cbd5e1;">Sorgu çözümleri ve OSINT araçlarımız aktif olarak hizmetinizde.</p></div>
+            <div class="promo-banner">
+                <h2><i class="fa-solid fa-bolt"></i> Hoş Geldiniz!</h2>
+                <p style="margin-top:6px; font-size:14px; color:#cbd5e1;">Sorgu çözümleri ve OSINT araçlarımız aktif olarak hizmetinizde.</p>
+                
+                <!-- DASHBOARD TELEGRAM BUTONLARI -->
+                <div class="tg-buttons">
+                    <a href="https://t.me/genelmerkezkanal" target="_blank" class="tg-btn">
+                        <i class="fa-brands fa-telegram"></i> Genel Merkez Kanalı
+                    </a>
+                    <a href="https://t.me/markettchats" target="_blank" class="tg-btn">
+                        <i class="fa-brands fa-telegram"></i> Market Chat
+                    </a>
+                </div>
+            </div>
+            
             <div class="stats-grid">
                 <div class="stat-card"><h4>Toplam Kullanıcı</h4><div class="value counter" data-target="{{ total_users }}">0</div></div>
                 <div class="stat-card green"><h4>Toplam Sorgu</h4><div class="value counter" data-target="{{ total_queries }}">0</div></div>
                 <div class="stat-card orange"><h4>Sizin Sorgularınız</h4><div class="value counter" data-target="{{ user_queries }}">0</div></div>
             </div>
         </div>
+        
         <div id="view-query" class="view">
             <div class="panel">
                 <div class="panel-header">
@@ -159,6 +214,7 @@
                 <div id="qResults"></div>
             </div>
         </div>
+        
         <div id="view-profile" class="view">
             <div class="panel">
                 <div class="panel-header">
@@ -180,6 +236,7 @@
             </div>
         </div>
     </main>
+
     <script>
         function toggleAssistant() { document.getElementById('assistantWindow').classList.toggle('show'); }
         function sendAssistantMsg() {
@@ -196,8 +253,7 @@
                 if(m.includes('merhaba') || m.includes('selam')) reply = "Merhaba! Hoş geldiniz. Size nasıl yardımcı olabilirim?";
                 else if(m.includes('şifre')) reply = "Şifrenizi sağdaki 'Profilim' sekmesinden değiştirebilirsiniz.";
                 else if(m.includes('sorgu') || m.includes('arama')) reply = "Sol menüden istediğiniz sorgu aracını seçip, ilgili bilgileri girerek arama yapabilirsiniz.";
-                else if(m.includes('admin')) reply = "Admin paneline sadece yetkili kişiler erişebilir. Şifreniz yoksa sistem yöneticinizle iletişime geçin.";
-                else if(m.includes('fiyat') || m.includes('bakiye')) reply = "Şu an tüm sorgular ücretsizdir. İlerleyen dönemde premium üyelik gelebilir.";
+                else if(m.includes('telegram') || m.includes('iletişim')) reply = "Sol menüdeki veya sağ alttaki Telegram butonlarına tıklayarak kanallarımıza katılabilirsiniz.";
                 
                 body.innerHTML += `<div class="msg bot">${reply}</div>`;
                 body.scrollTop = body.scrollHeight;
@@ -214,7 +270,9 @@
         function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
         function toast(msg, type = 'info') { const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' }; const el = document.createElement('div'); el.className = `toast ${type}`; el.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span>${escapeHtml(msg)}</span>`; $('toastWrap').appendChild(el); setTimeout(() => el.remove(), 3600); }
         function setLoading(btn, loading, html) { btn.disabled = loading; btn.innerHTML = html; }
+        
         document.querySelectorAll('.counter').forEach(el => { const target = parseInt(el.dataset.target || '0', 10); if (target === 0) { el.textContent = '0'; return; } let start = 0; const timer = setInterval(() => { start += Math.ceil(target / 50); if (start >= target) { el.textContent = target.toLocaleString('tr-TR'); clearInterval(timer); } else { el.textContent = start.toLocaleString('tr-TR'); } }, 20); });
+        
         const TOOLS = {
             'adsoyad': { title: 'Mernis 2026', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
             'adsoyad_proxy': { title: 'Mernis Proxy', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }, { id:'il', label:'İl (opsiyonel)', req:false }] },
@@ -227,17 +285,20 @@
             'osint_hash': { title:'Hash Üret', fields:[{ id:'text', label:'Metin' }] },
             'social_tiktok': { title:'Sosyal Medya Sorgu (TikTok/IG)', fields:[{ id:'text', label:'Kullanıcı Adı / Telefon / E-posta' }] }
         };
+        
         let currentType = null, lastResult = null;
         async function refreshBroadcast() { try { const b = await fetch('/api/get_broadcast').then(r => r.json()); if (b.success && b.broadcast) $('broadcast').innerHTML = '<span class="dot"></span> ' + escapeHtml(b.broadcast); } catch (_) {} }
         refreshBroadcast(); setInterval(refreshBroadcast, 15000);
         function toggleMenu() { $('sidebar').classList.toggle('open'); $('overlay').classList.toggle('show'); }
         function showView(view, el) { if (el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); } document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); $('view-' + view).classList.add('active'); if (window.innerWidth < 992) toggleMenu(); }
         function loadTool(type, el) { const tool = TOOLS[type]; if (!tool) return; currentType = type; lastResult = null; showView('query', el); $('qTitle').innerText = tool.title; $('qResults').innerHTML = ''; $('resultToolbar').innerHTML = ''; let html = ''; tool.fields.forEach(f => { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" placeholder="${f.label} girin..."></div>`; }); $('qInputs').innerHTML = html; }
+        
         let isQuerying = false;
         async function runQuery() { if (!currentType || isQuerying) return; const payload = { type: currentType }; let valid = true; TOOLS[currentType].fields.forEach(f => { const inp = $('inp_' + f.id); const val = inp.value.trim(); inp.classList.remove('invalid'); if (f.req !== false && !val) { inp.classList.add('invalid'); valid = false; } else if (val && f.pattern && !f.pattern.test(val)) { inp.classList.add('invalid'); valid = false; } if (val) payload[f.id] = val; }); if (!valid) return toast('Lütfen alanları doğru doldurun.', 'error'); isQuerying = true; const btn = $('submitBtn'); setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Sorgulanıyor...'); $('qResults').innerHTML = '<div class="spinner-lg"></div>'; $('resultToolbar').innerHTML = ''; try { const res = await fetch('/api/sorgu', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload) }).then(r => r.json()); if (!res.success) { $('qResults').innerHTML = `<div class="empty-state error"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(res.error)}</div>`; } else { lastResult = res.data; renderData(res.data); } } catch (e) { $('qResults').innerHTML = `<div class="empty-state error">Sunucu hatası veya bağlantı koptu.</div>`; } finally { isQuerying = false; setLoading(btn, false, '<i class="fa-solid fa-bolt"></i> Sorgula'); } }
         function flatten(obj, prefix = '') { const out = []; for (const [k, v] of Object.entries(obj)) { const key = prefix ? `${prefix}.${k}` : k; if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flatten(v, key)); else if (Array.isArray(v)) out.push([key, v.map(x => typeof x === 'object' ? JSON.stringify(x) : x).join(', ')]); else out.push([key, v]); } return out; }
         function renderData(data) { const items = Array.isArray(data) ? data : [data]; $('resultToolbar').innerHTML = `<button class="btn-submit" style="width:auto; padding:10px 16px; font-size:13px; margin-top:0;" onclick="copyResult()"><i class="fa-solid fa-copy"></i> Sonuçları Kopyala</button>`; let html = ''; items.forEach((item, idx) => { const rows = flatten(item).filter(([, v]) => v !== null && v !== undefined && v !== '' && String(v).toUpperCase() !== 'YOK' && String(v).toUpperCase() !== 'NULL'); if (rows.length === 0) { html += `<div class="empty-state">Sonuç boş.</div>`; return; } html += `<table class="data-table"><tbody>`; for (const [key, val] of rows) html += `<tr><th>${escapeHtml(String(key).toUpperCase())}</th><td>${escapeHtml(String(val))}</td></tr>`; html += `</tbody></table>`; }); $('qResults').innerHTML = html; }
         function copyResult() { if (lastResult) navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(() => toast('Sonuçlar kopyalandı!', 'success')); }
+        
         async function changePass() { const oldP = $('old_pass').value, newP = $('new_pass').value; if (!oldP || newP.length < 6) return toast('Şifre en az 6 karakter olmalı', 'error'); const btn = $('changePassBtn'); setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Güncelleniyor...'); try { const r = await fetch('/api/change_password', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ old: oldP, new: newP }) }).then(x => x.json()); if (r.success) { toast('Şifre güncellendi', 'success'); $('old_pass').value = ''; $('new_pass').value = ''; } else toast(r.error, 'error'); } catch (_) { toast('Bağlantı hatası', 'error'); } finally { setLoading(btn, false, '<i class="fa-solid fa-floppy-disk"></i> Şifreyi Güncelle'); } }
         async function logout() { try { await fetch('/api/logout', { method: 'POST', headers: JSON_HEADERS }); } catch (_) {} window.location.href = '/login'; }
     </script>
