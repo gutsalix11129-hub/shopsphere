@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --sidebar-bg: #0f172a; --sidebar-text: #94a3b8; --bg: #f8fafc; --card-bg: #ffffff; --text: #1e293b; --primary: #2563eb; --border: #e2e8f0; --success: #10b981; --danger: #ef4444; --telegram: #229ED9; }
+        :root { --sidebar-bg: #0f172a; --sidebar-text: #94a3b8; --bg: #f8fafc; --card-bg: #ffffff; --text: #1e293b; --primary: #2563eb; --border: #e2e8f0; --success: #10b981; --danger: #ef4444; --telegram: #229ED9; --gold: #fbbf24; }
         [data-theme="dark"] { --sidebar-bg: #020617; --sidebar-text: #94a3b8; --bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc; --border: #334155; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; transition: background-color .3s, border-color .3s; }
         body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
@@ -19,14 +19,17 @@
         .logo-area h2 { font-size: 20px; font-weight: 800; color: #fff; } .logo-area h2 span { color: #3b82f6; }
         .user-profile { padding: 18px; margin: 15px; background: rgba(255,255,255,.03); border-radius: 12px; display: flex; align-items: center; gap: 14px; border: 1px solid rgba(255,255,255,.05); }
         .avatar { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #3b82f6; background: #fff; object-fit: cover; }
-        .user-info h3 { font-size: 14px; font-weight: 600; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-info h3 { font-size: 14px; font-weight: 600; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; }
         .user-info p { font-size: 11px; color: #3b82f6; background: rgba(59,130,246,.15); padding: 2px 8px; border-radius: 20px; display: inline-block; margin-top: 3px; }
+        .vip-badge { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; }
+        
         .nav-section { padding: 8px 14px 30px; }
         .nav-title { font-size: 10.5px; font-weight: 700; color: #475569; text-transform: uppercase; margin: 18px 0 8px 12px; }
         .nav-item { display: flex; align-items: center; padding: 11px 14px; border-radius: 9px; color: var(--sidebar-text); font-size: 13.5px; font-weight: 500; cursor: pointer; transition: .2s; margin-bottom: 2px; }
         .nav-item:hover, .nav-item.active { background: rgba(59,130,246,.12); color: #93c5fd; }
         .nav-item .icon { width: 22px; font-size: 15px; margin-right: 10px; text-align: center; }
         .nav-item .badge-new { background: #10b981; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-left: auto; }
+        
         .main { flex: 1; padding: 20px; width: 100%; transition: margin-left .3s; }
         .topbar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 14px 22px; border-radius: 14px; margin-bottom: 22px; box-shadow: 0 1px 3px rgba(0,0,0,.04); border: 1px solid var(--border); gap: 12px; }
         .menu-btn { font-size: 22px; cursor: pointer; color: var(--text); background: none; border: none; padding: 6px; }
@@ -88,6 +91,19 @@
         .profile-card .cam-btn { position: absolute; bottom: 0; right: 0; background: var(--primary); color: #fff; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,.3); transition: .2s; }
         .profile-card .cam-btn:hover { transform: scale(1.1); }
         
+        /* VIP FİYATLANDIRMA */
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+        .price-card { background: var(--bg); border: 2px solid var(--border); border-radius: 16px; padding: 30px 20px; text-align: center; position: relative; transition: .3s; }
+        .price-card:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 10px 30px rgba(37,99,235,.15); }
+        .price-card.popular { border-color: var(--gold); }
+        .price-card.popular::before { content: 'EN ÇOK TERCİH EDİLEN'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #000; font-size: 10px; font-weight: 800; padding: 4px 12px; border-radius: 20px; }
+        .price-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+        .price-card .price { font-size: 36px; font-weight: 800; color: var(--primary); margin-bottom: 20px; }
+        .price-card .price span { font-size: 14px; color: #64748b; font-weight: 500; }
+        .price-card ul { list-style: none; margin-bottom: 25px; text-align: left; }
+        .price-card ul li { font-size: 13px; color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .price-card ul li i { color: var(--success); }
+        
         /* YÜZEN BUTONLAR */
         .float-container { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 15px; z-index: 2500; }
         .assistant-btn, .telegram-btn { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer; color: #fff; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: transform .2s; text-decoration: none; }
@@ -126,15 +142,24 @@
         <div class="logo-area"><div class="logo-icon-wrap"><i class="fa-solid fa-shield-halved"></i></div><h2>SHOP<span>SPHERE</span></h2></div>
         <div class="user-profile">
             <img src="{{ avatar }}" id="sidebarAvatar" class="avatar" alt="Profil">
-            <div class="user-info"><h3>{{ username }}</h3><p>Ücretsiz Üye</p></div>
+            <div class="user-info">
+                <h3>{{ username }} {% if is_vip %}<span class="vip-badge">VIP</span>{% endif %}</h3>
+                <p>{% if is_vip %}Sınırsız Üyelik{% else %}Ücretsiz Üye{% endif %}</p>
+            </div>
         </div>
         <div class="nav-section">
             <div class="nav-item active" data-view="dashboard" onclick="showView('dashboard', this)"><div class="icon"><i class="fa-solid fa-house"></i></div> Ana Sayfa</div>
             <div class="nav-item" data-view="profile" onclick="showView('profile', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Profilim</div>
             
-            <div class="nav-title">SORGU ÇÖZÜMLERİ</div>
+            {% if not is_vip %}
+            <div class="nav-item" data-view="vip" onclick="showView('vip', this)" style="background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); margin-top: 10px;">
+                <div class="icon"><i class="fa-solid fa-crown" style="color:var(--gold);"></i></div> 
+                <b style="color:var(--gold);">VIP Paketleri</b>
+            </div>
+            {% endif %}
+            
+            <div class="nav-title">TEMEL SORGULAR</div>
             <div class="nav-item" onclick="loadTool('adsoyad', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Mernis 2026</div>
-            <div class="nav-item" onclick="loadTool('adsoyad_proxy', this)"><div class="icon"><i class="fa-solid fa-user-shield"></i></div> Mernis Proxy</div>
             <div class="nav-item" onclick="loadTool('aile', this)"><div class="icon"><i class="fa-solid fa-users"></i></div> Aile Çözümleri</div>
             <div class="nav-item" onclick="loadTool('tcgsm', this)"><div class="icon"><i class="fa-solid fa-phone"></i></div> GSM Çözümleri</div>
             <div class="nav-item" onclick="loadTool('gsmtc', this)"><div class="icon"><i class="fa-solid fa-phone-flip"></i></div> GSM → TC</div>
@@ -144,29 +169,28 @@
             <div class="nav-item" onclick="loadTool('osint_ip', this)"><div class="icon"><i class="fa-solid fa-network-wired"></i></div> IP Sorgu</div>
             <div class="nav-item" onclick="loadTool('osint_domain', this)"><div class="icon"><i class="fa-solid fa-globe"></i></div> Domain Sorgu</div>
             <div class="nav-item" onclick="loadTool('osint_hash', this)"><div class="icon"><i class="fa-solid fa-hashtag"></i></div> Hash Üret</div>
-            <div class="nav-item" onclick="loadTool('social_tiktok', this)"><div class="icon"><i class="fa-brands fa-tiktok"></i></div> Sosyal Medya (TikTok/IG)</div>
             
-            <div class="nav-title" style="color:var(--danger);">YENİ NESİL SORGULAR (J-K)</div>
-            <div class="nav-item" onclick="loadTool('jk_tiktok', this)"><div class="icon"><i class="fa-brands fa-tiktok"></i></div> TikTok Sorgu</div>
+            <div class="nav-title" style="color:var(--danger);">J-K SORGULARI</div>
             <div class="nav-item" onclick="loadTool('jk_anne', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Anne Sorgu</div>
-            <div class="nav-item" onclick="loadTool('jk_annetaraf', this)"><div class="icon"><i class="fa-solid fa-users"></i></div> Anne Taraf Sorgu</div>
             <div class="nav-item" onclick="loadTool('jk_baba', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Baba Sorgu</div>
-            <div class="nav-item" onclick="loadTool('jk_babataraf', this)"><div class="icon"><i class="fa-solid fa-users"></i></div> Baba Taraf Sorgu</div>
             <div class="nav-item" onclick="loadTool('jk_burc', this)"><div class="icon"><i class="fa-solid fa-star"></i></div> Burç / Yaş</div>
             <div class="nav-item" onclick="loadTool('jk_dns', this)"><div class="icon"><i class="fa-solid fa-network-wired"></i></div> DNS Sorgu</div>
             <div class="nav-item" onclick="loadTool('jk_iban', this)"><div class="icon"><i class="fa-solid fa-building-columns"></i></div> İBAN Sorgu</div>
             <div class="nav-item" onclick="loadTool('jk_operator', this)"><div class="icon"><i class="fa-solid fa-tower-cell"></i></div> Operatör Sorgu</div>
-            <div class="nav-item" onclick="loadTool('jk_soyagaci', this)"><div class="icon"><i class="fa-solid fa-sitemap"></i></div> Soyağacı Sorgu</div>
-            <div class="nav-item" onclick="loadTool('jk_tc', this)"><div class="icon"><i class="fa-solid fa-id-card"></i></div> TC Sorgu (J-K)</div>
-            <div class="nav-item" onclick="loadTool('jk_aile_wa', this)"><div class="icon"><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i></div> Aile Sorgu (WA)</div>
             <div class="nav-item" onclick="loadTool('jk_aile', this)"><div class="icon"><i class="fa-solid fa-people-group"></i></div> Aile Sorgu (Std)</div>
-            <div class="nav-item" onclick="loadTool('jk_tcplus', this)"><div class="icon"><i class="fa-solid fa-circle-plus"></i></div> TC Plus (Karışık)</div>
-            <div class="nav-item" onclick="loadTool('jk_adsoyad', this)"><div class="icon"><i class="fa-solid fa-signature"></i></div> Düz Ad Soyad Sorgu</div>
-            <div class="nav-item" onclick="loadTool('dildo_tcpro', this)"><div class="icon"><i class="fa-solid fa-robot"></i></div> TC Pro (Dildo)</div>
+            <div class="nav-item" onclick="loadTool('jk_adsoyad', this)"><div class="icon"><i class="fa-solid fa-signature"></i></div> Düz Ad Soyad</div>
+            
+            <div class="nav-title" style="color:var(--gold);">VIP SORGULAR <i class="fa-solid fa-crown"></i></div>
+            <div class="nav-item" onclick="loadTool('jk_soyagaci', this)"><div class="icon"><i class="fa-solid fa-sitemap" style="color:var(--gold);"></i></div> Soyağacı Sorgu</div>
+            <div class="nav-item" onclick="loadTool('jk_tc', this)"><div class="icon"><i class="fa-solid fa-id-card" style="color:var(--gold);"></i></div> TC Sorgu (VIP)</div>
+            <div class="nav-item" onclick="loadTool('jk_aile_wa', this)"><div class="icon"><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i></div> Aile Sorgu (WA)</div>
+
+            <div class="nav-title" style="color:var(--primary);">E-OKUL PLAKA SORGULARI</div>
+            <div class="nav-item" onclick="loadTool('plaka_sorgu', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka Sorgu</div>
+            <div class="nav-item" onclick="loadTool('plaka_adsoyad', this)"><div class="icon"><i class="fa-solid fa-user-tag"></i></div> Plaka (Ad Soyad)</div>
 
             <div class="nav-title">HESABIM</div>
             <div class="nav-item" data-view="history" onclick="showView('history', this)"><div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div> Sorgu Geçmişim</div>
-            <div class="nav-item" data-view="bulk" onclick="showView('bulk', this)"><div class="icon"><i class="fa-solid fa-layer-group"></i></div> Toplu Sorgu <span class="badge-new" style="background:var(--primary);">PRO</span></div>
             <div class="nav-item" data-view="ticket" onclick="showView('ticket', this)"><div class="icon"><i class="fa-solid fa-headset"></i></div> Destek Talebi</div>
 
             <div class="nav-title">DESTEK</div>
@@ -185,8 +209,8 @@
         
         <div id="view-dashboard" class="view active">
             <div class="promo-banner">
-                <h2><i class="fa-solid fa-bolt"></i> Hoş Geldiniz!</h2>
-                <p style="margin-top:6px; font-size:14px; color:#cbd5e1;">Sorgu çözümleri ve OSINT araçlarımız aktif olarak hizmetinizde.</p>
+                <h2><i class="fa-solid fa-bolt"></i> Hoş Geldiniz, {{ username }}!</h2>
+                <p style="margin-top:6px; font-size:14px; color:#cbd5e1;">{% if is_vip %}VIP üyeliğiniz aktif. Tüm özel sorguları kullanabilirsiniz.{% else %}Standart üye olarak devam ediyorsunuz. VIP paketler ile sınırsız erişime geçin.{% endif %}</p>
                 <div class="tg-buttons">
                     <a href="https://t.me/genelmerkezkanal" target="_blank" class="tg-btn"><i class="fa-brands fa-telegram"></i> Genel Merkez Kanalı</a>
                     <a href="https://t.me/markettchats" target="_blank" class="tg-btn"><i class="fa-brands fa-telegram"></i> Market Chat</a>
@@ -198,7 +222,56 @@
                 <div class="stat-card orange"><h4>Sizin Sorgularınız</h4><div class="value counter" data-target="{{ user_queries }}">0</div></div>
             </div>
         </div>
-        
+
+        <!-- VIP FİYATLANDIRMA SAYFASI -->
+        <div id="view-vip" class="view">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-crown" style="color:var(--gold);"></i> VIP Paketler</h2>
+                    <button class="close-btn" onclick="showView('dashboard', document.querySelector('[data-view=\'dashboard\']'))"><i class="fa-solid fa-xmark"></i> Kapat</button>
+                </div>
+                <p style="text-align:center; color:#64748b; margin-bottom:20px;">VIP üyelik satın alarak tüm gelişmiş sorgulara ve özel ayrıcalıklara anında erişim sağlayın.</p>
+                
+                <div class="pricing-grid">
+                    <div class="price-card">
+                        <h3>1 Günlük VIP</h3>
+                        <div class="price">50 ₺ <span>/ gün</span></div>
+                        <ul>
+                            <li><i class="fa-solid fa-check"></i> Tüm VIP Sorgular</li>
+                            <li><i class="fa-solid fa-check"></i> Sınırsız Arama</li>
+                            <li><i class="fa-solid fa-check"></i> WhatsApp'lı Aile Sorgu</li>
+                        </ul>
+                        <a href="https://t.me/markettchats" target="_blank" class="btn-submit" style="text-decoration:none; font-size:14px; padding:12px;">Satın Al (Telegram)</a>
+                    </div>
+
+                    <div class="price-card popular">
+                        <h3>1 Haftalık VIP</h3>
+                        <div class="price">200 ₺ <span>/ hafta</span></div>
+                        <ul>
+                            <li><i class="fa-solid fa-check"></i> Tüm VIP Sorgular</li>
+                            <li><i class="fa-solid fa-check"></i> Sınırsız Arama</li>
+                            <li><i class="fa-solid fa-check"></i> Soyağacı & TC Sorgu</li>
+                            <li><i class="fa-solid fa-check"></i> Öncelikli Destek</li>
+                        </ul>
+                        <a href="https://t.me/markettchats" target="_blank" class="btn-submit" style="text-decoration:none; font-size:14px; padding:12px; background:linear-gradient(135deg, #fbbf24, #f59e0b); color:#000;">Satın Al (Telegram)</a>
+                    </div>
+
+                    <div class="price-card">
+                        <h3>Aylık VIP</h3>
+                        <div class="price">500 ₺ <span>/ ay</span></div>
+                        <ul>
+                            <li><i class="fa-solid fa-check"></i> Tüm VIP Sorgular</li>
+                            <li><i class="fa-solid fa-check"></i> Sınırsız Arama</li>
+                            <li><i class="fa-solid fa-check"></i> Plaka & E-Okul Sorguları</li>
+                            <li><i class="fa-solid fa-check"></i> 7/24 Öncelikli Destek</li>
+                        </ul>
+                        <a href="https://t.me/markettchats" target="_blank" class="btn-submit" style="text-decoration:none; font-size:14px; padding:12px;">Satın Al (Telegram)</a>
+                    </div>
+                </div>
+                <p style="text-align:center; font-size:13px; color:#94a3b8; margin-top:20px;"><i class="fa-solid fa-info-circle"></i> Ödemelerinizi Telegram üzerinden yapabilirsiniz. Ödeme sonrası yönetici hesabınızı VIP olarak güncelleyecektir.</p>
+            </div>
+        </div>
+
         <div id="view-query" class="view">
             <div class="panel">
                 <div class="panel-header">
@@ -211,33 +284,6 @@
                 </form>
                 <div class="result-toolbar" id="resultToolbar" style="display:flex; gap:8px; margin-top:15px; flex-wrap:wrap;"></div>
                 <div id="qResults"></div>
-            </div>
-        </div>
-
-        <div id="view-bulk" class="view">
-            <div class="panel">
-                <div class="panel-header">
-                    <h2><i class="fa-solid fa-layer-group" style="color:var(--primary);"></i> Toplu Sorgu (Max 20)</h2>
-                    <button class="close-btn" onclick="showView('dashboard', document.querySelector('[data-view=\'dashboard\']'))"><i class="fa-solid fa-xmark"></i> Kapat</button>
-                </div>
-                <div class="form-group">
-                    <label>Sorgu Tipi</label>
-                    <select id="bulkType">
-                        <option value="aile">Aile (TC)</option>
-                        <option value="adres">Adres (TC)</option>
-                        <option value="tcgsm">TC → GSM</option>
-                        <option value="gsmtc">GSM → TC</option>
-                        <option value="jk_anne">J-K Anne Sorgu</option>
-                        <option value="jk_baba">J-K Baba Sorgu</option>
-                        <option value="jk_aile">J-K Aile Sorgu</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Veriler (Her satıra bir veri)</label>
-                    <textarea id="bulkData" rows="6" placeholder="11111111110&#10;22222222220&#10;33333333330"></textarea>
-                </div>
-                <button class="btn-submit" onclick="runBulkQuery()" id="bulkBtn"><i class="fa-solid fa-rocket"></i> Toplu Sorguyu Başlat</button>
-                <div id="bulkResults" style="margin-top:20px;"></div>
             </div>
         </div>
 
@@ -260,7 +306,7 @@
                 <div style="display:flex; gap:20px; flex-wrap:wrap;">
                     <div style="flex:1; min-width:300px; background:var(--bg); padding:20px; border-radius:12px; border:1px solid var(--border);">
                         <h3 style="font-size:15px; margin-bottom:15px; color:var(--text);"><i class="fa-solid fa-plus-circle" style="color:var(--primary);"></i> Yeni Talep Oluştur</h3>
-                        <div class="form-group"><label>Konu</label><input type="text" id="ticketSubject" placeholder="Örn: API Çalışmıyor"></div>
+                        <div class="form-group"><label>Konu</label><input type="text" id="ticketSubject" placeholder="Örn: VIP Satın Alma"></div>
                         <div class="form-group"><label>Mesajınız</label><textarea id="ticketMessage" rows="4" placeholder="Detaylı açıklama yazın..."></textarea></div>
                         <button class="btn-submit" onclick="createTicket()" style="padding:12px; font-size:14px;"><i class="fa-solid fa-paper-plane"></i> Talebi Gönder</button>
                     </div>
@@ -285,9 +331,8 @@
                         <input type="file" id="profileFile" accept="image/*" style="display:none;">
                     </div>
                     <div>
-                        <h3>{{ username }}</h3>
+                        <h3>{{ username }} {% if is_vip %}<span class="vip-badge">VIP</span>{% endif %}</h3>
                         <p><i class="fa-regular fa-calendar"></i> Kayıt: {{ created }}</p>
-                        <div style="display:inline-flex; align-items:center; gap:5px; color:var(--success); font-size:12.5px; font-weight:600; padding:3px 10px; background:rgba(16,185,129,.1); border-radius:20px; margin-top:8px;"><i class="fa-solid fa-circle-check"></i> Standart Üyelik</div>
                     </div>
                 </div>
                 <h3 style="font-size:15px; font-weight:700; margin-bottom:14px;"><i class="fa-solid fa-key" style="color:var(--primary);"></i> Şifre Değiştir</h3>
@@ -299,21 +344,22 @@
     </main>
 
     <script>
+        const IS_VIP = {{ 'true' if is_vip else 'false' }};
+        
         function toggleAssistant() { document.getElementById('assistantWindow').classList.toggle('show'); }
         function sendAssistantMsg() {
             const inp = document.getElementById('assistantInput');
             const msg = inp.value.trim(); if(!msg) return;
             const body = document.getElementById('assistantBody');
-            
             body.innerHTML += `<div class="msg user">${msg}</div>`;
             inp.value = ''; body.scrollTop = body.scrollHeight;
-            
             setTimeout(() => {
-                let reply = "Bu konuda size nasıl yardımcı olabilirim? Sorgular sekmesinden arama yapabilirsiniz.";
+                let reply = "Bu konuda size nasıl yardımcı olabilirim?";
                 let m = msg.toLowerCase();
-                if(m.includes('merhaba') || m.includes('selam')) reply = "Merhaba! Hoş geldiniz. Size nasıl yardımcı olabilirim?";
+                if(m.includes('merhaba') || m.includes('selam')) reply = "Merhaba! VIP sistemimiz hakkında bilgi almak ister misiniz?";
                 else if(m.includes('şifre')) reply = "Şifrenizi sağdaki 'Profilim' sekmesinden değiştirebilirsiniz.";
-                else if(m.includes('sorgu')) reply = "Sol menüden istediğiniz sorgu aracını seçip, ilgili bilgileri girerek arama yapabilirsiniz.";
+                else if(m.includes('vip') || m.includes('fiyat')) reply = "VIP paketlerimizi sol menüden inceleyebilirsiniz. Ödeme sonrası hesabınız anında VIP yapılır.";
+                else if(m.includes('plaka')) reply = "Plaka sorgulamak için sol menüdeki 'E-Okul Plaka Sorguları' bölümünü kullanabilirsiniz.";
                 body.innerHTML += `<div class="msg bot">${reply}</div>`;
                 body.scrollTop = body.scrollHeight;
             }, 600);
@@ -364,7 +410,6 @@
         
         const TOOLS = {
             'adsoyad': { title: 'Mernis 2026', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
-            'adsoyad_proxy': { title: 'Mernis Proxy', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }, { id:'il', label:'İl (opsiyonel)', req:false }] },
             'aile':  { title:'Aile Çözümleri', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
             'adres': { title:'Adres Çözümleri', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
             'tcgsm': { title:'GSM Çözümleri', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
@@ -372,25 +417,25 @@
             'osint_ip': { title:'IP Sorgu', fields:[{ id:'ip', label:'IP Adresi' }] },
             'osint_domain': { title:'Domain Sorgu', fields:[{ id:'domain', label:'Domain Adı' }] },
             'osint_hash': { title:'Hash Üret', fields:[{ id:'text', label:'Metin' }] },
-            'social_tiktok': { title:'Sosyal Medya Sorgu (TikTok/IG)', fields:[{ id:'text', label:'Kullanıcı Adı / Telefon / E-posta' }] },
             
-            // YENİ EKLENEN J-K.TV APİLERİ
-            'jk_tiktok': { title: 'TikTok Sorgu', fields: [{ id:'kadi', label:'Kullanıcı Adı' }] },
+            // ÜCRETSİZ J-K API'LERİ
             'jk_anne': { title: 'Anne Sorgu', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'jk_annetaraf': { title: 'Anne Taraf Sorgu', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
             'jk_baba': { title: 'Baba Sorgu', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'jk_babataraf': { title: 'Baba Taraf Sorgu', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
             'jk_burc': { title: 'Burç / Yaş / Doğum Günü', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
             'jk_dns': { title: 'DNS Sorgu', fields: [{ id:'tc', label:'Domain Adı (örn: allah.com)' }] },
             'jk_iban': { title: 'İBAN Sorgu', fields: [{ id:'tc', label:'IBAN (TR ile başlayan)' }] },
             'jk_operator': { title: 'Operatör Sorgu', fields: [{ id:'tc', label:'GSM Numarası', pattern:/^\d{10,11}$/ }] },
-            'jk_soyagaci': { title: 'Soyağacı Sorgu', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'jk_tc': { title: 'TC Sorgu (J-K)', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'jk_aile_wa': { title: 'Aile Sorgu (WhatsApp\'lı)', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
             'jk_aile': { title: 'Aile Sorgu (Standart)', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'jk_tcplus': { title: 'TC Plus (Karışık)', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
             'jk_adsoyad': { title: 'Düz Ad Soyad Sorgu', fields: [{ id:'adi', label:'Ad' }, { id:'soyadi', label:'Soyad' }] },
-            'dildo_tcpro': { title: 'TC Pro (Dildo)', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] }
+            
+            // VIP J-K API'LERİ
+            'jk_soyagaci': { title: 'Soyağacı Sorgu (VIP)', vip: true, fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'jk_tc': { title: 'TC Sorgu (VIP)', vip: true, fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'jk_aile_wa': { title: 'Aile Sorgu WhatsApp (VIP)', vip: true, fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+
+            // E-OKUL PLAKA API'LERİ
+            'plaka_sorgu': { title: 'Plaka Sorgu', fields: [{ id:'plaka', label:'Plaka (örn: 41HU096)' }] },
+            'plaka_adsoyad': { title: 'Plaka Ad Soyad Sorgu', fields: [{ id:'ad_soyad', label:'Ad Soyad' }] }
         };
         
         let currentType = null, lastResult = null;
@@ -406,7 +451,20 @@
             if (view === 'ticket') loadMyTickets();
         }
         
-        function loadTool(type, el) { const tool = TOOLS[type]; if (!tool) return; currentType = type; lastResult = null; showView('query', el); $('qTitle').innerText = tool.title; $('qResults').innerHTML = ''; $('resultToolbar').innerHTML = ''; let html = ''; tool.fields.forEach(f => { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" placeholder="${f.label} girin..."></div>`; }); $('qInputs').innerHTML = html; }
+        function loadTool(type, el) { 
+            const tool = TOOLS[type]; if (!tool) return; 
+            
+            // VIP KONTROLÜ
+            if (tool.vip && !IS_VIP) {
+                showView('vip', document.querySelector('[data-view="vip"]'));
+                toast('Bu sorgu VIP üyelere özeldir. Lütfen paket satın alın.', 'error');
+                return;
+            }
+
+            currentType = type; lastResult = null; showView('query', el); $('qTitle').innerText = tool.title; $('qResults').innerHTML = ''; $('resultToolbar').innerHTML = ''; 
+            let html = ''; tool.fields.forEach(f => { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" placeholder="${f.label} girin..."></div>`; }); 
+            $('qInputs').innerHTML = html; 
+        }
         
         let isQuerying = false;
         async function runQuery() { 
@@ -489,37 +547,6 @@
         }
         function copyResult() { if (lastResult) navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(() => toast('Sonuçlar kopyalandı!', 'success')); }
         
-        async function runBulkQuery() {
-            const type = $('bulkType').value;
-            const raw = $('bulkData').value.trim();
-            if (!raw) return toast('Lütfen veri girin.', 'error');
-            const items = raw.split('\n').map(s => s.trim()).filter(s => s);
-            if (items.length > 20) return toast('En fazla 20 sorgu yapabilirsiniz.', 'error');
-            
-            const btn = $('bulkBtn');
-            setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Sorgulanıyor...');
-            $('bulkResults').innerHTML = `<div class="spinner-lg"></div><p style="text-align:center; color:#64748b; font-size:13px;">API'yi yormamak için her sorgu arasında 0.8 sn bekleniyor...</p>`;
-            
-            try {
-                const res = await fetch('/api/bulk_sorgu', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ type: type, items: items }) }).then(r => r.json());
-                if (!res.success) { $('bulkResults').innerHTML = `<div class="empty-state error">${escapeHtml(res.error)}</div>`; }
-                else {
-                    let html = '<table class="data-table"><thead><tr><th>Sorgulanan Veri</th><th>Durum</th><th>Sonuç Detayı</th></tr></thead><tbody>';
-                    res.results.forEach(r => {
-                        if (r.success) {
-                            let details = flatten(r.data).map(([k,v]) => `<b>${k}:</b> ${v}`).join('<br>');
-                            html += `<tr><td>${r.query}</td><td><span class="badge badge-ok">BAŞARILI</span></td><td style="font-size:12px;">${details}</td></tr>`;
-                        } else {
-                            html += `<tr><td>${r.query}</td><td><span class="badge badge-bad">BAŞARISIZ</span></td><td>${r.error}</td></tr>`;
-                        }
-                    });
-                    html += '</tbody></table>';
-                    $('bulkResults').innerHTML = html;
-                }
-            } catch (_) { $('bulkResults').innerHTML = `<div class="empty-state error">Bağlantı hatası.</div>`; }
-            finally { setLoading(btn, false, '<i class="fa-solid fa-rocket"></i> Toplu Sorguyu Başlat'); }
-        }
-
         async function loadMyHistory() {
             $('historyContent').innerHTML = '<div class="spinner-lg"></div>';
             try {
