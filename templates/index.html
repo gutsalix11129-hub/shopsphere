@@ -12,15 +12,13 @@
         [data-theme="dark"] { --sidebar-bg: #020617; --sidebar-text: #94a3b8; --bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc; --border: #334155; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; transition: background-color .3s, border-color .3s; }
         body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
-        
-        /* SIDEBAR */
         .sidebar { width: 280px; background: var(--sidebar-bg); color: white; position: fixed; height: 100vh; left: -280px; top: 0; transition: transform .3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; display: flex; flex-direction: column; overflow-y: auto; border-right: 1px solid rgba(255,255,255,.05); }
         .sidebar.open { left: 0; }
         .logo-area { padding: 24px 22px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.05); }
         .logo-icon-wrap { width: 38px; height: 38px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; }
         .logo-area h2 { font-size: 20px; font-weight: 800; color: #fff; } .logo-area h2 span { color: #3b82f6; }
         .user-profile { padding: 18px; margin: 15px; background: rgba(255,255,255,.03); border-radius: 12px; display: flex; align-items: center; gap: 14px; border: 1px solid rgba(255,255,255,.05); }
-        .avatar { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #3b82f6; background: #fff; }
+        .avatar { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #3b82f6; background: #fff; object-fit: cover; }
         .user-info h3 { font-size: 14px; font-weight: 600; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .user-info p { font-size: 11px; color: #3b82f6; background: rgba(59,130,246,.15); padding: 2px 8px; border-radius: 20px; display: inline-block; margin-top: 3px; }
         .nav-section { padding: 8px 14px 30px; }
@@ -29,8 +27,6 @@
         .nav-item:hover, .nav-item.active { background: rgba(59,130,246,.12); color: #93c5fd; }
         .nav-item .icon { width: 22px; font-size: 15px; margin-right: 10px; text-align: center; }
         .nav-item .badge-new { background: #10b981; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-left: auto; }
-        
-        /* MAIN */
         .main { flex: 1; padding: 20px; width: 100%; transition: margin-left .3s; }
         .topbar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 14px 22px; border-radius: 14px; margin-bottom: 22px; box-shadow: 0 1px 3px rgba(0,0,0,.04); border: 1px solid var(--border); gap: 12px; }
         .menu-btn { font-size: 22px; cursor: pointer; color: var(--text); background: none; border: none; padding: 6px; }
@@ -40,7 +36,6 @@
         .view { display: none; animation: fadeIn .3s ease; } .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
         
-        /* DASHBOARD */
         .promo-banner { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1d4ed8 100%); border-radius: 16px; padding: 30px; color: white; margin-bottom: 22px; box-shadow: 0 10px 25px rgba(29,78,216,.3); position: relative; overflow: hidden; }
         .promo-banner h2 { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
         .tg-buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
@@ -53,29 +48,32 @@
         .stat-card.green::before { background: var(--success); } .stat-card.orange::before { background: #f59e0b; }
         .stat-card h4 { font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; }
         .stat-card .value { font-size: 36px; font-weight: 800; color: var(--text); margin-top: 10px; line-height: 1.2; }
-        
         @media (min-width: 992px) { .sidebar { left: 0; } .main { margin-left: 280px; width: calc(100% - 280px); } .menu-btn { display: none; } .stats-grid { grid-template-columns: repeat(3, 1fr); } }
         
-        /* PANEL & QUERY */
-        .panel { background: var(--card-bg); border-radius: 16px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,.05); border: 1px solid var(--border); margin-bottom: 22px; max-width: 800px; margin-left: auto; margin-right: auto; }
+        .panel { background: var(--card-bg); border-radius: 16px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,.05); border: 1px solid var(--border); margin-bottom: 22px; max-width: 900px; margin-left: auto; margin-right: auto; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 18px; margin-bottom: 25px; }
         .panel-header h2 { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
         .close-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 14px; font-weight: 600; padding: 8px 12px; border-radius: 8px; transition: .2s; }
         .close-btn:hover { background: rgba(239, 68, 68, 0.1); }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-size: 13px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
-        .form-group input { width: 100%; padding: 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 16px; font-weight: 500; background: var(--bg); color: var(--text); transition: .2s; }
-        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
-        .btn-submit { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; padding: 18px 24px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: all .2s; box-shadow: 0 8px 20px rgba(37,99,235,.3); margin-top: 10px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 15px; font-weight: 500; background: var(--bg); color: var(--text); transition: .2s; outline: none; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+        .btn-submit { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; padding: 16px 24px; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: all .2s; box-shadow: 0 8px 20px rgba(37,99,235,.3); }
         .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(37,99,235,.4); }
         .btn-submit:disabled { opacity: .7; cursor: not-allowed; }
+        
         .data-table { width: 100%; border-collapse: collapse; font-size: 14px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); margin-top: 20px; }
         .data-table th, .data-table td { padding: 14px 18px; border-bottom: 1px solid var(--border); text-align: left; }
-        .data-table th { background: var(--bg); color: #64748b; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 35%; }
+        .data-table th { background: var(--bg); color: #64748b; font-weight: 700; font-size: 12px; text-transform: uppercase; }
         .spinner-lg { width: 36px; height: 36px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; margin: 30px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .empty-state { padding: 32px 20px; background: var(--bg); border: 2px dashed var(--border); border-radius: 12px; text-align: center; color: #64748b; font-size: 14px; font-weight: 500; margin-top: 20px; }
-        .empty-state.error { color: var(--danger); border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); }
+        
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge-ok { background: rgba(16,185,129,0.15); color: #10b981; } .badge-bad { background: rgba(239,68,68,0.15); color: #ef4444; }
+        .badge-info { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 999; display: none; backdrop-filter: blur(3px); }
         .overlay.show { display: block; }
         .toast-wrap { position: fixed; top: 20px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 8px; }
@@ -83,13 +81,15 @@
         .toast.success { background: var(--success); } .toast.error { background: var(--danger); } .toast.info { background: var(--primary); }
         @keyframes slideLeft { from { transform: translateX(100%); } to { transform: none; } }
         .theme-toggle { background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; padding: 8px; border-radius: 8px; transition: .2s; }
+        
         .profile-card { margin-bottom: 22px; padding: 24px; background: var(--bg); border-radius: 14px; border: 1px solid var(--border); display: flex; align-items: center; gap: 20px; }
-        .profile-card img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--card-bg); box-shadow: 0 4px 10px rgba(0,0,0,.1); background: #fff; }
-        .profile-card h3 { font-size: 22px; font-weight: 800; }
+        .profile-card .img-wrap { position: relative; display: inline-block; }
+        .profile-card img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--card-bg); box-shadow: 0 4px 10px rgba(0,0,0,.1); background: #fff; object-fit: cover; }
+        .profile-card .cam-btn { position: absolute; bottom: 0; right: 0; background: var(--primary); color: #fff; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,.3); transition: .2s; }
+        .profile-card .cam-btn:hover { transform: scale(1.1); }
         
-        /* YÜZEN BUTONLAR (ASİSTAN VE TELEGRAM) */
+        /* YÜZEN BUTONLAR */
         .float-container { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 15px; z-index: 2500; }
-        
         .assistant-btn, .telegram-btn { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer; color: #fff; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: transform .2s; text-decoration: none; }
         .assistant-btn { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
         .telegram-btn { background: var(--telegram); box-shadow: 0 10px 25px rgba(34,158,217,.4); }
@@ -108,34 +108,24 @@
     <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
     <div class="toast-wrap" id="toastWrap"></div>
     
-    <!-- YÜZEN BUTONLAR -->
     <div class="float-container">
-        <!-- Telegram Yüzen Buton -->
         <a href="https://t.me/genelmerkezkanal" target="_blank" class="telegram-btn" title="Telegram Kanalımız"><i class="fa-brands fa-telegram"></i></a>
-        <!-- Asistan Butonu -->
         <div class="assistant-btn" onclick="toggleAssistant()"><i class="fa-solid fa-robot"></i></div>
     </div>
 
-    <!-- YARDIMCI ASİSTAN PENCERESİ -->
     <div class="assistant-window" id="assistantWindow">
-        <div class="assistant-header">
-            <span><i class="fa-solid fa-headset"></i> Canlı Asistan</span>
-            <button onclick="toggleAssistant()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:18px;">&times;</button>
-        </div>
-        <div class="assistant-body" id="assistantBody">
-            <div class="msg bot">Merhaba! Size nasıl yardımcı olabilirim? Sorgular, hesap işlemleri veya sistem hakkında soru sorabilirsiniz.</div>
-        </div>
+        <div class="assistant-header"><span><i class="fa-solid fa-headset"></i> Canlı Asistan</span><button onclick="toggleAssistant()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:18px;">&times;</button></div>
+        <div class="assistant-body" id="assistantBody"><div class="msg bot">Merhaba! Size nasıl yardımcı olabilirim?</div></div>
         <div style="padding: 10px; border-top: 1px solid var(--border); display: flex; gap: 5px;">
             <input type="text" id="assistantInput" placeholder="Bir şey yazın..." style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text);" onkeypress="if(event.key==='Enter') sendAssistantMsg()">
             <button onclick="sendAssistantMsg()" style="background:var(--primary); color:#fff; border:none; border-radius:8px; padding:0 15px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
     </div>
 
-    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="logo-area"><div class="logo-icon-wrap"><i class="fa-solid fa-shield-halved"></i></div><h2>SHOP<span>SPHERE</span></h2></div>
         <div class="user-profile">
-            <img src="{{ avatar }}" class="avatar" alt="Profil">
+            <img src="{{ avatar }}" id="sidebarAvatar" class="avatar" alt="Profil">
             <div class="user-info"><h3>{{ username }}</h3><p>Ücretsiz Üye</p></div>
         </div>
         <div class="nav-section">
@@ -156,20 +146,18 @@
             <div class="nav-item" onclick="loadTool('osint_hash', this)"><div class="icon"><i class="fa-solid fa-hashtag"></i></div> Hash Üret</div>
             <div class="nav-item" onclick="loadTool('social_tiktok', this)"><div class="icon"><i class="fa-brands fa-tiktok"></i></div> Sosyal Medya (TikTok/IG) <span class="badge-new">YENİ</span></div>
             
+            <div class="nav-title">HESABIM</div>
+            <div class="nav-item" data-view="history" onclick="showView('history', this)"><div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div> Sorgu Geçmişim</div>
+            <div class="nav-item" data-view="bulk" onclick="showView('bulk', this)"><div class="icon"><i class="fa-solid fa-layer-group"></i></div> Toplu Sorgu <span class="badge-new" style="background:var(--primary);">PRO</span></div>
+            <div class="nav-item" data-view="ticket" onclick="showView('ticket', this)"><div class="icon"><i class="fa-solid fa-headset"></i></div> Destek Talebi</div>
+
             <div class="nav-title">DESTEK</div>
-            <!-- TELEGRAM MENÜ BUTONLARI -->
-            <div class="nav-item" onclick="window.open('https://t.me/genelmerkezkanal', '_blank')">
-                <div class="icon"><i class="fa-brands fa-telegram" style="color:var(--telegram);"></i></div> Genel Merkez Kanalı
-            </div>
-            <div class="nav-item" onclick="window.open('https://t.me/markettchats', '_blank')">
-                <div class="icon"><i class="fa-brands fa-telegram" style="color:var(--telegram);"></i></div> Market Chat
-            </div>
-            
+            <div class="nav-item" onclick="window.open('https://t.me/genelmerkezkanal', '_blank')"><div class="icon"><i class="fa-brands fa-telegram" style="color:var(--telegram);"></i></div> Genel Merkez Kanalı</div>
+            <div class="nav-item" onclick="window.open('https://t.me/markettchats', '_blank')"><div class="icon"><i class="fa-brands fa-telegram" style="color:var(--telegram);"></i></div> Market Chat</div>
             <div class="nav-item" onclick="logout()" style="color:#ef4444; margin-top:15px;"><div class="icon"><i class="fa-solid fa-right-from-bracket"></i></div> Çıkış Yap</div>
         </div>
     </aside>
 
-    <!-- MAIN -->
     <main class="main">
         <header class="topbar">
             <button class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
@@ -181,18 +169,11 @@
             <div class="promo-banner">
                 <h2><i class="fa-solid fa-bolt"></i> Hoş Geldiniz!</h2>
                 <p style="margin-top:6px; font-size:14px; color:#cbd5e1;">Sorgu çözümleri ve OSINT araçlarımız aktif olarak hizmetinizde.</p>
-                
-                <!-- DASHBOARD TELEGRAM BUTONLARI -->
                 <div class="tg-buttons">
-                    <a href="https://t.me/genelmerkezkanal" target="_blank" class="tg-btn">
-                        <i class="fa-brands fa-telegram"></i> Genel Merkez Kanalı
-                    </a>
-                    <a href="https://t.me/markettchats" target="_blank" class="tg-btn">
-                        <i class="fa-brands fa-telegram"></i> Market Chat
-                    </a>
+                    <a href="https://t.me/genelmerkezkanal" target="_blank" class="tg-btn"><i class="fa-brands fa-telegram"></i> Genel Merkez Kanalı</a>
+                    <a href="https://t.me/markettchats" target="_blank" class="tg-btn"><i class="fa-brands fa-telegram"></i> Market Chat</a>
                 </div>
             </div>
-            
             <div class="stats-grid">
                 <div class="stat-card"><h4>Toplam Kullanıcı</h4><div class="value counter" data-target="{{ total_users }}">0</div></div>
                 <div class="stat-card green"><h4>Toplam Sorgu</h4><div class="value counter" data-target="{{ total_queries }}">0</div></div>
@@ -210,11 +191,66 @@
                     <div id="qInputs"></div>
                     <button type="submit" class="btn-submit" id="submitBtn"><i class="fa-solid fa-bolt"></i> Sorgula</button>
                 </form>
-                <div class="result-toolbar" id="resultToolbar" style="display:flex; gap:8px; margin-top:15px;"></div>
+                <div class="result-toolbar" id="resultToolbar" style="display:flex; gap:8px; margin-top:15px; flex-wrap:wrap;"></div>
                 <div id="qResults"></div>
             </div>
         </div>
-        
+
+        <div id="view-bulk" class="view">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-layer-group" style="color:var(--primary);"></i> Toplu Sorgu (Max 20)</h2>
+                    <button class="close-btn" onclick="showView('dashboard', document.querySelector('[data-view=\'dashboard\']'))"><i class="fa-solid fa-xmark"></i> Kapat</button>
+                </div>
+                <div class="form-group">
+                    <label>Sorgu Tipi</label>
+                    <select id="bulkType">
+                        <option value="aile">Aile (TC)</option>
+                        <option value="adres">Adres (TC)</option>
+                        <option value="tcgsm">TC → GSM</option>
+                        <option value="gsmtc">GSM → TC</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Veriler (Her satıra bir veri)</label>
+                    <textarea id="bulkData" rows="6" placeholder="11111111110&#10;22222222220&#10;33333333330"></textarea>
+                </div>
+                <button class="btn-submit" onclick="runBulkQuery()" id="bulkBtn"><i class="fa-solid fa-rocket"></i> Toplu Sorguyu Başlat</button>
+                <div id="bulkResults" style="margin-top:20px;"></div>
+            </div>
+        </div>
+
+        <div id="view-history" class="view">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);"></i> Sorgu Geçmişim</h2>
+                    <button class="close-btn" onclick="showView('dashboard', document.querySelector('[data-view=\'dashboard\']'))"><i class="fa-solid fa-xmark"></i> Kapat</button>
+                </div>
+                <div id="historyContent"><div class="spinner-lg"></div></div>
+            </div>
+        </div>
+
+        <div id="view-ticket" class="view">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-headset" style="color:var(--primary);"></i> Destek Taleplerim</h2>
+                    <button class="close-btn" onclick="showView('dashboard', document.querySelector('[data-view=\'dashboard\']'))"><i class="fa-solid fa-xmark"></i> Kapat</button>
+                </div>
+                <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:300px; background:var(--bg); padding:20px; border-radius:12px; border:1px solid var(--border);">
+                        <h3 style="font-size:15px; margin-bottom:15px; color:var(--text);"><i class="fa-solid fa-plus-circle" style="color:var(--primary);"></i> Yeni Talep Oluştur</h3>
+                        <div class="form-group"><label>Konu</label><input type="text" id="ticketSubject" placeholder="Örn: API Çalışmıyor"></div>
+                        <div class="form-group"><label>Mesajınız</label><textarea id="ticketMessage" rows="4" placeholder="Detaylı açıklama yazın..."></textarea></div>
+                        <button class="btn-submit" onclick="createTicket()" style="padding:12px; font-size:14px;"><i class="fa-solid fa-paper-plane"></i> Talebi Gönder</button>
+                    </div>
+                    <div style="flex:2; min-width:300px;">
+                        <h3 style="font-size:15px; margin-bottom:15px; color:var(--text);"><i class="fa-solid fa-inbox" style="color:var(--primary);"></i> Geçmiş Talepler</h3>
+                        <div id="ticketList"><div class="spinner-lg"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="view-profile" class="view">
             <div class="panel">
                 <div class="panel-header">
@@ -222,7 +258,11 @@
                     <button class="close-btn" onclick="showView('dashboard', document.querySelector('[data-view=\'dashboard\']'))"><i class="fa-solid fa-xmark"></i> Kapat</button>
                 </div>
                 <div class="profile-card">
-                    <img src="{{ avatar }}" alt="Profil">
+                    <div class="img-wrap">
+                        <img src="{{ avatar }}" id="profileImg" alt="Profil">
+                        <button class="cam-btn" onclick="document.getElementById('profileFile').click()" title="Fotoğrafı Değiştir"><i class="fa-solid fa-camera"></i></button>
+                        <input type="file" id="profileFile" accept="image/*" style="display:none;">
+                    </div>
                     <div>
                         <h3>{{ username }}</h3>
                         <p><i class="fa-regular fa-calendar"></i> Kayıt: {{ created }}</p>
@@ -248,13 +288,11 @@
             inp.value = ''; body.scrollTop = body.scrollHeight;
             
             setTimeout(() => {
-                let reply = "Bu konuda size nasıl yardımcı olabilirim? Sorgular sekmesinden arama yapabilir, profilinizden şifrenizi değiştirebilirsiniz.";
+                let reply = "Bu konuda size nasıl yardımcı olabilirim? Sorgular sekmesinden arama yapabilirsiniz.";
                 let m = msg.toLowerCase();
                 if(m.includes('merhaba') || m.includes('selam')) reply = "Merhaba! Hoş geldiniz. Size nasıl yardımcı olabilirim?";
                 else if(m.includes('şifre')) reply = "Şifrenizi sağdaki 'Profilim' sekmesinden değiştirebilirsiniz.";
-                else if(m.includes('sorgu') || m.includes('arama')) reply = "Sol menüden istediğiniz sorgu aracını seçip, ilgili bilgileri girerek arama yapabilirsiniz.";
-                else if(m.includes('telegram') || m.includes('iletişim')) reply = "Sol menüdeki veya sağ alttaki Telegram butonlarına tıklayarak kanallarımıza katılabilirsiniz.";
-                
+                else if(m.includes('sorgu')) reply = "Sol menüden istediğiniz sorgu aracını seçip, ilgili bilgileri girerek arama yapabilirsiniz.";
                 body.innerHTML += `<div class="msg bot">${reply}</div>`;
                 body.scrollTop = body.scrollHeight;
             }, 600);
@@ -270,6 +308,45 @@
         function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
         function toast(msg, type = 'info') { const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' }; const el = document.createElement('div'); el.className = `toast ${type}`; el.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span>${escapeHtml(msg)}</span>`; $('toastWrap').appendChild(el); setTimeout(() => el.remove(), 3600); }
         function setLoading(btn, loading, html) { btn.disabled = loading; btn.innerHTML = html; }
+        
+        // --- PROFİL FOTOĞRAFI GÜNCELLEME ---
+        $('profileFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = 150; canvas.height = 150;
+                    
+                    // Resmi ortadan kırpıp 150x150 yap
+                    const size = Math.min(img.width, img.height);
+                    const x = (img.width - size) / 2;
+                    const y = (img.height - size) / 2;
+                    ctx.drawImage(img, x, y, size, size, 0, 0, 150, 150);
+                    
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // Sunucuya kaydet
+                    fetch('/api/upload_avatar', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ image: dataUrl }) })
+                    .then(r => r.json()).then(res => {
+                        if (res.success) {
+                            // Ekrandaki tüm avatarları anında güncelle
+                            $('profileImg').src = dataUrl;
+                            $('sidebarAvatar').src = dataUrl;
+                            toast('Profil fotoğrafı güncellendi.', 'success');
+                        } else {
+                            toast(res.error, 'error');
+                        }
+                    }).catch(() => toast('Yükleme hatası.', 'error'));
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
         
         document.querySelectorAll('.counter').forEach(el => { const target = parseInt(el.dataset.target || '0', 10); if (target === 0) { el.textContent = '0'; return; } let start = 0; const timer = setInterval(() => { start += Math.ceil(target / 50); if (start >= target) { el.textContent = target.toLocaleString('tr-TR'); clearInterval(timer); } else { el.textContent = start.toLocaleString('tr-TR'); } }, 20); });
         
@@ -290,14 +367,141 @@
         async function refreshBroadcast() { try { const b = await fetch('/api/get_broadcast').then(r => r.json()); if (b.success && b.broadcast) $('broadcast').innerHTML = '<span class="dot"></span> ' + escapeHtml(b.broadcast); } catch (_) {} }
         refreshBroadcast(); setInterval(refreshBroadcast, 15000);
         function toggleMenu() { $('sidebar').classList.toggle('open'); $('overlay').classList.toggle('show'); }
-        function showView(view, el) { if (el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); } document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); $('view-' + view).classList.add('active'); if (window.innerWidth < 992) toggleMenu(); }
+        
+        function showView(view, el) { 
+            if (el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); } 
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); $('view-' + view).classList.add('active'); 
+            if (window.innerWidth < 992) toggleMenu(); 
+            if (view === 'history') loadMyHistory();
+            if (view === 'ticket') loadMyTickets();
+        }
+        
         function loadTool(type, el) { const tool = TOOLS[type]; if (!tool) return; currentType = type; lastResult = null; showView('query', el); $('qTitle').innerText = tool.title; $('qResults').innerHTML = ''; $('resultToolbar').innerHTML = ''; let html = ''; tool.fields.forEach(f => { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" placeholder="${f.label} girin..."></div>`; }); $('qInputs').innerHTML = html; }
         
         let isQuerying = false;
         async function runQuery() { if (!currentType || isQuerying) return; const payload = { type: currentType }; let valid = true; TOOLS[currentType].fields.forEach(f => { const inp = $('inp_' + f.id); const val = inp.value.trim(); inp.classList.remove('invalid'); if (f.req !== false && !val) { inp.classList.add('invalid'); valid = false; } else if (val && f.pattern && !f.pattern.test(val)) { inp.classList.add('invalid'); valid = false; } if (val) payload[f.id] = val; }); if (!valid) return toast('Lütfen alanları doğru doldurun.', 'error'); isQuerying = true; const btn = $('submitBtn'); setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Sorgulanıyor...'); $('qResults').innerHTML = '<div class="spinner-lg"></div>'; $('resultToolbar').innerHTML = ''; try { const res = await fetch('/api/sorgu', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload) }).then(r => r.json()); if (!res.success) { $('qResults').innerHTML = `<div class="empty-state error"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(res.error)}</div>`; } else { lastResult = res.data; renderData(res.data); } } catch (e) { $('qResults').innerHTML = `<div class="empty-state error">Sunucu hatası veya bağlantı koptu.</div>`; } finally { isQuerying = false; setLoading(btn, false, '<i class="fa-solid fa-bolt"></i> Sorgula'); } }
         function flatten(obj, prefix = '') { const out = []; for (const [k, v] of Object.entries(obj)) { const key = prefix ? `${prefix}.${k}` : k; if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flatten(v, key)); else if (Array.isArray(v)) out.push([key, v.map(x => typeof x === 'object' ? JSON.stringify(x) : x).join(', ')]); else out.push([key, v]); } return out; }
-        function renderData(data) { const items = Array.isArray(data) ? data : [data]; $('resultToolbar').innerHTML = `<button class="btn-submit" style="width:auto; padding:10px 16px; font-size:13px; margin-top:0;" onclick="copyResult()"><i class="fa-solid fa-copy"></i> Sonuçları Kopyala</button>`; let html = ''; items.forEach((item, idx) => { const rows = flatten(item).filter(([, v]) => v !== null && v !== undefined && v !== '' && String(v).toUpperCase() !== 'YOK' && String(v).toUpperCase() !== 'NULL'); if (rows.length === 0) { html += `<div class="empty-state">Sonuç boş.</div>`; return; } html += `<table class="data-table"><tbody>`; for (const [key, val] of rows) html += `<tr><th>${escapeHtml(String(key).toUpperCase())}</th><td>${escapeHtml(String(val))}</td></tr>`; html += `</tbody></table>`; }); $('qResults').innerHTML = html; }
+        
+        function downloadCSV() {
+            if (!lastResult) return;
+            const items = Array.isArray(lastResult) ? lastResult : [lastResult];
+            let csv = "\uFEFF"; 
+            let keys = new Set();
+            items.forEach(it => flatten(it).forEach(([k]) => keys.add(k)));
+            keys = Array.from(keys);
+            csv += keys.join(";") + "\n";
+            items.forEach(it => {
+                const row = [];
+                keys.forEach(k => {
+                    const flat = flatten(it).find(([key]) => key === k);
+                    let val = flat ? flat[1] : "";
+                    if (typeof val === 'string') val = val.replace(/;/g, ","); 
+                    row.push(val);
+                });
+                csv += row.join(";") + "\n";
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `sorgu_${Date.now()}.csv`;
+            a.click();
+        }
+        
+        function renderData(data) { 
+            const items = Array.isArray(data) ? data : [data]; 
+            $('resultToolbar').innerHTML = `
+                <button class="btn-submit" style="width:auto; padding:10px 16px; font-size:13px; margin-top:0; background:#10b981;" onclick="downloadCSV()"><i class="fa-solid fa-file-excel"></i> Excel/CSV İndir</button>
+                <button class="btn-submit" style="width:auto; padding:10px 16px; font-size:13px; margin-top:0;" onclick="copyResult()"><i class="fa-solid fa-copy"></i> JSON Kopyala</button>`; 
+            let html = ''; 
+            items.forEach((item, idx) => { 
+                const rows = flatten(item).filter(([, v]) => v !== null && v !== undefined && v !== '' && String(v).toUpperCase() !== 'YOK' && String(v).toUpperCase() !== 'NULL'); 
+                if (rows.length === 0) { html += `<div class="empty-state">Sonuç boş.</div>`; return; } 
+                html += `<table class="data-table"><tbody>`; 
+                for (const [key, val] of rows) html += `<tr><th>${escapeHtml(String(key).toUpperCase())}</th><td>${escapeHtml(String(val))}</td></tr>`; 
+                html += `</tbody></table>`; 
+            }); 
+            $('qResults').innerHTML = html; 
+        }
         function copyResult() { if (lastResult) navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(() => toast('Sonuçlar kopyalandı!', 'success')); }
+        
+        async function runBulkQuery() {
+            const type = $('bulkType').value;
+            const raw = $('bulkData').value.trim();
+            if (!raw) return toast('Lütfen veri girin.', 'error');
+            const items = raw.split('\n').map(s => s.trim()).filter(s => s);
+            if (items.length > 20) return toast('En fazla 20 sorgu yapabilirsiniz.', 'error');
+            
+            const btn = $('bulkBtn');
+            setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Sorgulanıyor...');
+            $('bulkResults').innerHTML = `<div class="spinner-lg"></div><p style="text-align:center; color:#64748b; font-size:13px;">API'yi yormamak için her sorgu arasında 0.8 sn bekleniyor...</p>`;
+            
+            try {
+                const res = await fetch('/api/bulk_sorgu', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ type: type, items: items }) }).then(r => r.json());
+                if (!res.success) { $('bulkResults').innerHTML = `<div class="empty-state error">${escapeHtml(res.error)}</div>`; }
+                else {
+                    let html = '<table class="data-table"><thead><tr><th>Sorgulanan Veri</th><th>Durum</th><th>Sonuç Detayı</th></tr></thead><tbody>';
+                    res.results.forEach(r => {
+                        if (r.success) {
+                            let details = flatten(r.data).map(([k,v]) => `<b>${k}:</b> ${v}`).join('<br>');
+                            html += `<tr><td>${r.query}</td><td><span class="badge badge-ok">BAŞARILI</span></td><td style="font-size:12px;">${details}</td></tr>`;
+                        } else {
+                            html += `<tr><td>${r.query}</td><td><span class="badge badge-bad">BAŞARISIZ</span></td><td>${r.error}</td></tr>`;
+                        }
+                    });
+                    html += '</tbody></table>';
+                    $('bulkResults').innerHTML = html;
+                }
+            } catch (_) { $('bulkResults').innerHTML = `<div class="empty-state error">Bağlantı hatası.</div>`; }
+            finally { setLoading(btn, false, '<i class="fa-solid fa-rocket"></i> Toplu Sorguyu Başlat'); }
+        }
+
+        async function loadMyHistory() {
+            $('historyContent').innerHTML = '<div class="spinner-lg"></div>';
+            try {
+                const res = await fetch('/api/my_history').then(r => r.json());
+                if (!res.history.length) { $('historyContent').innerHTML = '<div class="empty-state">Henüz sorgu yapmadınız.</div>'; return; }
+                let html = '<table class="data-table"><thead><tr><th>Tarih</th><th>İşlem</th><th>Parametre</th><th>Durum</th></tr></thead><tbody>';
+                res.history.forEach(h => {
+                    html += `<tr><td style="color:#64748b; font-size:12px;">${h.time}</td><td><span class="badge badge-info">${h.type}</span></td><td>${escapeHtml(h.param)}</td><td><span class="badge ${h.status === 'basarili' ? 'badge-ok' : 'badge-bad'}">${h.status.toUpperCase()}</span></td></tr>`;
+                });
+                $('historyContent').innerHTML = html + '</tbody></table>';
+            } catch (_) { $('historyContent').innerHTML = '<div class="empty-state error">Hata oluştu.</div>'; }
+        }
+
+        async function createTicket() {
+            const subject = $('ticketSubject').value.trim();
+            const message = $('ticketMessage').value.trim();
+            if (!subject || !message) return toast('Konu ve mesaj zorunludur.', 'error');
+            try {
+                const res = await fetch('/api/create_ticket', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ subject: subject, message: message }) }).then(r => r.json());
+                if (res.success) {
+                    toast('Talebiniz oluşturuldu.', 'success');
+                    $('ticketSubject').value = ''; $('ticketMessage').value = '';
+                    loadMyTickets();
+                } else toast(res.error, 'error');
+            } catch (_) { toast('Bağlantı hatası.', 'error'); }
+        }
+        
+        async function loadMyTickets() {
+            $('ticketList').innerHTML = '<div class="spinner-lg"></div>';
+            try {
+                const res = await fetch('/api/my_tickets').then(r => r.json());
+                if (!res.tickets.length) { $('ticketList').innerHTML = '<div class="empty-state">Hiç talebiniz yok.</div>'; return; }
+                let html = '';
+                res.tickets.forEach(t => {
+                    let statusColor = t.status === 'open' ? '#f59e0b' : '#10b981';
+                    html += `<div style="background:var(--bg); border:1px solid var(--border); padding:15px; border-radius:10px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <b style="color:var(--text);">${escapeHtml(t.subject)}</b>
+                            <span class="badge" style="background:${statusColor}20; color:${statusColor};">${t.status.toUpperCase()}</span>
+                        </div>
+                        <p style="font-size:13px; color:#64748b; margin-bottom:10px;">${escapeHtml(t.message)}</p>
+                        ${t.reply ? `<div style="background:#dbeafe; color:#1e40af; padding:10px; border-radius:8px; font-size:13px;"><b>Admin Cevabı:</b><br>${escapeHtml(t.reply)}</div>` : ''}
+                    </div>`;
+                });
+                $('ticketList').innerHTML = html;
+            } catch (_) { $('ticketList').innerHTML = '<div class="empty-state error">Hata.</div>'; }
+        }
         
         async function changePass() { const oldP = $('old_pass').value, newP = $('new_pass').value; if (!oldP || newP.length < 6) return toast('Şifre en az 6 karakter olmalı', 'error'); const btn = $('changePassBtn'); setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Güncelleniyor...'); try { const r = await fetch('/api/change_password', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ old: oldP, new: newP }) }).then(x => x.json()); if (r.success) { toast('Şifre güncellendi', 'success'); $('old_pass').value = ''; $('new_pass').value = ''; } else toast(r.error, 'error'); } catch (_) { toast('Bağlantı hatası', 'error'); } finally { setLoading(btn, false, '<i class="fa-solid fa-floppy-disk"></i> Şifreyi Güncelle'); } }
         async function logout() { try { await fetch('/api/logout', { method: 'POST', headers: JSON_HEADERS }); } catch (_) {} window.location.href = '/login'; }
