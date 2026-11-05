@@ -11,7 +11,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background: #0f172a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: hidden; position: relative; }
         
-        /* Arka Plan Animasyonlu Şekiller */
         .blob { position: absolute; filter: blur(80px); z-index: 0; opacity: 0.6; animation: float 10s infinite alternate; }
         .blob-1 { width: 400px; height: 400px; background: #2563eb; top: -100px; left: -100px; }
         .blob-2 { width: 350px; height: 350px; background: #8b5cf6; bottom: -50px; right: -50px; animation-delay: -5s; }
@@ -88,9 +87,10 @@
                 <div class="tab" data-tab="register">Kayıt Ol</div>
             </div>
             <div class="form-body">
-                <!-- LOGIN -->
+                <!-- LOGIN EKRANI -->
                 <div class="form-panel active" id="panel-login">
                     <div class="alert alert-error" id="loginErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
+                    <div class="alert alert-success" id="loginOk"><i class="fa-solid fa-circle-check"></i><span></span></div>
                     <form id="loginForm" novalidate>
                         <div class="form-group">
                             <label>Kullanıcı Adı</label>
@@ -106,7 +106,7 @@
                     <div class="footer-text">Hesabınız yok mu? <a data-tab="register">Hemen Kayıt Olun</a></div>
                 </div>
 
-                <!-- REGISTER -->
+                <!-- KAYIT EKRANI -->
                 <div class="form-panel" id="panel-register">
                     <div class="alert alert-error" id="regErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
                     <div class="alert alert-success" id="regOk"><i class="fa-solid fa-circle-check"></i><span></span></div>
@@ -148,11 +148,12 @@
         function setLoading(btn, loading, text) { btn.disabled = loading; btn.classList.toggle('loading', loading); if (text) btn.querySelector('.btn-text').textContent = text; }
         
         function switchTab(name) {
-            ['loginErr', 'regErr', 'regOk'].forEach(id => hideAlert($(id)));
+            ['loginErr', 'loginOk', 'regErr', 'regOk'].forEach(id => hideAlert($(id)));
             document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
             document.querySelectorAll('.form-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
             history.replaceState(null, '', '#' + name);
         }
+        
         document.querySelectorAll('[data-tab]').forEach(el => el.addEventListener('click', () => switchTab(el.dataset.tab)));
         if (location.hash === '#register') switchTab('register');
 
@@ -163,18 +164,26 @@
             });
         });
 
+        // --- GİRİŞ YAPMA ---
         $('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault(); hideAlert($('loginErr'));
+            e.preventDefault(); hideAlert($('loginErr')); hideAlert($('loginOk'));
             const u = $('login-u').value.trim(), p = $('login-p').value;
             if (!u || !p) return showAlert($('loginErr'), 'Tüm alanları doldurun.');
+            
             const btn = $('loginBtn'); setLoading(btn, true, 'Giriş yapılıyor…');
             try {
                 const res = await fetch('/api/login', { method: 'POST', headers: HEADERS, credentials: 'same-origin', body: JSON.stringify({ username: u, password: p }) }).then(r => r.json());
-                if (res.success) window.location.href = '/';
-                else { showAlert($('loginErr'), res.error); setLoading(btn, false, 'Giriş Yap'); }
-            } catch (_) { showAlert($('loginErr'), 'Bağlantı hatası.'); setLoading(btn, false, 'Giriş Yap'); }
+                if (res.success) { 
+                    window.location.href = '/';
+                } else { 
+                    showAlert($('loginErr'), res.error); setLoading(btn, false, 'Giriş Yap'); 
+                }
+            } catch (_) { 
+                showAlert($('loginErr'), 'Bağlantı hatası.'); setLoading(btn, false, 'Giriş Yap'); 
+            }
         });
 
+        // --- CANLI KULLANICI ADI KONTROLÜ ---
         $('reg-u').addEventListener('input', () => {
             const v = $('reg-u').value.trim(), status = $('reg-u-status'), hint = $('reg-u-hint'), inp = $('reg-u');
             inp.classList.remove('invalid', 'valid'); status.className = 'input-status fa-solid'; hint.classList.remove('error', 'success');
@@ -195,6 +204,7 @@
             }, 500);
         });
 
+        // --- ŞİFRE GÜCÜ ---
         $('reg-p').addEventListener('input', () => {
             const pw = $('reg-p').value, meter = $('strengthMeter'), bars = meter.querySelectorAll('.strength-bar');
             if (!pw) { meter.style.display = 'none'; return; }
@@ -206,6 +216,7 @@
             $('reg-p2').dispatchEvent(new Event('input'));
         });
 
+        // --- ŞİFRE EŞLEŞMESİ ---
         $('reg-p2').addEventListener('input', () => {
             const p1 = $('reg-p').value, p2 = $('reg-p2').value, inp = $('reg-p2'), status = $('reg-p2-status');
             inp.classList.remove('invalid', 'valid'); status.classList.remove('show', 'ok', 'err');
@@ -214,15 +225,27 @@
             else if (p2.length >= 6) { inp.classList.add('invalid'); status.className = 'input-status fa-solid fa-circle-xmark show err'; }
         });
 
+        // --- KAYIT OLMA (Sorunsuz Yönlendirme) ---
         $('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault(); hideAlert($('regErr')); hideAlert($('regOk'));
             const u = $('reg-u').value.trim(), p = $('reg-p').value, p2 = $('reg-p2').value;
             if (!u || !p || !p2) return showAlert($('regErr'), 'Tüm alanları doldurun.');
             if (p !== p2) return showAlert($('regErr'), 'Şifreler eşleşmiyor.');
+            
             const btn = $('registerBtn'); setLoading(btn, true, 'Kayıt yapılıyor…');
             try {
                 const res = await fetch('/api/register', { method: 'POST', headers: HEADERS, credentials: 'same-origin', body: JSON.stringify({ username: u, password: p }) }).then(r => r.json());
-                if (res.success) { showAlert($('regOk'), 'Hesap açıldı! Yönlendiriliyorsunuz…'); setTimeout(() => window.location.href = '/', 800); }
+                if (res.success) { 
+                    showAlert($('regOk'), 'Hesabınız oluşturuldu! Giriş sekmesine yönlendiriliyorsunuz…'); 
+                    // 1.5 saniye sonra Giriş sekmesine at ve bilgileri doldur
+                    setTimeout(() => {
+                        switchTab('login');
+                        $('login-u').value = u;
+                        $('login-p').value = p;
+                        showAlert($('loginOk'), 'Lütfen "Giriş Yap" butonuna tıklayın.');
+                        setLoading(btn, false, 'Hesap Oluştur');
+                    }, 1500);
+                }
                 else { showAlert($('regErr'), res.error); setLoading(btn, false, 'Hesap Oluştur'); }
             } catch (_) { showAlert($('regErr'), 'Bağlantı hatası.'); setLoading(btn, false, 'Hesap Oluştur'); }
         });
