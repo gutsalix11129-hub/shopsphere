@@ -30,6 +30,7 @@ app.config.update(
 )
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
+# Render için kalıcı disk ayarı
 DB_DIR = "/var/data" if os.path.exists("/var/data") else "/tmp"
 if os.name == 'nt': DB_DIR = "."
 DB_FILE = os.path.join(DB_DIR, "siber_karargah.db")
@@ -47,6 +48,10 @@ def init_db():
         CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
         CREATE INDEX IF NOT EXISTS idx_logs_user ON logs(user_id);
         """)
+        # Avatar sütunu ekleme (Hata verirse geç)
+        try: c.execute("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT ''")
+        except sqlite3.OperationalError: pass
+        
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('maintenance', '0')")
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('broadcast', 'Sistemimize hoş geldiniz!')")
         c.commit()
@@ -112,12 +117,14 @@ USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,32}$")
 def home():
     if 'user_id' not in session: return redirect('/login')
     with get_db() as c:
-        row = c.execute("SELECT username, created_at FROM users WHERE id=?", (session['user_id'],)).fetchone()
+        row = c.execute("SELECT username, created_at, avatar FROM users WHERE id=?", (session['user_id'],)).fetchone()
         if not row: session.clear(); return redirect('/login')
         total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
         user_queries = c.execute("SELECT COUNT(*) FROM logs WHERE user_id=?", (session['user_id'],)).fetchone()[0]
-    return render_template('index.html', total_users=total_users, total_queries=total_queries, user_queries=user_queries, username=row[0], created=row[1])
+    
+    avatar = row[2] if row[2] else f"https://api.dicebear.com/7.x/bottts/svg?seed={row[0]}"
+    return render_template('index.html', total_users=total_users, total_queries=total_queries, user_queries=user_queries, username=row[0], created=row[1], avatar=avatar)
 
 @app.route("/login")
 def login_page():
@@ -134,11 +141,11 @@ def api_check_username():
 @app.route("/api/register", methods=["POST"])
 def api_register():
     req = request.json or {}
-    u, p = (req.get("username") or "").strip().lower(), (req.get("password") or "").strip()
+    u, p, avatar = (req.get("username") or "").strip().lower(), (req.get("password") or "").strip(), (req.get("avatar") or "").strip()
     if not USERNAME_RE.match(u) or len(p) < 6: return jsonify({"success": False, "error": "Geçersiz veri."})
     try:
         with get_db() as c:
-            c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)", (u, generate_password_hash(p), datetime.now(timezone.utc).strftime("%Y-%m-%d")))
+            c.execute("INSERT INTO users (username, password, created_at, avatar) VALUES (?,?,?,?)", (u, generate_password_hash(p), datetime.now(timezone.utc).strftime("%Y-%m-%d"), avatar))
             c.commit()
         return jsonify({"success": True})
     except sqlite3.IntegrityError: return jsonify({"success": False, "error": "Kullanıcı adı alınmış."})
@@ -274,6 +281,19 @@ def admin_dashboard():
         daily_labels = json.dumps(dates); daily_data = json.dumps(daily_counts)
 
     return render_template('admin.html', show_login=False, logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"), chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, temp_passes=temp_passes, popular_queries=popular_queries, success_count=success_count, fail_count=fail_count)
+
+@app.route("/admin-add-user", methods=["POST"])
+def admin_add_user():
+    if not session.get("admin"): return redirect("/")
+    u = request.form.get("username", "").strip().lower()
+    p = request.form.get("password", "").strip()
+    if u and p:
+        try:
+            with get_db() as c:
+                c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)", (u, generate_password_hash(p), datetime.now(timezone.utc).strftime("%Y-%m-%d")))
+                c.commit()
+        except: pass
+    return redirect("/admin-panel-x9")
 
 @app.route("/admin-logout-x9", methods=["POST"])
 def admin_logout(): session.pop("admin", None); return redirect("/admin-panel-x9")
