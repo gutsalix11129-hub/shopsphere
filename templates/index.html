@@ -18,7 +18,7 @@
         .logo-icon-wrap { width: 38px; height: 38px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; }
         .logo-area h2 { font-size: 20px; font-weight: 800; color: #fff; } .logo-area h2 span { color: #3b82f6; }
         .user-profile { padding: 18px; margin: 15px; background: rgba(255,255,255,.03); border-radius: 12px; display: flex; align-items: center; gap: 14px; border: 1px solid rgba(255,255,255,.05); }
-        .avatar { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #3b82f6; }
+        .avatar { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #3b82f6; background: #fff; }
         .user-info h3 { font-size: 14px; font-weight: 600; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .user-info p { font-size: 11px; color: #3b82f6; background: rgba(59,130,246,.15); padding: 2px 8px; border-radius: 20px; display: inline-block; margin-top: 3px; }
         .nav-section { padding: 8px 14px 30px; }
@@ -55,8 +55,7 @@
         .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
         .btn-submit { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; padding: 18px 24px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: all .2s; box-shadow: 0 8px 20px rgba(37,99,235,.3); margin-top: 10px; }
         .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(37,99,235,.4); }
-        .btn-submit:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 4px 10px rgba(37,99,235,.3); }
-        .btn-submit:disabled { opacity: .7; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-submit:disabled { opacity: .7; cursor: not-allowed; }
         .data-table { width: 100%; border-collapse: collapse; font-size: 14px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); margin-top: 20px; }
         .data-table th, .data-table td { padding: 14px 18px; border-bottom: 1px solid var(--border); text-align: left; }
         .data-table th { background: var(--bg); color: #64748b; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 35%; }
@@ -71,20 +70,46 @@
         .toast.success { background: var(--success); } .toast.error { background: var(--danger); } .toast.info { background: var(--primary); }
         @keyframes slideLeft { from { transform: translateX(100%); } to { transform: none; } }
         .theme-toggle { background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; padding: 8px; border-radius: 8px; transition: .2s; }
-        .theme-toggle:hover { background: var(--border); }
         .profile-card { margin-bottom: 22px; padding: 24px; background: var(--bg); border-radius: 14px; border: 1px solid var(--border); display: flex; align-items: center; gap: 20px; }
-        .profile-card img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--card-bg); box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        .profile-card img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--card-bg); box-shadow: 0 4px 10px rgba(0,0,0,.1); background: #fff; }
         .profile-card h3 { font-size: 22px; font-weight: 800; }
-        .profile-card p { font-size: 13px; color: #64748b; margin-top: 5px; }
+        
+        /* Yardımcı Asistan */
+        .assistant-btn { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 10px 25px rgba(37,99,235,.4); z-index: 2500; transition: transform .2s; }
+        .assistant-btn:hover { transform: scale(1.1); }
+        .assistant-window { position: fixed; bottom: 100px; right: 25px; width: 320px; background: var(--card-bg); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,.2); border: 1px solid var(--border); z-index: 2500; display: none; flex-direction: column; overflow: hidden; animation: slideUp .3s ease; }
+        .assistant-window.show { display: flex; }
+        .assistant-header { background: var(--primary); color: #fff; padding: 15px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+        .assistant-body { padding: 15px; height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--bg); }
+        .msg { padding: 10px 14px; border-radius: 12px; font-size: 13px; max-width: 85%; line-height: 1.4; }
+        .msg.bot { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .msg.user { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
     </style>
 </head>
 <body>
     <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
     <div class="toast-wrap" id="toastWrap"></div>
+    
+    <!-- YARDIMCI ASİSTAN -->
+    <div class="assistant-btn" onclick="toggleAssistant()"><i class="fa-solid fa-robot"></i></div>
+    <div class="assistant-window" id="assistantWindow">
+        <div class="assistant-header">
+            <span><i class="fa-solid fa-headset"></i> Canlı Asistan</span>
+            <button onclick="toggleAssistant()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:18px;">&times;</button>
+        </div>
+        <div class="assistant-body" id="assistantBody">
+            <div class="msg bot">Merhaba! Size nasıl yardımcı olabilirim? Sorgular, hesap işlemleri veya sistem hakkında soru sorabilirsiniz.</div>
+        </div>
+        <div style="padding: 10px; border-top: 1px solid var(--border); display: flex; gap: 5px;">
+            <input type="text" id="assistantInput" placeholder="Bir şey yazın..." style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text);" onkeypress="if(event.key==='Enter') sendAssistantMsg()">
+            <button onclick="sendAssistantMsg()" style="background:var(--primary); color:#fff; border:none; border-radius:8px; padding:0 15px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
     <aside class="sidebar" id="sidebar">
         <div class="logo-area"><div class="logo-icon-wrap"><i class="fa-solid fa-shield-halved"></i></div><h2>SHOP<span>SPHERE</span></h2></div>
         <div class="user-profile">
-            <img src="https://ui-avatars.com/api/?name={{ username }}&background=2563eb&color=fff&rounded=true&bold=true" class="avatar" alt="Profil">
+            <img src="{{ avatar }}" class="avatar" alt="Profil">
             <div class="user-info"><h3>{{ username }}</h3><p>Ücretsiz Üye</p></div>
         </div>
         <div class="nav-section">
@@ -141,7 +166,7 @@
                     <button class="close-btn" onclick="showView('dashboard', document.querySelector('[data-view=\'dashboard\']'))"><i class="fa-solid fa-xmark"></i> Kapat</button>
                 </div>
                 <div class="profile-card">
-                    <img src="https://ui-avatars.com/api/?name={{ username }}&background=2563eb&color=fff&rounded=true&bold=true&size=80" alt="Profil">
+                    <img src="{{ avatar }}" alt="Profil">
                     <div>
                         <h3>{{ username }}</h3>
                         <p><i class="fa-regular fa-calendar"></i> Kayıt: {{ created }}</p>
@@ -149,46 +174,47 @@
                     </div>
                 </div>
                 <h3 style="font-size:15px; font-weight:700; margin-bottom:14px;"><i class="fa-solid fa-key" style="color:var(--primary);"></i> Şifre Değiştir</h3>
-                <div class="form-group"><label>Mevcut Şifreniz</label><input type="password" id="old_pass" autocomplete="current-password"></div>
-                <div class="form-group"><label>Yeni Şifreniz</label><input type="password" id="new_pass" autocomplete="new-password" minlength="6" placeholder="En az 6 karakter"></div>
+                <div class="form-group"><label>Mevcut Şifreniz</label><input type="password" id="old_pass"></div>
+                <div class="form-group"><label>Yeni Şifreniz</label><input type="password" id="new_pass" minlength="6" placeholder="En az 6 karakter"></div>
                 <button class="btn-submit" id="changePassBtn" onclick="changePass()"><i class="fa-solid fa-floppy-disk"></i> Şifreyi Güncelle</button>
             </div>
         </div>
     </main>
     <script>
-        const theme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', theme);
-        updateThemeIcon(theme);
-        function toggleTheme() {
-            const current = document.documentElement.getAttribute('data-theme');
-            const next = current === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-            updateThemeIcon(next);
+        function toggleAssistant() { document.getElementById('assistantWindow').classList.toggle('show'); }
+        function sendAssistantMsg() {
+            const inp = document.getElementById('assistantInput');
+            const msg = inp.value.trim(); if(!msg) return;
+            const body = document.getElementById('assistantBody');
+            
+            body.innerHTML += `<div class="msg user">${msg}</div>`;
+            inp.value = ''; body.scrollTop = body.scrollHeight;
+            
+            setTimeout(() => {
+                let reply = "Bu konuda size nasıl yardımcı olabilirim? Sorgular sekmesinden arama yapabilir, profilinizden şifrenizi değiştirebilirsiniz.";
+                let m = msg.toLowerCase();
+                if(m.includes('merhaba') || m.includes('selam')) reply = "Merhaba! Hoş geldiniz. Size nasıl yardımcı olabilirim?";
+                else if(m.includes('şifre')) reply = "Şifrenizi sağdaki 'Profilim' sekmesinden değiştirebilirsiniz.";
+                else if(m.includes('sorgu') || m.includes('arama')) reply = "Sol menüden istediğiniz sorgu aracını seçip, ilgili bilgileri girerek arama yapabilirsiniz.";
+                else if(m.includes('admin')) reply = "Admin paneline sadece yetkili kişiler erişebilir. Şifreniz yoksa sistem yöneticinizle iletişime geçin.";
+                else if(m.includes('fiyat') || m.includes('bakiye')) reply = "Şu an tüm sorgular ücretsizdir. İlerleyen dönemde premium üyelik gelebilir.";
+                
+                body.innerHTML += `<div class="msg bot">${reply}</div>`;
+                body.scrollTop = body.scrollHeight;
+            }, 600);
         }
+
+        const theme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', theme); updateThemeIcon(theme);
+        function toggleTheme() { const current = document.documentElement.getAttribute('data-theme'); const next = current === 'light' ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next); updateThemeIcon(next); }
         function updateThemeIcon(t) { document.getElementById('themeIcon').className = t === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun'; }
         function $(id) { return document.getElementById(id); }
         const CSRF = document.querySelector('meta[name="csrf-token"]').content;
         const JSON_HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
         function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-        function toast(msg, type = 'info') {
-            const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' };
-            const el = document.createElement('div'); el.className = `toast ${type}`;
-            el.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span>${escapeHtml(msg)}</span>`;
-            $('toastWrap').appendChild(el);
-            setTimeout(() => el.remove(), 3600);
-        }
+        function toast(msg, type = 'info') { const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' }; const el = document.createElement('div'); el.className = `toast ${type}`; el.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span>${escapeHtml(msg)}</span>`; $('toastWrap').appendChild(el); setTimeout(() => el.remove(), 3600); }
         function setLoading(btn, loading, html) { btn.disabled = loading; btn.innerHTML = html; }
-        document.querySelectorAll('.counter').forEach(el => {
-            const target = parseInt(el.dataset.target || '0', 10);
-            if (target === 0) { el.textContent = '0'; return; }
-            let start = 0;
-            const timer = setInterval(() => {
-                start += Math.ceil(target / 50);
-                if (start >= target) { el.textContent = target.toLocaleString('tr-TR'); clearInterval(timer); }
-                else { el.textContent = start.toLocaleString('tr-TR'); }
-            }, 20);
-        });
+        document.querySelectorAll('.counter').forEach(el => { const target = parseInt(el.dataset.target || '0', 10); if (target === 0) { el.textContent = '0'; return; } let start = 0; const timer = setInterval(() => { start += Math.ceil(target / 50); if (start >= target) { el.textContent = target.toLocaleString('tr-TR'); clearInterval(timer); } else { el.textContent = start.toLocaleString('tr-TR'); } }, 20); });
         const TOOLS = {
             'adsoyad': { title: 'Mernis 2026', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
             'adsoyad_proxy': { title: 'Mernis Proxy', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }, { id:'il', label:'İl (opsiyonel)', req:false }] },
@@ -202,81 +228,18 @@
             'social_tiktok': { title:'Sosyal Medya Sorgu (TikTok/IG)', fields:[{ id:'text', label:'Kullanıcı Adı / Telefon / E-posta' }] }
         };
         let currentType = null, lastResult = null;
-        async function refreshBroadcast() {
-            try { const b = await fetch('/api/get_broadcast').then(r => r.json()); if (b.success && b.broadcast) $('broadcast').innerHTML = '<span class="dot"></span> ' + escapeHtml(b.broadcast); } catch (_) {}
-        }
+        async function refreshBroadcast() { try { const b = await fetch('/api/get_broadcast').then(r => r.json()); if (b.success && b.broadcast) $('broadcast').innerHTML = '<span class="dot"></span> ' + escapeHtml(b.broadcast); } catch (_) {} }
         refreshBroadcast(); setInterval(refreshBroadcast, 15000);
         function toggleMenu() { $('sidebar').classList.toggle('open'); $('overlay').classList.toggle('show'); }
-        function showView(view, el) {
-            if (el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); $('view-' + view).classList.add('active');
-            if (window.innerWidth < 992) toggleMenu();
-        }
-        function loadTool(type, el) {
-            const tool = TOOLS[type]; if (!tool) return;
-            currentType = type; lastResult = null; showView('query', el); $('qTitle').innerText = tool.title;
-            $('qResults').innerHTML = ''; $('resultToolbar').innerHTML = '';
-            let html = '';
-            tool.fields.forEach(f => { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" placeholder="${f.label} girin..."></div>`; });
-            $('qInputs').innerHTML = html;
-        }
+        function showView(view, el) { if (el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); } document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); $('view-' + view).classList.add('active'); if (window.innerWidth < 992) toggleMenu(); }
+        function loadTool(type, el) { const tool = TOOLS[type]; if (!tool) return; currentType = type; lastResult = null; showView('query', el); $('qTitle').innerText = tool.title; $('qResults').innerHTML = ''; $('resultToolbar').innerHTML = ''; let html = ''; tool.fields.forEach(f => { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" placeholder="${f.label} girin..."></div>`; }); $('qInputs').innerHTML = html; }
         let isQuerying = false;
-        async function runQuery() {
-            if (!currentType || isQuerying) return; 
-            const payload = { type: currentType }; let valid = true;
-            TOOLS[currentType].fields.forEach(f => {
-                const inp = $('inp_' + f.id); const val = inp.value.trim(); inp.classList.remove('invalid');
-                if (f.req !== false && !val) { inp.classList.add('invalid'); valid = false; }
-                else if (val && f.pattern && !f.pattern.test(val)) { inp.classList.add('invalid'); valid = false; }
-                if (val) payload[f.id] = val;
-            });
-            if (!valid) return toast('Lütfen alanları doğru doldurun.', 'error');
-            isQuerying = true; 
-            const btn = $('submitBtn'); setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Sorgulanıyor...');
-            $('qResults').innerHTML = '<div class="spinner-lg"></div>'; $('resultToolbar').innerHTML = '';
-            try {
-                const res = await fetch('/api/sorgu', { method: 'POST', credentials: 'same-origin', headers: JSON_HEADERS, body: JSON.stringify(payload) }).then(r => r.json());
-                if (!res.success) { $('qResults').innerHTML = `<div class="empty-state error"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(res.error)}</div>`; }
-                else { lastResult = res.data; renderData(res.data); }
-            } catch (e) { $('qResults').innerHTML = `<div class="empty-state error">Sunucu hatası veya bağlantı koptu.</div>`; }
-            finally { isQuerying = false; setLoading(btn, false, '<i class="fa-solid fa-bolt"></i> Sorgula'); }
-        }
-        function flatten(obj, prefix = '') {
-            const out = [];
-            for (const [k, v] of Object.entries(obj)) {
-                const key = prefix ? `${prefix}.${k}` : k;
-                if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flatten(v, key));
-                else if (Array.isArray(v)) out.push([key, v.map(x => typeof x === 'object' ? JSON.stringify(x) : x).join(', ')]);
-                else out.push([key, v]);
-            }
-            return out;
-        }
-        function renderData(data) {
-            const items = Array.isArray(data) ? data : [data];
-            $('resultToolbar').innerHTML = `<button class="btn-submit" style="width:auto; padding:10px 16px; font-size:13px; margin-top:0;" onclick="copyResult()"><i class="fa-solid fa-copy"></i> Sonuçları Kopyala</button>`;
-            let html = '';
-            items.forEach((item, idx) => {
-                const rows = flatten(item).filter(([, v]) => v !== null && v !== undefined && v !== '' && String(v).toUpperCase() !== 'YOK' && String(v).toUpperCase() !== 'NULL');
-                if (rows.length === 0) { html += `<div class="empty-state">Sonuç boş.</div>`; return; }
-                html += `<table class="data-table"><tbody>`;
-                for (const [key, val] of rows) html += `<tr><th>${escapeHtml(String(key).toUpperCase())}</th><td>${escapeHtml(String(val))}</td></tr>`;
-                html += `</tbody></table>`;
-            });
-            $('qResults').innerHTML = html;
-        }
+        async function runQuery() { if (!currentType || isQuerying) return; const payload = { type: currentType }; let valid = true; TOOLS[currentType].fields.forEach(f => { const inp = $('inp_' + f.id); const val = inp.value.trim(); inp.classList.remove('invalid'); if (f.req !== false && !val) { inp.classList.add('invalid'); valid = false; } else if (val && f.pattern && !f.pattern.test(val)) { inp.classList.add('invalid'); valid = false; } if (val) payload[f.id] = val; }); if (!valid) return toast('Lütfen alanları doğru doldurun.', 'error'); isQuerying = true; const btn = $('submitBtn'); setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Sorgulanıyor...'); $('qResults').innerHTML = '<div class="spinner-lg"></div>'; $('resultToolbar').innerHTML = ''; try { const res = await fetch('/api/sorgu', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload) }).then(r => r.json()); if (!res.success) { $('qResults').innerHTML = `<div class="empty-state error"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(res.error)}</div>`; } else { lastResult = res.data; renderData(res.data); } } catch (e) { $('qResults').innerHTML = `<div class="empty-state error">Sunucu hatası veya bağlantı koptu.</div>`; } finally { isQuerying = false; setLoading(btn, false, '<i class="fa-solid fa-bolt"></i> Sorgula'); } }
+        function flatten(obj, prefix = '') { const out = []; for (const [k, v] of Object.entries(obj)) { const key = prefix ? `${prefix}.${k}` : k; if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flatten(v, key)); else if (Array.isArray(v)) out.push([key, v.map(x => typeof x === 'object' ? JSON.stringify(x) : x).join(', ')]); else out.push([key, v]); } return out; }
+        function renderData(data) { const items = Array.isArray(data) ? data : [data]; $('resultToolbar').innerHTML = `<button class="btn-submit" style="width:auto; padding:10px 16px; font-size:13px; margin-top:0;" onclick="copyResult()"><i class="fa-solid fa-copy"></i> Sonuçları Kopyala</button>`; let html = ''; items.forEach((item, idx) => { const rows = flatten(item).filter(([, v]) => v !== null && v !== undefined && v !== '' && String(v).toUpperCase() !== 'YOK' && String(v).toUpperCase() !== 'NULL'); if (rows.length === 0) { html += `<div class="empty-state">Sonuç boş.</div>`; return; } html += `<table class="data-table"><tbody>`; for (const [key, val] of rows) html += `<tr><th>${escapeHtml(String(key).toUpperCase())}</th><td>${escapeHtml(String(val))}</td></tr>`; html += `</tbody></table>`; }); $('qResults').innerHTML = html; }
         function copyResult() { if (lastResult) navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(() => toast('Sonuçlar kopyalandı!', 'success')); }
-        async function changePass() {
-            const oldP = $('old_pass').value, newP = $('new_pass').value;
-            if (!oldP || newP.length < 6) return toast('Şifre en az 6 karakter olmalı', 'error');
-            const btn = $('changePassBtn'); setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Güncelleniyor...');
-            try {
-                const r = await fetch('/api/change_password', { method: 'POST', credentials: 'same-origin', headers: JSON_HEADERS, body: JSON.stringify({ old: oldP, new: newP }) }).then(x => x.json());
-                if (r.success) { toast('Şifre güncellendi', 'success'); $('old_pass').value = ''; $('new_pass').value = ''; }
-                else toast(r.error, 'error');
-            } catch (_) { toast('Bağlantı hatası', 'error'); }
-            finally { setLoading(btn, false, '<i class="fa-solid fa-floppy-disk"></i> Şifreyi Güncelle'); }
-        }
-        async function logout() { try { await fetch('/api/logout', { method: 'POST', credentials: 'same-origin', headers: JSON_HEADERS }); } catch (_) {} window.location.href = '/login'; }
+        async function changePass() { const oldP = $('old_pass').value, newP = $('new_pass').value; if (!oldP || newP.length < 6) return toast('Şifre en az 6 karakter olmalı', 'error'); const btn = $('changePassBtn'); setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Güncelleniyor...'); try { const r = await fetch('/api/change_password', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ old: oldP, new: newP }) }).then(x => x.json()); if (r.success) { toast('Şifre güncellendi', 'success'); $('old_pass').value = ''; $('new_pass').value = ''; } else toast(r.error, 'error'); } catch (_) { toast('Bağlantı hatası', 'error'); } finally { setLoading(btn, false, '<i class="fa-solid fa-floppy-disk"></i> Şifreyi Güncelle'); } }
+        async function logout() { try { await fetch('/api/logout', { method: 'POST', headers: JSON_HEADERS }); } catch (_) {} window.location.href = '/login'; }
     </script>
 </body>
 </html>
