@@ -227,8 +227,8 @@ def api_sorgu():
     ip = request.remote_addr or "?"
     req = request.json or {}; q_type = req.get("type"); uid, uname = session['user_id'], session['username']
     
-    # VIP KONTROLÜ
-    VIP_TOOLS = ["jk_soyagaci", "jk_aile_wa", "jk_tc"]
+    # VIP KONTROLÜ (Yeni Eklenen Global API'lerden bazıları VIP)
+    VIP_TOOLS = ["api_wayback", "api_whois", "api_currency"]
     if q_type in VIP_TOOLS:
         with get_db() as c:
             u_row = c.execute("SELECT vip FROM users WHERE id=?", (uid,)).fetchone()
@@ -236,39 +236,84 @@ def api_sorgu():
             return jsonify({"success": False, "error": "Bu sorgu VIP üyelere özeldir. Lütfen VIP paket satın alın."})
     
     try:
+        # --- YEREL / ÜCRETSİZ API'LER (Zaten var olanlar) ---
         if q_type == "osint_ip": return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=8).json()})
         if q_type == "osint_domain": return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=8).json()})
         if q_type == "osint_hash":
             txt = (req.get('text') or '').encode()
             return jsonify({"success": True, "data": {"MD5": hashlib.md5(txt).hexdigest(), "SHA1": hashlib.sha1(txt).hexdigest(), "SHA256": hashlib.sha256(txt).hexdigest()}})
-        
+
+        # --- PLAKA SORGU API ---
+        if q_type == "plaka_sorgu":
+            plaka = (req.get('plaka') or '').strip().upper()
+            if not plaka: return jsonify({"success": False, "error": "Plaka girin."})
+            r = requests.get(f"https://eokulsorguapi.onrender.com/plaka/api?plaka={plaka}", timeout=15)
+            data = r.json()
+            log_query(uid, uname, q_type, plaka, ip, "basarili")
+            return jsonify({"success": True, "data": data})
+
+        # --- YENİ EKLENEN DÜNYA ÇAPINDA API'LER (Anahtarsız Çalışanlar) ---
+        if q_type == "api_wayback":
+            url = (req.get('url') or '').strip()
+            data = requests.get(f"http://archive.org/wayback/available?url={url}", timeout=15).json()
+            log_query(uid, uname, q_type, url, ip, "basarili")
+            return jsonify({"success": True, "data": data})
+
+        if q_type == "api_whois":
+            domain = (req.get('domain') or '').strip()
+            # RDAP ücretsiz ve API key gerektirmeyen bir WHOIS servisidir
+            r = requests.get(f"https://rdap.org/domain/{domain}", timeout=15)
+            if r.status_code == 200:
+                log_query(uid, uname, q_type, domain, ip, "basarili")
+                return jsonify({"success": True, "data": r.json()})
+            else:
+                return jsonify({"success": False, "error": "Domain bulunamadı."})
+
+        if q_type == "api_bin":
+            bin_no = (req.get('bin') or '').strip()
+            r = requests.get(f"https://lookup.binlist.net/{bin_no}", headers={"Accept-Version": "3"}, timeout=15)
+            if r.status_code == 200:
+                log_query(uid, uname, q_type, bin_no, ip, "basarili")
+                return jsonify({"success": True, "data": r.json()})
+            else:
+                return jsonify({"success": False, "error": "BIN bulunamadı."})
+
+        if q_type == "api_currency":
+            r = requests.get("https://api.frankfurter.app/latest?from=USD&to=TRY,EUR,GBP", timeout=10)
+            log_query(uid, uname, q_type, "USD", ip, "basarili")
+            return jsonify({"success": True, "data": r.json()})
+
+        if q_type == "api_crypto":
+            r = requests.get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,ripple,solana&vs_currencies=usd,try&include_24hr_change=true", timeout=10)
+            log_query(uid, uname, q_type, "Crypto", ip, "basarili")
+            return jsonify({"success": True, "data": r.json()})
+
+        if q_type == "api_email":
+            email = (req.get('email') or '').strip()
+            r = requests.get(f"https://open.kickbox.com/v1/disposable/{email}", timeout=10)
+            if r.status_code == 200:
+                log_query(uid, uname, q_type, email, ip, "basarili")
+                return jsonify({"success": True, "data": r.json()})
+            else:
+                return jsonify({"success": False, "error": "Geçersiz e-posta."})
+
+        if q_type == "api_weather":
+            city = (req.get('city') or '').strip()
+            geo = requests.get(f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=tr&format=json", timeout=10).json()
+            if not geo.get("results"): return jsonify({"success": False, "error": "Şehir bulunamadı."})
+            lat = geo["results"][0]["latitude"]; lon = geo["results"][0]["longitude"]
+            w = requests.get(f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true", timeout=10).json()
+            log_query(uid, uname, q_type, city, ip, "basarili")
+            return jsonify({"success": True, "data": {"sehir": geo["results"][0]["name"], "hava_durumu": w["current_weather"]}})
+
+        # --- ESKİ API'LER (Violetpanel) ---
         API_MAP = {
-            # ESKİ VE ÇALIŞAN KESİN API'LER
             "adsoyad": {"url": "https://violetpanel.cc/furkanapi/adsoyadapi.php", "params": {"ad":"ad","soyad":"soyad"}},
             "adsoyad_proxy": {"url": "https://violetpanel.cc/furkanapi/adsoyadproxapi.php", "params": {"ad":"ad","soyad":"soyad","il":"il"}},
             "aile": {"url": "https://violetpanel.cc/furkanapi/ailesorguapi.php", "params": {"tc":"tc"}},
             "adres": {"url": "https://violetpanel.cc/furkanapi/adrespro.php", "params": {"tc":"tc"}},
             "tcgsm": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"tc":"tc"}},
             "gsmtc": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"gsm":"gsm"}},
-
-            # J-K.TV API'LERİ (ÇALIŞANLAR)
-            "jk_anne": {"url": "https://j-k.tv/annesorgu.php", "params": {"tc": "tc"}},
-            "jk_baba": {"url": "https://j-k.tv/babasorgu.php", "params": {"tc": "tc"}},
-            "jk_burc": {"url": "https://j-k.tv/burc.php", "params": {"tc": "tc"}},
-            "jk_dns": {"url": "https://j-k.tv/dns.php", "params": {"tc": "tc"}},
-            "jk_iban": {"url": "https://j-k.tv/ibansorgu.php", "params": {"tc": "tc"}},
-            "jk_operator": {"url": "https://j-k.tv/operator.php", "params": {"tc": "tc"}},
-            "jk_aile": {"url": "https://j-k.tv/aile.php", "params": {"tc": "tc"}},
-            "jk_adsoyad": {"url": "https://j-k.tv/adsoyad.php?auth=emirjk", "params": {"adi": "adi", "soyadi": "soyadi"}},
-
-            # J-K.TV VIP API'LERİ
-            "jk_soyagaci": {"url": "https://j-k.tv/soyagaci.php", "params": {"tc": "tc"}},
-            "jk_tc": {"url": "https://j-k.tv/tc.php?auth=emirjk", "params": {"tc": "tc"}},
-            "jk_aile_wa": {"url": "https://j-k.tv/whatsapp.php", "params": {"tc": "tc"}},
-
-            # E-OKUL PLAKA API'LERİ (YENİ)
-            "plaka_sorgu": {"url": "https://eokulsorguapi.onrender.com/plaka/api", "params": {"plaka": "plaka"}},
-            "plaka_adsoyad": {"url": "https://eokulsorguapi.onrender.com/plaka/api", "params": {"ad_soyad": "ad_soyad"}},
         }
         if q_type not in API_MAP: return jsonify({"success": False, "error": "Geçersiz sorgu."})
         
@@ -277,13 +322,10 @@ def api_sorgu():
             val = (req.get(k) or "").strip()
             if not val: continue
             
-            # Validasyonlar
-            if rk == "tc" and q_type not in ["jk_dns", "jk_iban", "jk_operator"] and not re.fullmatch(r"\d{11}", val): 
+            if rk == "tc" and not re.fullmatch(r"\d{11}", val): 
                 return jsonify({"success": False, "error": "TC 11 haneli sayı olmalı."})
-            if q_type == "jk_operator" and not re.fullmatch(r"\d{10,11}", val): 
+            if rk == "gsm" and not re.fullmatch(r"\d{10,11}", val): 
                 return jsonify({"success": False, "error": "GSM 10-11 haneli sayı olmalı."})
-            if q_type == "plaka_sorgu" and not re.fullmatch(r"[A-Za-z0-9]{5,10}", val):
-                return jsonify({"success": False, "error": "Geçersiz plaka formatı."})
                 
             params[rk] = val[:100]; query_str += f"{rk}={val[:100]} "
             
