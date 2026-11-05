@@ -20,6 +20,8 @@ app = Flask(__name__)
 # --- GÜVENLİK AYARLARI ---
 SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+SOCIALFINDER_TOKEN = "318f49ac1ff1d8bf7f253f85999ac5bb" # TikTok/IG API Token
+
 app.secret_key = SECRET_KEY
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
@@ -29,8 +31,10 @@ app.config.update(
 )
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
-# Disk varsa oraya, yoksa /tmp'ye kaydet
-DB_FILE = os.path.join(os.environ.get("DB_DIR", "/var/data" if os.path.exists("/var/data") else "/tmp"), "siber_karargah.db")
+# Render Kalıcı Disk veya /tmp ayarı
+DB_DIR = "/var/data" if os.path.exists("/var/data") else "/tmp"
+if os.name == 'nt': DB_DIR = "." # Windows local test için
+DB_FILE = os.path.join(DB_DIR, "siber_karargah.db")
 
 # --- VERİTABANI ---
 def get_db():
@@ -81,7 +85,7 @@ def firewall():
             if request.path.startswith("/api/"): return jsonify({"success": False, "error": "CSRF Hatası. Sayfayı yenileyin."}), 403
             return "CSRF doğrulaması başarısız.", 403
 
-# --- RATE LIMIT (İstek Sınırlandırma) ---
+# --- RATE LIMIT ---
 RATE_LIMIT = {}
 def check_rate_limit(key, max_req=30):
     now = time.time()
@@ -126,60 +130,39 @@ def login_page():
     if 'user_id' in session: return redirect('/')
     return render_template('login.html')
 
-# --- KULLANICI KAYIT VE GİRİŞİ (DÜZELTİLDİ) ---
-@app.route("/api/register", methods=["POST"])
-def api_register():
-    req = request.json or {}
-    u, p = (req.get("username") or "").strip().lower(), (req.get("password") or "").strip()
-    if not USERNAME_RE.match(u) or len(p) < 6: 
-        return jsonify({"success": False, "error": "Geçersiz kullanıcı adı veya şifre kısa."})
-    try:
-        with get_db() as c:
-            c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)", (u, generate_password_hash(p), datetime.now(timezone.utc).strftime("%Y-%m-%d")))
-            row = c.execute("SELECT id FROM users WHERE username=?", (u,)).fetchone(); c.commit()
-        
-        # OTOMATİK GİRİŞ (Auto-Login)
-        session.permanent = True
-        session['user_id'] = row[0]
-        session['username'] = u
-        return jsonify({"success": True, "auto_login": True})
-    except sqlite3.IntegrityError: 
-        return jsonify({"success": False, "error": "Bu kullanıcı adı zaten alınmış."})
-    except Exception as e:
-        return jsonify({"success": False, "error": "Kayıt sırasında hata oluştu."})
-
-@app.route("/api/login", methods=["POST"])
-def api_login():
-    req = request.json or {}
-    u, p = (req.get("username") or "").strip().lower(), req.get("password") or ""
-    
-    with get_db() as c: 
-        r = c.execute("SELECT id, username, password, banned FROM users WHERE username=?", (u,)).fetchone()
-    
-    if r:
-        if r[3] == 1: 
-            return jsonify({"success": False, "error": "Hesabınız askıya alınmış."})
-        
-        # Şifre doğrulama
-        if check_password_hash(r[2], p):
-            session.permanent = True
-            session['user_id'] = r[0]
-            session['username'] = r[1]
-            return jsonify({"success": True})
-        else:
-            return jsonify({"success": False, "error": "Şifre yanlış."})
-            
-    return jsonify({"success": False, "error": "Böyle bir kullanıcı bulunamadı."})
-
-@app.route("/api/logout", methods=["POST"])
-def api_logout(): session.clear(); return jsonify({"success": True})
-
+# --- KULLANICI API'LERİ ---
 @app.route("/api/check_username")
 def api_check_username():
     u = (request.args.get("u") or "").strip().lower()
     if not USERNAME_RE.match(u): return jsonify({"available": False, "reason": "format"})
     with get_db() as c: exists = c.execute("SELECT 1 FROM users WHERE username=?", (u,)).fetchone()
     return jsonify({"available": not exists})
+
+@app.route("/api/register", methods=["POST"])
+def api_register():
+    req = request.json or {}
+    u, p = (req.get("username") or "").strip().lower(), (req.get("password") or "").strip()
+    if not USERNAME_RE.match(u) or len(p) < 6: return jsonify({"success": False, "error": "Geçersiz veri."})
+    try:
+        with get_db() as c:
+            c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)", (u, generate_password_hash(p), datetime.now(timezone.utc).strftime("%Y-%m-%d")))
+            c.commit()
+        return jsonify({"success": True})
+    except sqlite3.IntegrityError: return jsonify({"success": False, "error": "Kullanıcı adı alınmış."})
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    req = request.json or {}
+    u, p = (req.get("username") or "").strip().lower(), req.get("password") or ""
+    with get_db() as c: r = c.execute("SELECT id, username, password, banned FROM users WHERE username=?", (u,)).fetchone()
+    if r and check_password_hash(r[2], p):
+        if r[3] == 1: return jsonify({"success": False, "error": "Hesap askıya alınmış."})
+        session.permanent = True; session['user_id'] = r[0]; session['username'] = r[1]
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Kullanıcı adı veya şifre hatalı."})
+
+@app.route("/api/logout", methods=["POST"])
+def api_logout(): session.clear(); return jsonify({"success": True})
 
 @app.route("/api/get_broadcast")
 def api_get_broadcast(): return jsonify({"success": True, "broadcast": get_setting("broadcast")})
@@ -189,15 +172,83 @@ def api_change_password():
     if 'user_id' not in session: return jsonify({"success": False}), 401
     req = request.json or {}
     old, new = (req.get("old") or "").strip(), (req.get("new") or "").strip()
-    if len(new) < 6: return jsonify({"success": False, "error": "Yeni şifre çok kısa."})
+    if len(new) < 6: return jsonify({"success": False, "error": "Yeni şifre kısa."})
     with get_db() as c:
         r = c.execute("SELECT password FROM users WHERE id=?", (session['user_id'],)).fetchone()
-        if not r or not check_password_hash(r[0], old): 
-            return jsonify({"success": False, "error": "Mevcut şifre yanlış."})
+        if not r or not check_password_hash(r[0], old): return jsonify({"success": False, "error": "Mevcut şifre yanlış."})
         c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(new), session['user_id'])); c.commit()
     return jsonify({"success": True})
 
-# --- ADMIN PANELİ ---
+# --- SORGU API ---
+@app.route("/api/sorgu", methods=["POST"])
+def api_sorgu():
+    if get_setting("maintenance") == "1": return jsonify({"success": False, "error": "Sistem bakımda."})
+    if 'user_id' not in session: return jsonify({"success": False, "error": "Giriş yapın."}), 401
+    
+    ip = request.remote_addr or "?"
+    req = request.json or {}; q_type = req.get("type"); uid, uname = session['user_id'], session['username']
+    
+    try:
+        # --- SOSYAL MEDYA SORGU (TikTok / Instagram) ---
+        if q_type == "social_tiktok":
+            text_to_search = (req.get('text') or '').strip()
+            if not text_to_search: return jsonify({"success": False, "error": "Aranacak veri girin."})
+            
+            payload = {"action": "searchTiktok", "token": SOCIALFINDER_TOKEN, "text": text_to_search}
+            r = requests.post("https://socialfinder.notetonotes.com/api/index.php?v=1", json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+            data = r.json()
+            
+            if data.get("status") == "success":
+                log_query(uid, uname, q_type, text_to_search, ip, "basarili")
+                return jsonify({"success": True, "data": data.get("data")})
+            else:
+                err = data.get("message", "Hata oluştu.")
+                log_query(uid, uname, q_type, text_to_search, ip, "basarisiz")
+                return jsonify({"success": False, "error": err})
+
+        # --- OSINT ARAÇLARI ---
+        if q_type == "osint_ip": return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=8).json()})
+        if q_type == "osint_domain": return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=8).json()})
+        if q_type == "osint_hash":
+            txt = (req.get('text') or '').encode()
+            return jsonify({"success": True, "data": {"MD5": hashlib.md5(txt).hexdigest(), "SHA1": hashlib.sha1(txt).hexdigest(), "SHA256": hashlib.sha256(txt).hexdigest()}})
+        
+        # --- MERNİS / GSM / ADRES ---
+        API_MAP = {
+            "adsoyad": {"url": "https://violetpanel.cc/furkanapi/adsoyadapi.php", "params": {"ad":"ad","soyad":"soyad"}},
+            "adsoyad_proxy": {"url": "https://violetpanel.cc/furkanapi/adsoyadproxapi.php", "params": {"ad":"ad","soyad":"soyad","il":"il"}},
+            "aile": {"url": "https://violetpanel.cc/furkanapi/ailesorguapi.php", "params": {"tc":"tc"}},
+            "adres": {"url": "https://violetpanel.cc/furkanapi/adrespro.php", "params": {"tc":"tc"}},
+            "tcgsm": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"tc":"tc"}},
+            "gsmtc": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"gsm":"gsm"}},
+        }
+        if q_type not in API_MAP: return jsonify({"success": False, "error": "Geçersiz sorgu."})
+        
+        api_info = API_MAP[q_type]; params = {}; query_str = ""
+        for k, rk in api_info["params"].items():
+            val = (req.get(k) or "").strip()
+            if val: params[rk] = val[:100]; query_str += f"{rk}={val[:100]} "
+        if not params: return jsonify({"success": False, "error": "Eksik parametre."})
+        
+        time.sleep(0.8) # API Ban Koruması
+        
+        r = requests.get(api_info["url"], params=params, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+        try: data = r.json()
+        except ValueError: return jsonify({"success": False, "error": "Dış API limiti aşıldı."})
+
+        is_ok = data.get("success") in [True, "true"] or data.get("durum") in ["basarili", "başarılı"] or data.get("status") == "success"
+        result = data.get("data") or data.get("veri") or data.get("result")
+        
+        if not is_ok or not result: 
+            log_query(uid, uname, q_type, query_str.strip(), ip, "basarisiz")
+            return jsonify({"success": False, "error": "Bulunamadı."})
+            
+        log_query(uid, uname, q_type, query_str.strip(), ip, "basarili")
+        return jsonify({"success": True, "data": result})
+    except Exception: 
+        return jsonify({"success": False, "error": "Bağlantı hatası oluştu."})
+
+# --- ADMIN PANELİ VE İŞLEMLERİ ---
 @app.route("/admin-panel-x9", methods=["GET", "POST"])
 def admin_dashboard():
     ip = request.remote_addr or "?"
@@ -211,10 +262,7 @@ def admin_dashboard():
                     session["admin"] = True; session["admin_since"] = time.time(); return redirect("/admin-panel-x9")
                 else: error = "Hatalı şifre."
         
-        return render_template('admin.html', show_login=True, login_error=error, 
-                               total_users=0, total_queries=0, banned_users=0, users=[], logs=[], 
-                               maint="0", current_bc="", chart_labels="[]", chart_data="[]", 
-                               daily_labels="[]", daily_data="[]", temp_passes={})
+        return render_template('admin.html', show_login=True, login_error=error, total_users=0, total_queries=0, banned_users=0, users=[], logs=[], maint="0", current_bc="", chart_labels="[]", chart_data="[]", daily_labels="[]", daily_data="[]", temp_passes={})
 
     if time.time() - session.get("admin_since", 0) > 3600:
         session.pop("admin", None); return redirect("/admin-panel-x9")
@@ -224,15 +272,14 @@ def admin_dashboard():
         logs = c.execute("SELECT * FROM logs ORDER BY id DESC LIMIT 500").fetchall()
         users = c.execute("""
             SELECT u.id, u.username, u.password, u.banned, u.created_at, COUNT(l.id) as query_count
-            FROM users u
-            LEFT JOIN logs l ON u.id = l.user_id
-            GROUP BY u.id
-            ORDER BY u.id DESC
+            FROM users u LEFT JOIN logs l ON u.id = l.user_id
+            GROUP BY u.id ORDER BY u.id DESC
         """).fetchall()
         total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
         total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         banned_users = c.execute("SELECT COUNT(*) FROM users WHERE banned=1").fetchone()[0]
         q_stats = c.execute("SELECT query_type, COUNT(*) FROM logs GROUP BY query_type").fetchall()
+        
         chart_labels = json.dumps([q[0] for q in q_stats]); chart_data = json.dumps([q[1] for q in q_stats])
         dates = [(datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(6, -1, -1)]
         daily_counts = [c.execute("SELECT COUNT(*) FROM logs WHERE timestamp LIKE ?", (f"{d}%",)).fetchone()[0] for d in dates]
@@ -240,56 +287,6 @@ def admin_dashboard():
 
     return render_template('admin.html', show_login=False, logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"), chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, temp_passes=temp_passes)
 
-# --- SORGU API (DIŞ API KORUMALI) ---
-@app.route("/api/sorgu", methods=["POST"])
-def api_sorgu():
-    if get_setting("maintenance") == "1": return jsonify({"success": False, "error": "Sistem bakımda."})
-    if 'user_id' not in session: return jsonify({"success": False, "error": "Giriş yapın."}), 401
-    
-    req = request.json or {}; q_type = req.get("type")
-    try:
-        if q_type == "osint_ip": return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=8).json()})
-        if q_type == "osint_domain": return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=8).json()})
-        if q_type == "osint_hash":
-            txt = (req.get('text') or '').encode()
-            return jsonify({"success": True, "data": {"MD5": hashlib.md5(txt).hexdigest(), "SHA1": hashlib.sha1(txt).hexdigest(), "SHA256": hashlib.sha256(txt).hexdigest()}})
-        
-        API_MAP = {
-            "adsoyad": {"url": "https://violetpanel.cc/furkanapi/adsoyadapi.php", "params": {"ad":"ad","soyad":"soyad"}},
-            "adsoyad_proxy": {"url": "https://violetpanel.cc/furkanapi/adsoyadproxapi.php", "params": {"ad":"ad","soyad":"soyad","il":"il"}},
-            "aile": {"url": "https://violetpanel.cc/furkanapi/ailesorguapi.php", "params": {"tc":"tc"}},
-            "adres": {"url": "https://violetpanel.cc/furkanapi/adrespro.php", "params": {"tc":"tc"}},
-            "tcgsm": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"tc":"tc"}},
-            "gsmtc": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"gsm":"gsm"}},
-        }
-        if q_type not in API_MAP: return jsonify({"success": False, "error": "Geçersiz sorgu."})
-        
-        api_info = API_MAP[q_type]; params = {}
-        for k, rk in api_info["params"].items():
-            val = (req.get(k) or "").strip()
-            if val: params[rk] = val[:100]
-        if not params: return jsonify({"success": False, "error": "Eksik parametre."})
-        
-        time.sleep(0.8) 
-        
-        r = requests.get(api_info["url"], params=params, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
-        
-        try:
-            data = r.json()
-        except ValueError:
-            return jsonify({"success": False, "error": "Dış API limiti aşıldı, lütfen bekleyin."})
-
-        is_ok = data.get("success") in [True, "true"] or data.get("durum") in ["basarili", "başarılı"] or data.get("status") == "success"
-        result = data.get("data") or data.get("veri") or data.get("result")
-        
-        if not is_ok or not result: 
-            return jsonify({"success": False, "error": "Kayıt bulunamadı veya API limiti aşıldı."})
-            
-        return jsonify({"success": True, "data": result})
-    except Exception: 
-        return jsonify({"success": False, "error": "Bağlantı hatası oluştu."})
-
-# --- ADMIN İŞLEMLERİ ---
 @app.route("/admin-logout-x9", methods=["POST"])
 def admin_logout(): session.pop("admin", None); return redirect("/admin-panel-x9")
 
