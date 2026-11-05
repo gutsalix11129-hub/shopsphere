@@ -76,7 +76,8 @@ def firewall():
     if request.method in ("POST", "PUT", "DELETE"):
         token = request.headers.get("X-CSRF-Token") or request.form.get("_csrf")
         stored = session.get("_csrf")
-        if not token or not stored or not secrets.compare_digest(token, stored):
+        # ÇÖZÜM BURADA: Güvenli karşılaştırma için .encode() kullanıyoruz
+        if not token or not stored or not secrets.compare_digest(str(token).encode('utf-8'), str(stored).encode('utf-8')):
             if request.path.startswith("/api/"): return jsonify({"success": False, "error": "CSRF Hatası."}), 403
             return "CSRF doğrulaması başarısız.", 403
 
@@ -132,10 +133,15 @@ def admin_dashboard():
     if not session.get("admin"):
         error = None
         if request.method == "POST":
-            if not check_rate_limit(f"admin_{ip}", max_req=5): error = "Çok fazla deneme."
-            elif secrets.compare_digest(request.form.get("pass", ""), ADMIN_PASSWORD):
-                session["admin"] = True; session["admin_since"] = time.time(); return redirect("/admin-panel-x9")
-            else: error = "Hatalı şifre."
+            if not check_rate_limit(f"admin_{ip}", max_req=5): 
+                error = "Çok fazla deneme."
+            else:
+                # ÇÖZÜM BURADA: Türkçe karakter çökmesini engellemek için .encode('utf-8') ekledik
+                girilen_sifre = request.form.get("pass", "")
+                if secrets.compare_digest(str(girilen_sifre).encode('utf-8'), str(ADMIN_PASSWORD).encode('utf-8')):
+                    session["admin"] = True; session["admin_since"] = time.time(); return redirect("/admin-panel-x9")
+                else: 
+                    error = "Hatalı şifre."
         
         return render_template('admin.html', show_login=True, login_error=error, 
                                total_users=0, total_queries=0, banned_users=0, users=[], logs=[], 
@@ -248,6 +254,47 @@ def api_sorgu():
 
 @app.route("/admin-logout-x9", methods=["POST"])
 def admin_logout(): session.pop("admin", None); return redirect("/admin-panel-x9")
+
+@app.route("/admin-history/<int:uid>")
+def admin_history(uid):
+    if not session.get("admin"): return jsonify({"success": False}), 401
+    with get_db() as c:
+        rows = c.execute("SELECT timestamp, query_type, query_param, status FROM logs WHERE user_id=? ORDER BY id DESC LIMIT 200", (uid,)).fetchall()
+    return jsonify({"success": True, "history": [{"time": r[0], "type": r[1], "param": r[2], "status": r[3]} for r in rows]})
+
+@app.route("/admin-reset-pass/<int:uid>", methods=["POST"])
+def admin_reset_pass(uid):
+    if not session.get("admin"): return redirect("/")
+    tmp = secrets.token_urlsafe(9)
+    with get_db() as c:
+        c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(tmp), uid)); c.commit()
+    tp = session.get("_temp_passes", {}); tp[str(uid)] = tmp; session["_temp_passes"] = dict(list(tp.items())[-5:])
+    return redirect("/admin-panel-x9")
+
+@app.route("/gizli-bakim-degistir", methods=["POST"])
+def admin_toggle_maint():
+    if not session.get("admin"): return redirect("/")
+    set_setting("maintenance", "0" if get_setting("maintenance") == "1" else "1")
+    return redirect("/admin-panel-x9")
+
+@app.route("/gizli-duyuru-gonder", methods=["POST"])
+def admin_broadcast():
+    if not session.get("admin"): return redirect("/")
+    set_setting("broadcast", (request.form.get("bc_text") or "").strip()[:500])
+    return redirect("/admin-panel-x9")
+
+@app.route("/admin-ban/<int:uid>", methods=["POST"])
+def admin_ban_user(uid):
+    if not session.get("admin"): return redirect("/")
+    with get_db() as c: c.execute("UPDATE users SET banned = CASE WHEN banned=1 THEN 0 ELSE 1 END WHERE id=?", (uid,)); c.commit()
+    return redirect("/admin-panel-x9")
+
+@app.route("/admin-delete/<int:uid>", methods=["POST"])
+def admin_delete_user(uid):
+    if not session.get("admin"): return redirect("/")
+    with get_db() as c:
+        c.execute("DELETE FROM users WHERE id=?", (uid,)); c.execute("DELETE FROM logs WHERE user_id=?", (uid,)); c.commit()
+    return redirect("/admin-panel-x9")
 
 # --- HATA YÖNETİMİ (Hata detayını ekrana basar) ---
 @app.errorhandler(500)
