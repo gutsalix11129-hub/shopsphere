@@ -30,7 +30,6 @@ app.config.update(
 )
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
-# Render için kalıcı disk ayarı
 DB_DIR = "/var/data" if os.path.exists("/var/data") else "/tmp"
 if os.name == 'nt': DB_DIR = "."
 DB_FILE = os.path.join(DB_DIR, "siber_karargah.db")
@@ -43,15 +42,12 @@ def get_db():
 def init_db():
     with get_db() as c:
         c.executescript("""
-        CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, banned INTEGER DEFAULT 0, created_at TEXT);
+        CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, banned INTEGER DEFAULT 0, created_at TEXT, avatar TEXT);
         CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, query_type TEXT, query_param TEXT, ip TEXT, timestamp TEXT, status TEXT);
         CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+        CREATE TABLE IF NOT EXISTS tickets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, subject TEXT, message TEXT, reply TEXT, status TEXT DEFAULT 'open', created_at TEXT, replied_at TEXT);
         CREATE INDEX IF NOT EXISTS idx_logs_user ON logs(user_id);
         """)
-        # Avatar sütunu ekleme (Hata verirse geç)
-        try: c.execute("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT ''")
-        except sqlite3.OperationalError: pass
-        
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('maintenance', '0')")
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('broadcast', 'Sistemimize hoş geldiniz!')")
         c.commit()
@@ -179,6 +175,50 @@ def api_change_password():
         c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(new), session['user_id'])); c.commit()
     return jsonify({"success": True})
 
+@app.route("/api/upload_avatar", methods=["POST"])
+def api_upload_avatar():
+    if 'user_id' not in session: return jsonify({"success": False, "error": "Giriş yapın."}), 401
+    req = request.json or {}
+    img_data = req.get("image")
+    if not img_data or not img_data.startswith("data:image"):
+        return jsonify({"success": False, "error": "Geçersiz resim verisi."})
+    
+    # Base64 maksimum boyut kontrolü (~2MB)
+    if len(img_data) > 2 * 1024 * 1024: 
+        return jsonify({"success": False, "error": "Resim boyutu çok büyük. Lütfen daha küçük bir fotoğraf seçin."})
+        
+    with get_db() as c:
+        c.execute("UPDATE users SET avatar=? WHERE id=?", (img_data, session['user_id']))
+        c.commit()
+    return jsonify({"success": True})
+
+@app.route("/api/my_history")
+def api_my_history():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    with get_db() as c:
+        rows = c.execute("SELECT timestamp, query_type, query_param, status FROM logs WHERE user_id=? ORDER BY id DESC LIMIT 100", (session['user_id'],)).fetchall()
+    return jsonify({"success": True, "history": [{"time": r[0], "type": r[1], "param": r[2], "status": r[3]} for r in rows]})
+
+@app.route("/api/create_ticket", methods=["POST"])
+def api_create_ticket():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    req = request.json or {}
+    subject = (req.get("subject") or "").strip()
+    message = (req.get("message") or "").strip()
+    if not subject or not message: return jsonify({"success": False, "error": "Konu ve mesaj zorunludur."})
+    with get_db() as c:
+        c.execute("INSERT INTO tickets (user_id, username, subject, message, status, created_at) VALUES (?,?,?,?, 'open', ?)", 
+                  (session['user_id'], session['username'], subject, message, datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")))
+        c.commit()
+    return jsonify({"success": True})
+
+@app.route("/api/my_tickets")
+def api_my_tickets():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    with get_db() as c:
+        rows = c.execute("SELECT id, subject, message, reply, status, created_at FROM tickets WHERE user_id=? ORDER BY id DESC", (session['user_id'],)).fetchall()
+    return jsonify({"success": True, "tickets": [{"id": r[0], "subject": r[1], "message": r[2], "reply": r[3], "status": r[4], "time": r[5]} for r in rows]})
+
 @app.route("/api/sorgu", methods=["POST"])
 def api_sorgu():
     if get_setting("maintenance") == "1": return jsonify({"success": False, "error": "Sistem bakımda."})
@@ -241,6 +281,53 @@ def api_sorgu():
     except Exception: 
         return jsonify({"success": False, "error": "Bağlantı hatası oluştu."})
 
+@app.route("/api/bulk_sorgu", methods=["POST"])
+def api_bulk_sorgu():
+    if get_setting("maintenance") == "1": return jsonify({"success": False, "error": "Sistem bakımda."})
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    
+    ip = request.remote_addr or "?"
+    req = request.json or {}; q_type = req.get("type"); items = req.get("items", [])
+    uid, uname = session['user_id'], session['username']
+    
+    if not items or not isinstance(items, list): return jsonify({"success": False, "error": "Geçersiz veri."})
+    if len(items) > 20: return jsonify({"success": False, "error": "Tek seferde en fazla 20 sorgu yapabilirsiniz."})
+    
+    API_MAP = {
+        "aile": {"url": "https://violetpanel.cc/furkanapi/ailesorguapi.php", "param_key": "tc", "pattern": r"^\d{11}$"},
+        "adres": {"url": "https://violetpanel.cc/furkanapi/adrespro.php", "param_key": "tc", "pattern": r"^\d{11}$"},
+        "tcgsm": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "param_key": "tc", "pattern": r"^\d{11}$"},
+        "gsmtc": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "param_key": "gsm", "pattern": r"^\d{10,11}$"},
+    }
+    if q_type not in API_MAP: return jsonify({"success": False, "error": "Sadece TC ve GSM toplu sorgulanabilir."})
+    
+    api = API_MAP[q_type]
+    results = []
+    
+    for item in items:
+        item = str(item).strip()
+        if not re.match(api["pattern"], item):
+            results.append({"query": item, "success": False, "error": "Format hatası"})
+            continue
+            
+        try:
+            time.sleep(0.8) 
+            r = requests.get(api["url"], params={api["param_key"]: item}, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+            data = r.json()
+            is_ok = data.get("success") in [True, "true"] or data.get("durum") in ["basarili", "başarılı"]
+            result = data.get("data") or data.get("veri") or data.get("result")
+            
+            if is_ok and result:
+                results.append({"query": item, "success": True, "data": result})
+                log_query(uid, uname, f"bulk_{q_type}", item, ip, "basarili")
+            else:
+                results.append({"query": item, "success": False, "error": "Bulunamadı"})
+                log_query(uid, uname, f"bulk_{q_type}", item, ip, "basarisiz")
+        except Exception:
+            results.append({"query": item, "success": False, "error": "Bağlantı hatası"})
+            
+    return jsonify({"success": True, "results": results})
+
 @app.route("/admin-panel-x9", methods=["GET", "POST"])
 def admin_dashboard():
     ip = request.remote_addr or "?"
@@ -253,7 +340,7 @@ def admin_dashboard():
                 if secrets.compare_digest(str(girilen_sifre).encode('utf-8'), str(ADMIN_PASSWORD).encode('utf-8')):
                     session["admin"] = True; session["admin_since"] = time.time(); return redirect("/admin-panel-x9")
                 else: error = "Hatalı şifre."
-        return render_template('admin.html', show_login=True, login_error=error, total_users=0, total_queries=0, banned_users=0, users=[], logs=[], maint="0", current_bc="", chart_labels="[]", chart_data="[]", daily_labels="[]", daily_data="[]", temp_passes={}, popular_queries=[], success_count=0, fail_count=0)
+        return render_template('admin.html', show_login=True, login_error=error, total_users=0, total_queries=0, banned_users=0, users=[], logs=[], maint="0", current_bc="", chart_labels="[]", chart_data="[]", daily_labels="[]", daily_data="[]", temp_passes={}, popular_queries=[], success_count=0, fail_count=0, tickets=[])
 
     if time.time() - session.get("admin_since", 0) > 3600:
         session.pop("admin", None); return redirect("/admin-panel-x9")
@@ -266,6 +353,7 @@ def admin_dashboard():
             FROM users u LEFT JOIN logs l ON u.id = l.user_id
             GROUP BY u.id ORDER BY u.id DESC
         """).fetchall()
+        tickets = c.execute("SELECT * FROM tickets ORDER BY status ASC, id DESC").fetchall()
         total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
         total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         banned_users = c.execute("SELECT COUNT(*) FROM users WHERE banned=1").fetchone()[0]
@@ -280,7 +368,17 @@ def admin_dashboard():
         daily_counts = [c.execute("SELECT COUNT(*) FROM logs WHERE timestamp LIKE ?", (f"{d}%",)).fetchone()[0] for d in dates]
         daily_labels = json.dumps(dates); daily_data = json.dumps(daily_counts)
 
-    return render_template('admin.html', show_login=False, logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"), chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, temp_passes=temp_passes, popular_queries=popular_queries, success_count=success_count, fail_count=fail_count)
+    return render_template('admin.html', show_login=False, logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"), chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, temp_passes=temp_passes, popular_queries=popular_queries, success_count=success_count, fail_count=fail_count, tickets=tickets)
+
+@app.route("/admin-reply-ticket/<int:tid>", methods=["POST"])
+def admin_reply_ticket(tid):
+    if not session.get("admin"): return redirect("/")
+    reply = request.form.get("reply", "").strip()
+    if reply:
+        with get_db() as c:
+            c.execute("UPDATE tickets SET reply=?, status='closed', replied_at=? WHERE id=?", (reply, datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), tid))
+            c.commit()
+    return redirect("/admin-panel-x9")
 
 @app.route("/admin-add-user", methods=["POST"])
 def admin_add_user():
