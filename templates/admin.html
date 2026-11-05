@@ -146,7 +146,7 @@
         <div class="mid-grid">
             <div class="card">
                 <div class="card-header"><h2><i class="fa-solid fa-flask" style="color:var(--primary);"></i> Canlı Sorgu Test Aracı</h2></div>
-                <p style="font-size:13px; color:#94a3b8; margin-bottom:15px;">Admin yetkisiyle API'lerin çalışıp çalışmadığını buradan test edebilirsiniz. Sonuç direkt aşağıda JSON olarak belirir.</p>
+                <p style="font-size:13px; color:#94a3b8; margin-bottom:15px;">Admin yetkisiyle API'lerin çalışıp çalışmadığını buradan test edebilirsiniz.</p>
                 <div class="test-form">
                     <select id="testType" onchange="updateTestInputs()">
                         <option value="adsoyad">Mernis (Ad Soyad)</option>
@@ -186,27 +186,41 @@
                                 <td style="text-align:right;"><b style="color:var(--warn);">{{ pq[2] }} kez</b></td>
                             </tr>
                             {% endfor %}
-                        </ul>
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h2><i class="fa-solid fa-bullhorn"></i> Duyuru & Bakım</h2>
-                <form method="POST" action="/gizli-bakim-degistir" style="margin:0;">
+        <!-- MANUEL KULLANICI EKLEME VE DUYURU -->
+        <div class="mid-grid">
+            <div class="card">
+                <div class="card-header"><h2><i class="fa-solid fa-user-plus" style="color:var(--primary);"></i> Manuel Kullanıcı Ekle</h2></div>
+                <form action="/admin-add-user" method="POST" style="display:flex; flex-direction:column; gap:10px;">
                     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn {{ 'btn-success' if maint == '1' else 'btn-warn' }}">{{ 'Bakımı Kapat' if maint == '1' else 'Bakımı Aç' }}</button>
+                    <input type="text" name="username" placeholder="Kullanıcı Adı" required style="padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text);">
+                    <input type="password" name="password" placeholder="Şifre (Min 6 karakter)" required minlength="6" style="padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text);">
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-plus"></i> Kullanıcıyı Kaydet</button>
                 </form>
             </div>
-            <form action="/gizli-duyuru-gonder" method="POST" class="bc-form">
-                <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-                <input type="text" name="bc_text" value="{{ current_bc }}" placeholder="Duyuru metnini yazın..." maxlength="500">
-                <button type="submit" class="btn btn-primary">Yayınla</button>
-            </form>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-bullhorn" style="color:var(--warn);"></i> Duyuru & Bakım</h2>
+                    <form method="POST" action="/gizli-bakim-degistir" style="margin:0;">
+                        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn {{ 'btn-success' if maint == '1' else 'btn-warn' }}">{{ 'Bakımı Kapat' if maint == '1' else 'Bakımı Aç' }}</button>
+                    </form>
+                </div>
+                <form action="/gizli-duyuru-gonder" method="POST" style="display:flex; flex-direction:column; gap:10px;">
+                    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                    <input type="text" name="bc_text" value="{{ current_bc }}" placeholder="Duyuru metnini yazın..." maxlength="500" style="padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text);">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Yayınla</button>
+                </form>
+            </div>
         </div>
 
+        <!-- KULLANICI YÖNETİMİ -->
         <div class="card">
             <div class="card-header"><h2><i class="fa-solid fa-users"></i> Kullanıcı Yönetimi</h2></div>
             <div class="table-wrap">
@@ -235,6 +249,7 @@
             </div>
         </div>
 
+        <!-- LOGLAR -->
         <div class="card">
             <div class="card-header">
                 <h2><i class="fa-solid fa-list-ul"></i> Sistem Sorgu Geçmişi (Son 500)</h2>
@@ -325,21 +340,10 @@
             const type = document.getElementById('testType').value;
             const p1 = document.getElementById('testParam1');
             const p2 = document.getElementById('testParam2');
-            
-            if(type === 'adsoyad') {
-                p1.placeholder = 'Ad';
-                p2.placeholder = 'Soyad';
-                p2.style.display = 'block';
-            } else if (type === 'aile' || type === 'adres' || type === 'tcgsm') {
-                p1.placeholder = 'TC Kimlik No (11 Hane)';
-                p2.style.display = 'none';
-            } else if (type === 'gsmtc') {
-                p1.placeholder = 'GSM Numarası';
-                p2.style.display = 'none';
-            } else if (type === 'osint_ip') {
-                p1.placeholder = 'IP Adresi';
-                p2.style.display = 'none';
-            }
+            if(type === 'adsoyad') { p1.placeholder = 'Ad'; p2.placeholder = 'Soyad'; p2.style.display = 'block'; } 
+            else if (type === 'aile' || type === 'adres' || type === 'tcgsm') { p1.placeholder = 'TC Kimlik No'; p2.style.display = 'none'; } 
+            else if (type === 'gsmtc') { p1.placeholder = 'GSM Numarası'; p2.style.display = 'none'; } 
+            else if (type === 'osint_ip') { p1.placeholder = 'IP Adresi'; p2.style.display = 'none'; }
         }
         updateTestInputs();
 
@@ -348,45 +352,19 @@
             let p1 = document.getElementById('testParam1').value.trim();
             let p2 = document.getElementById('testParam2').value.trim();
             let resBox = document.getElementById('testResult');
-            
-            resBox.style.display = 'block';
-            resBox.style.color = '#f59e0b';
-            resBox.textContent = 'Sorgulanıyor... Lütfen bekleyin.';
-            
+            resBox.style.display = 'block'; resBox.style.color = '#f59e0b'; resBox.textContent = 'Sorgulanıyor...';
             let payload = { type: type };
-            if (type === 'adsoyad') {
-                if (!p1 || !p2) { resBox.style.color = '#ef4444'; return resBox.textContent = 'Ad ve Soyad zorunludur.'; }
-                payload.ad = p1; payload.soyad = p2;
-            } else if (type === 'aile' || type === 'adres' || type === 'tcgsm') {
-                if (!p1) { resBox.style.color = '#ef4444'; return resBox.textContent = 'TC Kimlik No zorunludur.'; }
-                payload.tc = p1;
-            } else if (type === 'gsmtc') {
-                if (!p1) { resBox.style.color = '#ef4444'; return resBox.textContent = 'GSM Numarası zorunludur.'; }
-                payload.gsm = p1;
-            } else if (type === 'osint_ip') {
-                if (!p1) { resBox.style.color = '#ef4444'; return resBox.textContent = 'IP Adresi zorunludur.'; }
-                payload.ip = p1;
-            }
+            if (type === 'adsoyad') { if (!p1 || !p2) { resBox.style.color = '#ef4444'; return resBox.textContent = 'Ad ve Soyad zorunludur.'; } payload.ad = p1; payload.soyad = p2; } 
+            else if (type === 'aile' || type === 'adres' || type === 'tcgsm') { if (!p1) { resBox.style.color = '#ef4444'; return resBox.textContent = 'TC zorunludur.'; } payload.tc = p1; } 
+            else if (type === 'gsmtc') { if (!p1) { resBox.style.color = '#ef4444'; return resBox.textContent = 'GSM zorunludur.'; } payload.gsm = p1; } 
+            else if (type === 'osint_ip') { if (!p1) { resBox.style.color = '#ef4444'; return resBox.textContent = 'IP zorunludur.'; } payload.ip = p1; }
 
             try {
                 let csrf = document.querySelector('meta[name="csrf-token"]').content;
-                let r = await fetch('/api/sorgu', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrf},
-                    body: JSON.stringify(payload)
-                }).then(x => x.json());
-                
-                if (r.success) {
-                    resBox.style.color = '#10b981';
-                    resBox.textContent = "✅ BAŞARILI\n\n" + JSON.stringify(r.data, null, 2);
-                } else {
-                    resBox.style.color = '#ef4444';
-                    resBox.textContent = "❌ HATA: " + r.error;
-                }
-            } catch(e) {
-                resBox.style.color = '#ef4444';
-                resBox.textContent = "Bağlantı hatası oluştu.";
-            }
+                let r = await fetch('/api/sorgu', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrf}, body: JSON.stringify(payload) }).then(x => x.json());
+                if (r.success) { resBox.style.color = '#10b981'; resBox.textContent = "✅ BAŞARILI\n\n" + JSON.stringify(r.data, null, 2); } 
+                else { resBox.style.color = '#ef4444'; resBox.textContent = "❌ HATA: " + r.error; }
+            } catch(e) { resBox.style.color = '#ef4444'; resBox.textContent = "Bağlantı hatası."; }
         }
     </script>
 </body>
