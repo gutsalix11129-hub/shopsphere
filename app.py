@@ -17,10 +17,9 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
 
-# --- GÜVENLİK AYARLARI ---
 SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
-SOCIALFINDER_TOKEN = "318f49ac1ff1d8bf7f253f85999ac5bb" # TikTok/IG API Token
+SOCIALFINDER_TOKEN = "318f49ac1ff1d8bf7f253f85999ac5bb"
 
 app.secret_key = SECRET_KEY
 app.config.update(
@@ -31,12 +30,10 @@ app.config.update(
 )
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
-# Render Kalıcı Disk veya /tmp ayarı
 DB_DIR = "/var/data" if os.path.exists("/var/data") else "/tmp"
-if os.name == 'nt': DB_DIR = "." # Windows local test için
+if os.name == 'nt': DB_DIR = "."
 DB_FILE = os.path.join(DB_DIR, "siber_karargah.db")
 
-# --- VERİTABANI ---
 def get_db():
     conn = sqlite3.connect(DB_FILE, timeout=20)
     conn.execute("PRAGMA journal_mode=WAL;")
@@ -56,7 +53,6 @@ def init_db():
 
 init_db()
 
-# --- CSRF & GÜVENLİK DUVARI (WAF) ---
 def csrf_token():
     if "_csrf" not in session: session["_csrf"] = secrets.token_urlsafe(32)
     return session["_csrf"]
@@ -85,7 +81,6 @@ def firewall():
             if request.path.startswith("/api/"): return jsonify({"success": False, "error": "CSRF Hatası. Sayfayı yenileyin."}), 403
             return "CSRF doğrulaması başarısız.", 403
 
-# --- RATE LIMIT ---
 RATE_LIMIT = {}
 def check_rate_limit(key, max_req=30):
     now = time.time()
@@ -113,7 +108,6 @@ def log_query(uid, uname, q_type, param, ip, status):
 
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,32}$")
 
-# --- ROTALAR ---
 @app.route("/")
 def home():
     if 'user_id' not in session: return redirect('/login')
@@ -130,7 +124,6 @@ def login_page():
     if 'user_id' in session: return redirect('/')
     return render_template('login.html')
 
-# --- KULLANICI API'LERİ ---
 @app.route("/api/check_username")
 def api_check_username():
     u = (request.args.get("u") or "").strip().lower()
@@ -179,7 +172,6 @@ def api_change_password():
         c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(new), session['user_id'])); c.commit()
     return jsonify({"success": True})
 
-# --- SORGU API ---
 @app.route("/api/sorgu", methods=["POST"])
 def api_sorgu():
     if get_setting("maintenance") == "1": return jsonify({"success": False, "error": "Sistem bakımda."})
@@ -189,31 +181,25 @@ def api_sorgu():
     req = request.json or {}; q_type = req.get("type"); uid, uname = session['user_id'], session['username']
     
     try:
-        # --- SOSYAL MEDYA SORGU (TikTok / Instagram) ---
         if q_type == "social_tiktok":
             text_to_search = (req.get('text') or '').strip()
             if not text_to_search: return jsonify({"success": False, "error": "Aranacak veri girin."})
-            
             payload = {"action": "searchTiktok", "token": SOCIALFINDER_TOKEN, "text": text_to_search}
             r = requests.post("https://socialfinder.notetonotes.com/api/index.php?v=1", json=payload, headers={"Content-Type": "application/json"}, timeout=15)
             data = r.json()
-            
             if data.get("status") == "success":
                 log_query(uid, uname, q_type, text_to_search, ip, "basarili")
                 return jsonify({"success": True, "data": data.get("data")})
             else:
-                err = data.get("message", "Hata oluştu.")
                 log_query(uid, uname, q_type, text_to_search, ip, "basarisiz")
-                return jsonify({"success": False, "error": err})
+                return jsonify({"success": False, "error": data.get("message", "Hata oluştu.")})
 
-        # --- OSINT ARAÇLARI ---
         if q_type == "osint_ip": return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=8).json()})
         if q_type == "osint_domain": return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=8).json()})
         if q_type == "osint_hash":
             txt = (req.get('text') or '').encode()
             return jsonify({"success": True, "data": {"MD5": hashlib.md5(txt).hexdigest(), "SHA1": hashlib.sha1(txt).hexdigest(), "SHA256": hashlib.sha256(txt).hexdigest()}})
         
-        # --- MERNİS / GSM / ADRES ---
         API_MAP = {
             "adsoyad": {"url": "https://violetpanel.cc/furkanapi/adsoyadapi.php", "params": {"ad":"ad","soyad":"soyad"}},
             "adsoyad_proxy": {"url": "https://violetpanel.cc/furkanapi/adsoyadproxapi.php", "params": {"ad":"ad","soyad":"soyad","il":"il"}},
@@ -230,7 +216,7 @@ def api_sorgu():
             if val: params[rk] = val[:100]; query_str += f"{rk}={val[:100]} "
         if not params: return jsonify({"success": False, "error": "Eksik parametre."})
         
-        time.sleep(0.8) # API Ban Koruması
+        time.sleep(0.8) 
         
         r = requests.get(api_info["url"], params=params, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
         try: data = r.json()
@@ -248,7 +234,6 @@ def api_sorgu():
     except Exception: 
         return jsonify({"success": False, "error": "Bağlantı hatası oluştu."})
 
-# --- ADMIN PANELİ VE İŞLEMLERİ ---
 @app.route("/admin-panel-x9", methods=["GET", "POST"])
 def admin_dashboard():
     ip = request.remote_addr or "?"
@@ -261,8 +246,7 @@ def admin_dashboard():
                 if secrets.compare_digest(str(girilen_sifre).encode('utf-8'), str(ADMIN_PASSWORD).encode('utf-8')):
                     session["admin"] = True; session["admin_since"] = time.time(); return redirect("/admin-panel-x9")
                 else: error = "Hatalı şifre."
-        
-        return render_template('admin.html', show_login=True, login_error=error, total_users=0, total_queries=0, banned_users=0, users=[], logs=[], maint="0", current_bc="", chart_labels="[]", chart_data="[]", daily_labels="[]", daily_data="[]", temp_passes={})
+        return render_template('admin.html', show_login=True, login_error=error, total_users=0, total_queries=0, banned_users=0, users=[], logs=[], maint="0", current_bc="", chart_labels="[]", chart_data="[]", daily_labels="[]", daily_data="[]", temp_passes={}, popular_queries=[], success_count=0, fail_count=0)
 
     if time.time() - session.get("admin_since", 0) > 3600:
         session.pop("admin", None); return redirect("/admin-panel-x9")
@@ -280,12 +264,16 @@ def admin_dashboard():
         banned_users = c.execute("SELECT COUNT(*) FROM users WHERE banned=1").fetchone()[0]
         q_stats = c.execute("SELECT query_type, COUNT(*) FROM logs GROUP BY query_type").fetchall()
         
+        popular_queries = c.execute("SELECT query_type, query_param, COUNT(*) as count FROM logs WHERE status='basarili' AND query_param != '' GROUP BY query_param ORDER BY count DESC LIMIT 10").fetchall()
+        success_count = c.execute("SELECT COUNT(*) FROM logs WHERE status='basarili'").fetchone()[0]
+        fail_count = c.execute("SELECT COUNT(*) FROM logs WHERE status='basarisiz'").fetchone()[0]
+        
         chart_labels = json.dumps([q[0] for q in q_stats]); chart_data = json.dumps([q[1] for q in q_stats])
         dates = [(datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(6, -1, -1)]
         daily_counts = [c.execute("SELECT COUNT(*) FROM logs WHERE timestamp LIKE ?", (f"{d}%",)).fetchone()[0] for d in dates]
         daily_labels = json.dumps(dates); daily_data = json.dumps(daily_counts)
 
-    return render_template('admin.html', show_login=False, logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"), chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, temp_passes=temp_passes)
+    return render_template('admin.html', show_login=False, logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"), chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, temp_passes=temp_passes, popular_queries=popular_queries, success_count=success_count, fail_count=fail_count)
 
 @app.route("/admin-logout-x9", methods=["POST"])
 def admin_logout(): session.pop("admin", None); return redirect("/admin-panel-x9")
