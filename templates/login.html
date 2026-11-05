@@ -10,63 +10,49 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background: #0f172a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: hidden; position: relative; }
-        
         .blob { position: absolute; filter: blur(80px); z-index: 0; opacity: 0.6; animation: float 10s infinite alternate; }
         .blob-1 { width: 400px; height: 400px; background: #2563eb; top: -100px; left: -100px; }
         .blob-2 { width: 350px; height: 350px; background: #8b5cf6; bottom: -50px; right: -50px; animation-delay: -5s; }
         @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 50px) scale(1.1); } }
-
         .container { width: 100%; max-width: 440px; position: relative; z-index: 1; }
         .card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,.5); overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
-        
         .card-header { padding: 35px 30px 20px; text-align: center; }
         .logo-icon { width: 64px; height: 64px; background: linear-gradient(135deg, #2563eb, #1d4ed8); border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; color: #fff; margin-bottom: 16px; box-shadow: 0 10px 20px rgba(37,99,235,.3); }
         .card-header h1 { font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
         .card-header p { font-size: 14px; color: #64748b; margin-top: 6px; }
-        
         .tabs { display: flex; background: #f1f5f9; padding: 6px; border-radius: 14px; margin: 0 30px; }
         .tab { flex: 1; text-align: center; padding: 12px; font-size: 14px; font-weight: 700; color: #64748b; border-radius: 10px; cursor: pointer; transition: .3s; user-select: none; }
         .tab.active { background: #fff; color: #2563eb; box-shadow: 0 4px 10px rgba(0,0,0,.05); }
-        
         .form-body { padding: 30px; }
         .form-panel { display: none; animation: slideUp .4s ease; }
         .form-panel.active { display: block; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-        
         .form-group { margin-bottom: 20px; position: relative; }
         .form-group label { display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
         .form-group input { width: 100%; padding: 15px 45px 15px 15px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 15px; color: #1e293b; background: #f8fafc; transition: .2s; }
         .form-group input:focus { outline: none; border-color: #2563eb; background: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
         .form-group input.invalid { border-color: #ef4444; background: #fef2f2; }
         .form-group input.valid { border-color: #10b981; background: #f0fdf4; }
-        
         .input-icon, .input-status { position: absolute; right: 15px; top: 40px; font-size: 16px; }
         .input-icon { color: #94a3b8; cursor: pointer; background: none; border: none; transition: .2s; }
         .input-icon:hover { color: #2563eb; }
         .input-status { pointer-events: none; opacity: 0; transition: opacity .2s; }
-        .input-status.show { opacity: 1; }
-        .input-status.ok { color: #10b981; } .input-status.err { color: #ef4444; }
-        
+        .input-status.show { opacity: 1; } .input-status.ok { color: #10b981; } .input-status.err { color: #ef4444; }
         .hint { font-size: 11.5px; color: #94a3b8; margin-top: 6px; }
         .hint.error { color: #ef4444; } .hint.success { color: #10b981; }
-        
         .strength-meter { display: flex; gap: 5px; margin-top: 10px; }
         .strength-bar { flex: 1; height: 5px; background: #e2e8f0; border-radius: 3px; transition: .3s; }
         .strength-bar.weak { background: #ef4444; } .strength-bar.medium { background: #f59e0b; } .strength-bar.strong { background: #10b981; }
-        
         .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #2563eb, #1d4ed8); cursor: pointer; transition: .2s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
         .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(37,99,235,.3); }
         .btn:disabled { opacity: .7; cursor: not-allowed; }
-        
         .spinner { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: none; }
         .btn.loading .spinner { display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        
         .alert { display: none; padding: 14px; border-radius: 10px; font-size: 13.5px; margin-bottom: 20px; align-items: flex-start; gap: 10px; }
         .alert.show { display: flex; }
         .alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
         .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-        
         .footer-text { text-align: center; font-size: 13.5px; color: #64748b; margin-top: 25px; }
         .footer-text a { color: #2563eb; font-weight: 700; text-decoration: none; cursor: pointer; }
     </style>
@@ -74,7 +60,6 @@
 <body>
     <div class="blob blob-1"></div>
     <div class="blob blob-2"></div>
-
     <div class="container">
         <div class="card">
             <div class="card-header">
@@ -87,7 +72,6 @@
                 <div class="tab" data-tab="register">Kayıt Ol</div>
             </div>
             <div class="form-body">
-                <!-- LOGIN EKRANI -->
                 <div class="form-panel active" id="panel-login">
                     <div class="alert alert-error" id="loginErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
                     <div class="alert alert-success" id="loginOk"><i class="fa-solid fa-circle-check"></i><span></span></div>
@@ -105,8 +89,6 @@
                     </form>
                     <div class="footer-text">Hesabınız yok mu? <a data-tab="register">Hemen Kayıt Olun</a></div>
                 </div>
-
-                <!-- KAYIT EKRANI -->
                 <div class="form-panel" id="panel-register">
                     <div class="alert alert-error" id="regErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
                     <div class="alert alert-success" id="regOk"><i class="fa-solid fa-circle-check"></i><span></span></div>
@@ -135,55 +117,40 @@
             </div>
         </div>
     </div>
-
     <script>
         const $ = id => document.getElementById(id);
         const CSRF = document.querySelector('meta[name="csrf-token"]').content;
         const HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
         const USERNAME_RE = /^[a-zA-Z0-9_]{3,32}$/;
         let usernameCheckTimer = null, lastCheckedUsername = '';
-
         function showAlert(el, msg) { el.querySelector('span').textContent = msg; el.classList.add('show'); }
         function hideAlert(el) { el.classList.remove('show'); }
         function setLoading(btn, loading, text) { btn.disabled = loading; btn.classList.toggle('loading', loading); if (text) btn.querySelector('.btn-text').textContent = text; }
-        
         function switchTab(name) {
             ['loginErr', 'loginOk', 'regErr', 'regOk'].forEach(id => hideAlert($(id)));
             document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
             document.querySelectorAll('.form-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
             history.replaceState(null, '', '#' + name);
         }
-        
         document.querySelectorAll('[data-tab]').forEach(el => el.addEventListener('click', () => switchTab(el.dataset.tab)));
         if (location.hash === '#register') switchTab('register');
-
         document.querySelectorAll('.toggle-pw').forEach(btn => {
             btn.addEventListener('click', () => {
                 const inp = $(btn.dataset.target); const show = inp.type === 'password';
                 inp.type = show ? 'text' : 'password'; btn.innerHTML = show ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
             });
         });
-
-        // --- GİRİŞ YAPMA ---
         $('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault(); hideAlert($('loginErr')); hideAlert($('loginOk'));
             const u = $('login-u').value.trim(), p = $('login-p').value;
             if (!u || !p) return showAlert($('loginErr'), 'Tüm alanları doldurun.');
-            
             const btn = $('loginBtn'); setLoading(btn, true, 'Giriş yapılıyor…');
             try {
                 const res = await fetch('/api/login', { method: 'POST', headers: HEADERS, credentials: 'same-origin', body: JSON.stringify({ username: u, password: p }) }).then(r => r.json());
-                if (res.success) { 
-                    window.location.href = '/';
-                } else { 
-                    showAlert($('loginErr'), res.error); setLoading(btn, false, 'Giriş Yap'); 
-                }
-            } catch (_) { 
-                showAlert($('loginErr'), 'Bağlantı hatası.'); setLoading(btn, false, 'Giriş Yap'); 
-            }
+                if (res.success) { window.location.href = '/'; } 
+                else { showAlert($('loginErr'), res.error); setLoading(btn, false, 'Giriş Yap'); }
+            } catch (_) { showAlert($('loginErr'), 'Bağlantı hatası.'); setLoading(btn, false, 'Giriş Yap'); }
         });
-
-        // --- CANLI KULLANICI ADI KONTROLÜ ---
         $('reg-u').addEventListener('input', () => {
             const v = $('reg-u').value.trim(), status = $('reg-u-status'), hint = $('reg-u-hint'), inp = $('reg-u');
             inp.classList.remove('invalid', 'valid'); status.className = 'input-status fa-solid'; hint.classList.remove('error', 'success');
@@ -203,8 +170,6 @@
                 } catch (_) {}
             }, 500);
         });
-
-        // --- ŞİFRE GÜCÜ ---
         $('reg-p').addEventListener('input', () => {
             const pw = $('reg-p').value, meter = $('strengthMeter'), bars = meter.querySelectorAll('.strength-bar');
             if (!pw) { meter.style.display = 'none'; return; }
@@ -215,8 +180,6 @@
             bars.forEach((bar, i) => { bar.className = 'strength-bar' + (i < s ? ' ' + colors[s] : ''); });
             $('reg-p2').dispatchEvent(new Event('input'));
         });
-
-        // --- ŞİFRE EŞLEŞMESİ ---
         $('reg-p2').addEventListener('input', () => {
             const p1 = $('reg-p').value, p2 = $('reg-p2').value, inp = $('reg-p2'), status = $('reg-p2-status');
             inp.classList.remove('invalid', 'valid'); status.classList.remove('show', 'ok', 'err');
@@ -224,29 +187,22 @@
             if (p1 === p2 && p2.length >= 6) { inp.classList.add('valid'); status.className = 'input-status fa-solid fa-circle-check show ok'; }
             else if (p2.length >= 6) { inp.classList.add('invalid'); status.className = 'input-status fa-solid fa-circle-xmark show err'; }
         });
-
-        // --- KAYIT OLMA (Sorunsuz Yönlendirme) ---
         $('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault(); hideAlert($('regErr')); hideAlert($('regOk'));
             const u = $('reg-u').value.trim(), p = $('reg-p').value, p2 = $('reg-p2').value;
             if (!u || !p || !p2) return showAlert($('regErr'), 'Tüm alanları doldurun.');
             if (p !== p2) return showAlert($('regErr'), 'Şifreler eşleşmiyor.');
-            
             const btn = $('registerBtn'); setLoading(btn, true, 'Kayıt yapılıyor…');
             try {
                 const res = await fetch('/api/register', { method: 'POST', headers: HEADERS, credentials: 'same-origin', body: JSON.stringify({ username: u, password: p }) }).then(r => r.json());
                 if (res.success) { 
                     showAlert($('regOk'), 'Hesabınız oluşturuldu! Giriş sekmesine yönlendiriliyorsunuz…'); 
-                    // 1.5 saniye sonra Giriş sekmesine at ve bilgileri doldur
                     setTimeout(() => {
-                        switchTab('login');
-                        $('login-u').value = u;
-                        $('login-p').value = p;
+                        switchTab('login'); $('login-u').value = u; $('login-p').value = p;
                         showAlert($('loginOk'), 'Lütfen "Giriş Yap" butonuna tıklayın.');
                         setLoading(btn, false, 'Hesap Oluştur');
                     }, 1500);
-                }
-                else { showAlert($('regErr'), res.error); setLoading(btn, false, 'Hesap Oluştur'); }
+                } else { showAlert($('regErr'), res.error); setLoading(btn, false, 'Hesap Oluştur'); }
             } catch (_) { showAlert($('regErr'), 'Bağlantı hatası.'); setLoading(btn, false, 'Hesap Oluştur'); }
         });
     </script>
