@@ -134,7 +134,7 @@
             
             <div class="nav-title">SORGU ÇÖZÜMLERİ</div>
             <div class="nav-item" onclick="loadTool('adsoyad', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Mernis 2026</div>
-            <div class="nav-item" onclick="loadTool('adsoyad_proxy', this)"><div class="icon"><i class="fa-solid fa-user-shield"></i></div> Mernis Proxy <span class="badge-new">YENİ</span></div>
+            <div class="nav-item" onclick="loadTool('adsoyad_proxy', this)"><div class="icon"><i class="fa-solid fa-user-shield"></i></div> Mernis Proxy</div>
             <div class="nav-item" onclick="loadTool('aile', this)"><div class="icon"><i class="fa-solid fa-users"></i></div> Aile Çözümleri</div>
             <div class="nav-item" onclick="loadTool('tcgsm', this)"><div class="icon"><i class="fa-solid fa-phone"></i></div> GSM Çözümleri</div>
             <div class="nav-item" onclick="loadTool('gsmtc', this)"><div class="icon"><i class="fa-solid fa-phone-flip"></i></div> GSM → TC</div>
@@ -144,8 +144,26 @@
             <div class="nav-item" onclick="loadTool('osint_ip', this)"><div class="icon"><i class="fa-solid fa-network-wired"></i></div> IP Sorgu</div>
             <div class="nav-item" onclick="loadTool('osint_domain', this)"><div class="icon"><i class="fa-solid fa-globe"></i></div> Domain Sorgu</div>
             <div class="nav-item" onclick="loadTool('osint_hash', this)"><div class="icon"><i class="fa-solid fa-hashtag"></i></div> Hash Üret</div>
-            <div class="nav-item" onclick="loadTool('social_tiktok', this)"><div class="icon"><i class="fa-brands fa-tiktok"></i></div> Sosyal Medya (TikTok/IG) <span class="badge-new">YENİ</span></div>
+            <div class="nav-item" onclick="loadTool('social_tiktok', this)"><div class="icon"><i class="fa-brands fa-tiktok"></i></div> Sosyal Medya (TikTok/IG)</div>
             
+            <div class="nav-title" style="color:var(--danger);">YENİ NESİL SORGULAR (J-K)</div>
+            <div class="nav-item" onclick="loadTool('jk_tiktok', this)"><div class="icon"><i class="fa-brands fa-tiktok"></i></div> TikTok Sorgu</div>
+            <div class="nav-item" onclick="loadTool('jk_anne', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Anne Sorgu</div>
+            <div class="nav-item" onclick="loadTool('jk_annetaraf', this)"><div class="icon"><i class="fa-solid fa-users"></i></div> Anne Taraf Sorgu</div>
+            <div class="nav-item" onclick="loadTool('jk_baba', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Baba Sorgu</div>
+            <div class="nav-item" onclick="loadTool('jk_babataraf', this)"><div class="icon"><i class="fa-solid fa-users"></i></div> Baba Taraf Sorgu</div>
+            <div class="nav-item" onclick="loadTool('jk_burc', this)"><div class="icon"><i class="fa-solid fa-star"></i></div> Burç / Yaş</div>
+            <div class="nav-item" onclick="loadTool('jk_dns', this)"><div class="icon"><i class="fa-solid fa-network-wired"></i></div> DNS Sorgu</div>
+            <div class="nav-item" onclick="loadTool('jk_iban', this)"><div class="icon"><i class="fa-solid fa-building-columns"></i></div> İBAN Sorgu</div>
+            <div class="nav-item" onclick="loadTool('jk_operator', this)"><div class="icon"><i class="fa-solid fa-tower-cell"></i></div> Operatör Sorgu</div>
+            <div class="nav-item" onclick="loadTool('jk_soyagaci', this)"><div class="icon"><i class="fa-solid fa-sitemap"></i></div> Soyağacı Sorgu</div>
+            <div class="nav-item" onclick="loadTool('jk_tc', this)"><div class="icon"><i class="fa-solid fa-id-card"></i></div> TC Sorgu (J-K)</div>
+            <div class="nav-item" onclick="loadTool('jk_aile_wa', this)"><div class="icon"><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i></div> Aile Sorgu (WA)</div>
+            <div class="nav-item" onclick="loadTool('jk_aile', this)"><div class="icon"><i class="fa-solid fa-people-group"></i></div> Aile Sorgu (Std)</div>
+            <div class="nav-item" onclick="loadTool('jk_tcplus', this)"><div class="icon"><i class="fa-solid fa-circle-plus"></i></div> TC Plus (Karışık)</div>
+            <div class="nav-item" onclick="loadTool('jk_adsoyad', this)"><div class="icon"><i class="fa-solid fa-signature"></i></div> Düz Ad Soyad Sorgu</div>
+            <div class="nav-item" onclick="loadTool('dildo_tcpro', this)"><div class="icon"><i class="fa-solid fa-robot"></i></div> TC Pro (Dildo)</div>
+
             <div class="nav-title">HESABIM</div>
             <div class="nav-item" data-view="history" onclick="showView('history', this)"><div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div> Sorgu Geçmişim</div>
             <div class="nav-item" data-view="bulk" onclick="showView('bulk', this)"><div class="icon"><i class="fa-solid fa-layer-group"></i></div> Toplu Sorgu <span class="badge-new" style="background:var(--primary);">PRO</span></div>
@@ -209,6 +227,9 @@
                         <option value="adres">Adres (TC)</option>
                         <option value="tcgsm">TC → GSM</option>
                         <option value="gsmtc">GSM → TC</option>
+                        <option value="jk_anne">J-K Anne Sorgu</option>
+                        <option value="jk_baba">J-K Baba Sorgu</option>
+                        <option value="jk_aile">J-K Aile Sorgu</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -309,11 +330,9 @@
         function toast(msg, type = 'info') { const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' }; const el = document.createElement('div'); el.className = `toast ${type}`; el.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span>${escapeHtml(msg)}</span>`; $('toastWrap').appendChild(el); setTimeout(() => el.remove(), 3600); }
         function setLoading(btn, loading, html) { btn.disabled = loading; btn.innerHTML = html; }
         
-        // --- PROFİL FOTOĞRAFI GÜNCELLEME ---
         $('profileFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            
             const reader = new FileReader();
             reader.onload = function(event) {
                 const img = new Image();
@@ -321,26 +340,19 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     canvas.width = 150; canvas.height = 150;
-                    
-                    // Resmi ortadan kırpıp 150x150 yap
                     const size = Math.min(img.width, img.height);
                     const x = (img.width - size) / 2;
                     const y = (img.height - size) / 2;
                     ctx.drawImage(img, x, y, size, size, 0, 0, 150, 150);
-                    
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
                     
-                    // Sunucuya kaydet
                     fetch('/api/upload_avatar', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ image: dataUrl }) })
                     .then(r => r.json()).then(res => {
                         if (res.success) {
-                            // Ekrandaki tüm avatarları anında güncelle
                             $('profileImg').src = dataUrl;
                             $('sidebarAvatar').src = dataUrl;
                             toast('Profil fotoğrafı güncellendi.', 'success');
-                        } else {
-                            toast(res.error, 'error');
-                        }
+                        } else { toast(res.error, 'error'); }
                     }).catch(() => toast('Yükleme hatası.', 'error'));
                 };
                 img.src = event.target.result;
@@ -360,7 +372,25 @@
             'osint_ip': { title:'IP Sorgu', fields:[{ id:'ip', label:'IP Adresi' }] },
             'osint_domain': { title:'Domain Sorgu', fields:[{ id:'domain', label:'Domain Adı' }] },
             'osint_hash': { title:'Hash Üret', fields:[{ id:'text', label:'Metin' }] },
-            'social_tiktok': { title:'Sosyal Medya Sorgu (TikTok/IG)', fields:[{ id:'text', label:'Kullanıcı Adı / Telefon / E-posta' }] }
+            'social_tiktok': { title:'Sosyal Medya Sorgu (TikTok/IG)', fields:[{ id:'text', label:'Kullanıcı Adı / Telefon / E-posta' }] },
+            
+            // YENİ EKLENEN J-K.TV APİLERİ
+            'jk_tiktok': { title: 'TikTok Sorgu', fields: [{ id:'kadi', label:'Kullanıcı Adı' }] },
+            'jk_anne': { title: 'Anne Sorgu', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'jk_annetaraf': { title: 'Anne Taraf Sorgu', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'jk_baba': { title: 'Baba Sorgu', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'jk_babataraf': { title: 'Baba Taraf Sorgu', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'jk_burc': { title: 'Burç / Yaş / Doğum Günü', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'jk_dns': { title: 'DNS Sorgu', fields: [{ id:'tc', label:'Domain Adı (örn: allah.com)' }] },
+            'jk_iban': { title: 'İBAN Sorgu', fields: [{ id:'tc', label:'IBAN (TR ile başlayan)' }] },
+            'jk_operator': { title: 'Operatör Sorgu', fields: [{ id:'tc', label:'GSM Numarası', pattern:/^\d{10,11}$/ }] },
+            'jk_soyagaci': { title: 'Soyağacı Sorgu', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'jk_tc': { title: 'TC Sorgu (J-K)', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'jk_aile_wa': { title: 'Aile Sorgu (WhatsApp\'lı)', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'jk_aile': { title: 'Aile Sorgu (Standart)', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'jk_tcplus': { title: 'TC Plus (Karışık)', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'jk_adsoyad': { title: 'Düz Ad Soyad Sorgu', fields: [{ id:'adi', label:'Ad' }, { id:'soyadi', label:'Soyad' }] },
+            'dildo_tcpro': { title: 'TC Pro (Dildo)', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] }
         };
         
         let currentType = null, lastResult = null;
@@ -379,7 +409,42 @@
         function loadTool(type, el) { const tool = TOOLS[type]; if (!tool) return; currentType = type; lastResult = null; showView('query', el); $('qTitle').innerText = tool.title; $('qResults').innerHTML = ''; $('resultToolbar').innerHTML = ''; let html = ''; tool.fields.forEach(f => { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" placeholder="${f.label} girin..."></div>`; }); $('qInputs').innerHTML = html; }
         
         let isQuerying = false;
-        async function runQuery() { if (!currentType || isQuerying) return; const payload = { type: currentType }; let valid = true; TOOLS[currentType].fields.forEach(f => { const inp = $('inp_' + f.id); const val = inp.value.trim(); inp.classList.remove('invalid'); if (f.req !== false && !val) { inp.classList.add('invalid'); valid = false; } else if (val && f.pattern && !f.pattern.test(val)) { inp.classList.add('invalid'); valid = false; } if (val) payload[f.id] = val; }); if (!valid) return toast('Lütfen alanları doğru doldurun.', 'error'); isQuerying = true; const btn = $('submitBtn'); setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Sorgulanıyor...'); $('qResults').innerHTML = '<div class="spinner-lg"></div>'; $('resultToolbar').innerHTML = ''; try { const res = await fetch('/api/sorgu', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload) }).then(r => r.json()); if (!res.success) { $('qResults').innerHTML = `<div class="empty-state error"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(res.error)}</div>`; } else { lastResult = res.data; renderData(res.data); } } catch (e) { $('qResults').innerHTML = `<div class="empty-state error">Sunucu hatası veya bağlantı koptu.</div>`; } finally { isQuerying = false; setLoading(btn, false, '<i class="fa-solid fa-bolt"></i> Sorgula'); } }
+        async function runQuery() { 
+            if (!currentType || isQuerying) return; 
+            const payload = { type: currentType }; 
+            let valid = true; 
+            TOOLS[currentType].fields.forEach(f => { 
+                const inp = $('inp_' + f.id); 
+                const val = inp.value.trim(); 
+                inp.classList.remove('invalid'); 
+                if (f.req !== false && !val) { inp.classList.add('invalid'); valid = false; } 
+                else if (val && f.pattern && !f.pattern.test(val)) { inp.classList.add('invalid'); valid = false; } 
+                if (val) payload[f.id] = val; 
+            }); 
+            if (!valid) return toast('Lütfen alanları doğru doldurun.', 'error'); 
+            
+            isQuerying = true; 
+            const btn = $('submitBtn'); 
+            setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Sorgulanıyor...'); 
+            $('qResults').innerHTML = '<div class="spinner-lg"></div>'; 
+            $('resultToolbar').innerHTML = ''; 
+            
+            try { 
+                const res = await fetch('/api/sorgu', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload) }).then(r => r.json()); 
+                if (!res.success) { 
+                    $('qResults').innerHTML = `<div class="empty-state error"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(res.error)}</div>`; 
+                } else { 
+                    lastResult = res.data; 
+                    renderData(res.data); 
+                } 
+            } catch (e) { 
+                $('qResults').innerHTML = `<div class="empty-state error">Sunucu hatası veya bağlantı koptu.</div>`; 
+            } finally { 
+                isQuerying = false; 
+                setLoading(btn, false, '<i class="fa-solid fa-bolt"></i> Sorgula'); 
+            } 
+        }
+        
         function flatten(obj, prefix = '') { const out = []; for (const [k, v] of Object.entries(obj)) { const key = prefix ? `${prefix}.${k}` : k; if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flatten(v, key)); else if (Array.isArray(v)) out.push([key, v.map(x => typeof x === 'object' ? JSON.stringify(x) : x).join(', ')]); else out.push([key, v]); } return out; }
         
         function downloadCSV() {
