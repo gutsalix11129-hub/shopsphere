@@ -19,7 +19,6 @@ app = Flask(__name__)
 
 SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
-SOCIALFINDER_TOKEN = "318f49ac1ff1d8bf7f253f85999ac5bb"
 
 app.secret_key = SECRET_KEY
 app.config.update(
@@ -42,12 +41,15 @@ def get_db():
 def init_db():
     with get_db() as c:
         c.executescript("""
-        CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, banned INTEGER DEFAULT 0, created_at TEXT, avatar TEXT);
+        CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, banned INTEGER DEFAULT 0, vip INTEGER DEFAULT 0, created_at TEXT, avatar TEXT);
         CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, query_type TEXT, query_param TEXT, ip TEXT, timestamp TEXT, status TEXT);
         CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
         CREATE TABLE IF NOT EXISTS tickets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, subject TEXT, message TEXT, reply TEXT, status TEXT DEFAULT 'open', created_at TEXT, replied_at TEXT);
         CREATE INDEX IF NOT EXISTS idx_logs_user ON logs(user_id);
         """)
+        try: c.execute("ALTER TABLE users ADD COLUMN vip INTEGER DEFAULT 0")
+        except: pass
+        
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('maintenance', '0')")
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('broadcast', 'Sistemimize hoş geldiniz!')")
         c.commit()
@@ -113,14 +115,15 @@ USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,32}$")
 def home():
     if 'user_id' not in session: return redirect('/login')
     with get_db() as c:
-        row = c.execute("SELECT username, created_at, avatar FROM users WHERE id=?", (session['user_id'],)).fetchone()
+        row = c.execute("SELECT username, created_at, avatar, vip FROM users WHERE id=?", (session['user_id'],)).fetchone()
         if not row: session.clear(); return redirect('/login')
         total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
         user_queries = c.execute("SELECT COUNT(*) FROM logs WHERE user_id=?", (session['user_id'],)).fetchone()[0]
     
     avatar = row[2] if row[2] else f"https://api.dicebear.com/7.x/bottts/svg?seed={row[0]}"
-    return render_template('index.html', total_users=total_users, total_queries=total_queries, user_queries=user_queries, username=row[0], created=row[1], avatar=avatar)
+    is_vip = row[3] == 1
+    return render_template('index.html', total_users=total_users, total_queries=total_queries, user_queries=user_queries, username=row[0], created=row[1], avatar=avatar, is_vip=is_vip)
 
 @app.route("/login")
 def login_page():
@@ -182,10 +185,8 @@ def api_upload_avatar():
     img_data = req.get("image")
     if not img_data or not img_data.startswith("data:image"):
         return jsonify({"success": False, "error": "Geçersiz resim verisi."})
-    
     if len(img_data) > 2 * 1024 * 1024: 
         return jsonify({"success": False, "error": "Resim boyutu çok büyük."})
-        
     with get_db() as c:
         c.execute("UPDATE users SET avatar=? WHERE id=?", (img_data, session['user_id']))
         c.commit()
@@ -226,20 +227,15 @@ def api_sorgu():
     ip = request.remote_addr or "?"
     req = request.json or {}; q_type = req.get("type"); uid, uname = session['user_id'], session['username']
     
+    # VIP KONTROLÜ
+    VIP_TOOLS = ["jk_soyagaci", "jk_aile_wa", "jk_tc"]
+    if q_type in VIP_TOOLS:
+        with get_db() as c:
+            u_row = c.execute("SELECT vip FROM users WHERE id=?", (uid,)).fetchone()
+        if not u_row or u_row[0] != 1:
+            return jsonify({"success": False, "error": "Bu sorgu VIP üyelere özeldir. Lütfen VIP paket satın alın."})
+    
     try:
-        if q_type == "social_tiktok":
-            text_to_search = (req.get('text') or '').strip()
-            if not text_to_search: return jsonify({"success": False, "error": "Aranacak veri girin."})
-            payload = {"action": "searchTiktok", "token": SOCIALFINDER_TOKEN, "text": text_to_search}
-            r = requests.post("https://socialfinder.notetonotes.com/api/index.php?v=1", json=payload, headers={"Content-Type": "application/json"}, timeout=15)
-            data = r.json()
-            if data.get("status") == "success":
-                log_query(uid, uname, q_type, text_to_search, ip, "basarili")
-                return jsonify({"success": True, "data": data.get("data")})
-            else:
-                log_query(uid, uname, q_type, text_to_search, ip, "basarisiz")
-                return jsonify({"success": False, "error": data.get("message", "Hata oluştu.")})
-
         if q_type == "osint_ip": return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=8).json()})
         if q_type == "osint_domain": return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=8).json()})
         if q_type == "osint_hash":
@@ -247,7 +243,7 @@ def api_sorgu():
             return jsonify({"success": True, "data": {"MD5": hashlib.md5(txt).hexdigest(), "SHA1": hashlib.sha1(txt).hexdigest(), "SHA256": hashlib.sha256(txt).hexdigest()}})
         
         API_MAP = {
-            # --- ESKİ API'LER ---
+            # ESKİ VE ÇALIŞAN KESİN API'LER
             "adsoyad": {"url": "https://violetpanel.cc/furkanapi/adsoyadapi.php", "params": {"ad":"ad","soyad":"soyad"}},
             "adsoyad_proxy": {"url": "https://violetpanel.cc/furkanapi/adsoyadproxapi.php", "params": {"ad":"ad","soyad":"soyad","il":"il"}},
             "aile": {"url": "https://violetpanel.cc/furkanapi/ailesorguapi.php", "params": {"tc":"tc"}},
@@ -255,23 +251,24 @@ def api_sorgu():
             "tcgsm": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"tc":"tc"}},
             "gsmtc": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"gsm":"gsm"}},
 
-            # --- YENİ J-K.TV API'LERİ ---
-            "jk_tiktok": {"url": "https://j-k.tv/tiktoksorgu.php", "params": {"kadi": "kadi"}},
+            # J-K.TV API'LERİ (ÇALIŞANLAR)
             "jk_anne": {"url": "https://j-k.tv/annesorgu.php", "params": {"tc": "tc"}},
-            "jk_annetaraf": {"url": "https://j-k.tv/annetaraf.php", "params": {"tc": "tc"}},
             "jk_baba": {"url": "https://j-k.tv/babasorgu.php", "params": {"tc": "tc"}},
-            "jk_babataraf": {"url": "https://j-k.tv/babataraf.php", "params": {"tc": "tc"}},
             "jk_burc": {"url": "https://j-k.tv/burc.php", "params": {"tc": "tc"}},
             "jk_dns": {"url": "https://j-k.tv/dns.php", "params": {"tc": "tc"}},
             "jk_iban": {"url": "https://j-k.tv/ibansorgu.php", "params": {"tc": "tc"}},
             "jk_operator": {"url": "https://j-k.tv/operator.php", "params": {"tc": "tc"}},
+            "jk_aile": {"url": "https://j-k.tv/aile.php", "params": {"tc": "tc"}},
+            "jk_adsoyad": {"url": "https://j-k.tv/adsoyad.php?auth=emirjk", "params": {"adi": "adi", "soyadi": "soyadi"}},
+
+            # J-K.TV VIP API'LERİ
             "jk_soyagaci": {"url": "https://j-k.tv/soyagaci.php", "params": {"tc": "tc"}},
             "jk_tc": {"url": "https://j-k.tv/tc.php?auth=emirjk", "params": {"tc": "tc"}},
             "jk_aile_wa": {"url": "https://j-k.tv/whatsapp.php", "params": {"tc": "tc"}},
-            "jk_aile": {"url": "https://j-k.tv/aile.php", "params": {"tc": "tc"}},
-            "jk_tcplus": {"url": "https://j-k.tv/tcplusnebileyimamk.php", "params": {"tc": "tc"}},
-            "jk_adsoyad": {"url": "https://j-k.tv/adsoyad.php?auth=emirjk", "params": {"adi": "adi", "soyadi": "soyadi"}},
-            "dildo_tcpro": {"url": "https://dildoservices.tech/api/itozel/tcpro", "params": {"tc": "tc"}},
+
+            # E-OKUL PLAKA API'LERİ (YENİ)
+            "plaka_sorgu": {"url": "https://eokulsorguapi.onrender.com/plaka/api", "params": {"plaka": "plaka"}},
+            "plaka_adsoyad": {"url": "https://eokulsorguapi.onrender.com/plaka/api", "params": {"ad_soyad": "ad_soyad"}},
         }
         if q_type not in API_MAP: return jsonify({"success": False, "error": "Geçersiz sorgu."})
         
@@ -280,11 +277,13 @@ def api_sorgu():
             val = (req.get(k) or "").strip()
             if not val: continue
             
-            # Validasyonlar (Yeni API'ler için özelleştirildi)
+            # Validasyonlar
             if rk == "tc" and q_type not in ["jk_dns", "jk_iban", "jk_operator"] and not re.fullmatch(r"\d{11}", val): 
                 return jsonify({"success": False, "error": "TC 11 haneli sayı olmalı."})
             if q_type == "jk_operator" and not re.fullmatch(r"\d{10,11}", val): 
                 return jsonify({"success": False, "error": "GSM 10-11 haneli sayı olmalı."})
+            if q_type == "plaka_sorgu" and not re.fullmatch(r"[A-Za-z0-9]{5,10}", val):
+                return jsonify({"success": False, "error": "Geçersiz plaka formatı."})
                 
             params[rk] = val[:100]; query_str += f"{rk}={val[:100]} "
             
@@ -294,7 +293,7 @@ def api_sorgu():
         
         r = requests.get(api_info["url"], params=params, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
         try: data = r.json()
-        except ValueError: return jsonify({"success": False, "error": "Dış API limiti aşıldı veya geçersiz yanıt döndü."})
+        except ValueError: return jsonify({"success": False, "error": "Dış API limiti aşıldı."})
 
         is_ok = data.get("success") in [True, "true"] or data.get("durum") in ["basarili", "başarılı"] or data.get("status") == "success"
         result = data.get("data") or data.get("veri") or data.get("result")
@@ -307,56 +306,6 @@ def api_sorgu():
         return jsonify({"success": True, "data": result})
     except Exception: 
         return jsonify({"success": False, "error": "Bağlantı hatası oluştu."})
-
-@app.route("/api/bulk_sorgu", methods=["POST"])
-def api_bulk_sorgu():
-    if get_setting("maintenance") == "1": return jsonify({"success": False, "error": "Sistem bakımda."})
-    if 'user_id' not in session: return jsonify({"success": False}), 401
-    
-    ip = request.remote_addr or "?"
-    req = request.json or {}; q_type = req.get("type"); items = req.get("items", [])
-    uid, uname = session['user_id'], session['username']
-    
-    if not items or not isinstance(items, list): return jsonify({"success": False, "error": "Geçersiz veri."})
-    if len(items) > 20: return jsonify({"success": False, "error": "Tek seferde en fazla 20 sorgu yapabilirsiniz."})
-    
-    API_MAP = {
-        "aile": {"url": "https://violetpanel.cc/furkanapi/ailesorguapi.php", "param_key": "tc", "pattern": r"^\d{11}$"},
-        "adres": {"url": "https://violetpanel.cc/furkanapi/adrespro.php", "param_key": "tc", "pattern": r"^\d{11}$"},
-        "tcgsm": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "param_key": "tc", "pattern": r"^\d{11}$"},
-        "gsmtc": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "param_key": "gsm", "pattern": r"^\d{10,11}$"},
-        "jk_anne": {"url": "https://j-k.tv/annesorgu.php", "param_key": "tc", "pattern": r"^\d{11}$"},
-        "jk_baba": {"url": "https://j-k.tv/babasorgu.php", "param_key": "tc", "pattern": r"^\d{11}$"},
-        "jk_aile": {"url": "https://j-k.tv/aile.php", "param_key": "tc", "pattern": r"^\d{11}$"},
-    }
-    if q_type not in API_MAP: return jsonify({"success": False, "error": "Bu sorgu tipi toplu aramayı desteklemiyor."})
-    
-    api = API_MAP[q_type]
-    results = []
-    
-    for item in items:
-        item = str(item).strip()
-        if not re.match(api["pattern"], item):
-            results.append({"query": item, "success": False, "error": "Format hatası"})
-            continue
-            
-        try:
-            time.sleep(0.8) 
-            r = requests.get(api["url"], params={api["param_key"]: item}, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
-            data = r.json()
-            is_ok = data.get("success") in [True, "true"] or data.get("durum") in ["basarili", "başarılı"]
-            result = data.get("data") or data.get("veri") or data.get("result")
-            
-            if is_ok and result:
-                results.append({"query": item, "success": True, "data": result})
-                log_query(uid, uname, f"bulk_{q_type}", item, ip, "basarili")
-            else:
-                results.append({"query": item, "success": False, "error": "Bulunamadı"})
-                log_query(uid, uname, f"bulk_{q_type}", item, ip, "basarisiz")
-        except Exception:
-            results.append({"query": item, "success": False, "error": "Bağlantı hatası"})
-            
-    return jsonify({"success": True, "results": results})
 
 @app.route("/admin-panel-x9", methods=["GET", "POST"])
 def admin_dashboard():
@@ -379,7 +328,7 @@ def admin_dashboard():
     with get_db() as c:
         logs = c.execute("SELECT * FROM logs ORDER BY id DESC LIMIT 500").fetchall()
         users = c.execute("""
-            SELECT u.id, u.username, u.password, u.banned, u.created_at, COUNT(l.id) as query_count
+            SELECT u.id, u.username, u.password, u.banned, u.created_at, COUNT(l.id) as query_count, u.vip
             FROM users u LEFT JOIN logs l ON u.id = l.user_id
             GROUP BY u.id ORDER BY u.id DESC
         """).fetchall()
@@ -387,6 +336,7 @@ def admin_dashboard():
         total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
         total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         banned_users = c.execute("SELECT COUNT(*) FROM users WHERE banned=1").fetchone()[0]
+        vip_users = c.execute("SELECT COUNT(*) FROM users WHERE vip=1").fetchone()[0]
         q_stats = c.execute("SELECT query_type, COUNT(*) FROM logs GROUP BY query_type").fetchall()
         
         popular_queries = c.execute("SELECT query_type, query_param, COUNT(*) as count FROM logs WHERE status='basarili' AND query_param != '' GROUP BY query_param ORDER BY count DESC LIMIT 10").fetchall()
@@ -398,7 +348,15 @@ def admin_dashboard():
         daily_counts = [c.execute("SELECT COUNT(*) FROM logs WHERE timestamp LIKE ?", (f"{d}%",)).fetchone()[0] for d in dates]
         daily_labels = json.dumps(dates); daily_data = json.dumps(daily_counts)
 
-    return render_template('admin.html', show_login=False, logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"), chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, temp_passes=temp_passes, popular_queries=popular_queries, success_count=success_count, fail_count=fail_count, tickets=tickets)
+    return render_template('admin.html', show_login=False, logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users, vip_users=vip_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"), chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, temp_passes=temp_passes, popular_queries=popular_queries, success_count=success_count, fail_count=fail_count, tickets=tickets)
+
+@app.route("/admin-toggle-vip/<int:uid>", methods=["POST"])
+def admin_toggle_vip(uid):
+    if not session.get("admin"): return redirect("/")
+    with get_db() as c: 
+        c.execute("UPDATE users SET vip = CASE WHEN vip=1 THEN 0 ELSE 1 END WHERE id=?", (uid,))
+        c.commit()
+    return redirect("/admin-panel-x9")
 
 @app.route("/admin-reply-ticket/<int:tid>", methods=["POST"])
 def admin_reply_ticket(tid):
@@ -408,19 +366,6 @@ def admin_reply_ticket(tid):
         with get_db() as c:
             c.execute("UPDATE tickets SET reply=?, status='closed', replied_at=? WHERE id=?", (reply, datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), tid))
             c.commit()
-    return redirect("/admin-panel-x9")
-
-@app.route("/admin-add-user", methods=["POST"])
-def admin_add_user():
-    if not session.get("admin"): return redirect("/")
-    u = request.form.get("username", "").strip().lower()
-    p = request.form.get("password", "").strip()
-    if u and p:
-        try:
-            with get_db() as c:
-                c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)", (u, generate_password_hash(p), datetime.now(timezone.utc).strftime("%Y-%m-%d")))
-                c.commit()
-        except: pass
     return redirect("/admin-panel-x9")
 
 @app.route("/admin-logout-x9", methods=["POST"])
