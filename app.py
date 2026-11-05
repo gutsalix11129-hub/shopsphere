@@ -79,7 +79,7 @@ def firewall():
         token = request.headers.get("X-CSRF-Token") or request.form.get("_csrf")
         stored = session.get("_csrf")
         if not token or not stored or not secrets.compare_digest(str(token).encode('utf-8'), str(stored).encode('utf-8')):
-            if request.path.startswith("/api/"): return jsonify({"success": False, "error": "CSRF Hatası. Sayfayı yenileyin."}), 403
+            if request.path.startswith("/api/"): return jsonify({"success": False, "error": "CSRF Hatası."}), 403
             return "CSRF doğrulaması başarısız.", 403
 
 RATE_LIMIT = {}
@@ -183,9 +183,8 @@ def api_upload_avatar():
     if not img_data or not img_data.startswith("data:image"):
         return jsonify({"success": False, "error": "Geçersiz resim verisi."})
     
-    # Base64 maksimum boyut kontrolü (~2MB)
     if len(img_data) > 2 * 1024 * 1024: 
-        return jsonify({"success": False, "error": "Resim boyutu çok büyük. Lütfen daha küçük bir fotoğraf seçin."})
+        return jsonify({"success": False, "error": "Resim boyutu çok büyük."})
         
     with get_db() as c:
         c.execute("UPDATE users SET avatar=? WHERE id=?", (img_data, session['user_id']))
@@ -248,33 +247,61 @@ def api_sorgu():
             return jsonify({"success": True, "data": {"MD5": hashlib.md5(txt).hexdigest(), "SHA1": hashlib.sha1(txt).hexdigest(), "SHA256": hashlib.sha256(txt).hexdigest()}})
         
         API_MAP = {
+            # --- ESKİ API'LER ---
             "adsoyad": {"url": "https://violetpanel.cc/furkanapi/adsoyadapi.php", "params": {"ad":"ad","soyad":"soyad"}},
             "adsoyad_proxy": {"url": "https://violetpanel.cc/furkanapi/adsoyadproxapi.php", "params": {"ad":"ad","soyad":"soyad","il":"il"}},
             "aile": {"url": "https://violetpanel.cc/furkanapi/ailesorguapi.php", "params": {"tc":"tc"}},
             "adres": {"url": "https://violetpanel.cc/furkanapi/adrespro.php", "params": {"tc":"tc"}},
             "tcgsm": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"tc":"tc"}},
             "gsmtc": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"gsm":"gsm"}},
+
+            # --- YENİ J-K.TV API'LERİ ---
+            "jk_tiktok": {"url": "https://j-k.tv/tiktoksorgu.php", "params": {"kadi": "kadi"}},
+            "jk_anne": {"url": "https://j-k.tv/annesorgu.php", "params": {"tc": "tc"}},
+            "jk_annetaraf": {"url": "https://j-k.tv/annetaraf.php", "params": {"tc": "tc"}},
+            "jk_baba": {"url": "https://j-k.tv/babasorgu.php", "params": {"tc": "tc"}},
+            "jk_babataraf": {"url": "https://j-k.tv/babataraf.php", "params": {"tc": "tc"}},
+            "jk_burc": {"url": "https://j-k.tv/burc.php", "params": {"tc": "tc"}},
+            "jk_dns": {"url": "https://j-k.tv/dns.php", "params": {"tc": "tc"}},
+            "jk_iban": {"url": "https://j-k.tv/ibansorgu.php", "params": {"tc": "tc"}},
+            "jk_operator": {"url": "https://j-k.tv/operator.php", "params": {"tc": "tc"}},
+            "jk_soyagaci": {"url": "https://j-k.tv/soyagaci.php", "params": {"tc": "tc"}},
+            "jk_tc": {"url": "https://j-k.tv/tc.php?auth=emirjk", "params": {"tc": "tc"}},
+            "jk_aile_wa": {"url": "https://j-k.tv/whatsapp.php", "params": {"tc": "tc"}},
+            "jk_aile": {"url": "https://j-k.tv/aile.php", "params": {"tc": "tc"}},
+            "jk_tcplus": {"url": "https://j-k.tv/tcplusnebileyimamk.php", "params": {"tc": "tc"}},
+            "jk_adsoyad": {"url": "https://j-k.tv/adsoyad.php?auth=emirjk", "params": {"adi": "adi", "soyadi": "soyadi"}},
+            "dildo_tcpro": {"url": "https://dildoservices.tech/api/itozel/tcpro", "params": {"tc": "tc"}},
         }
         if q_type not in API_MAP: return jsonify({"success": False, "error": "Geçersiz sorgu."})
         
         api_info = API_MAP[q_type]; params = {}; query_str = ""
         for k, rk in api_info["params"].items():
             val = (req.get(k) or "").strip()
-            if val: params[rk] = val[:100]; query_str += f"{rk}={val[:100]} "
+            if not val: continue
+            
+            # Validasyonlar (Yeni API'ler için özelleştirildi)
+            if rk == "tc" and q_type not in ["jk_dns", "jk_iban", "jk_operator"] and not re.fullmatch(r"\d{11}", val): 
+                return jsonify({"success": False, "error": "TC 11 haneli sayı olmalı."})
+            if q_type == "jk_operator" and not re.fullmatch(r"\d{10,11}", val): 
+                return jsonify({"success": False, "error": "GSM 10-11 haneli sayı olmalı."})
+                
+            params[rk] = val[:100]; query_str += f"{rk}={val[:100]} "
+            
         if not params: return jsonify({"success": False, "error": "Eksik parametre."})
         
         time.sleep(0.8) 
         
         r = requests.get(api_info["url"], params=params, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
         try: data = r.json()
-        except ValueError: return jsonify({"success": False, "error": "Dış API limiti aşıldı."})
+        except ValueError: return jsonify({"success": False, "error": "Dış API limiti aşıldı veya geçersiz yanıt döndü."})
 
         is_ok = data.get("success") in [True, "true"] or data.get("durum") in ["basarili", "başarılı"] or data.get("status") == "success"
         result = data.get("data") or data.get("veri") or data.get("result")
         
         if not is_ok or not result: 
             log_query(uid, uname, q_type, query_str.strip(), ip, "basarisiz")
-            return jsonify({"success": False, "error": "Bulunamadı."})
+            return jsonify({"success": False, "error": "Bulunamadı veya API hatası."})
             
         log_query(uid, uname, q_type, query_str.strip(), ip, "basarili")
         return jsonify({"success": True, "data": result})
@@ -298,8 +325,11 @@ def api_bulk_sorgu():
         "adres": {"url": "https://violetpanel.cc/furkanapi/adrespro.php", "param_key": "tc", "pattern": r"^\d{11}$"},
         "tcgsm": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "param_key": "tc", "pattern": r"^\d{11}$"},
         "gsmtc": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "param_key": "gsm", "pattern": r"^\d{10,11}$"},
+        "jk_anne": {"url": "https://j-k.tv/annesorgu.php", "param_key": "tc", "pattern": r"^\d{11}$"},
+        "jk_baba": {"url": "https://j-k.tv/babasorgu.php", "param_key": "tc", "pattern": r"^\d{11}$"},
+        "jk_aile": {"url": "https://j-k.tv/aile.php", "param_key": "tc", "pattern": r"^\d{11}$"},
     }
-    if q_type not in API_MAP: return jsonify({"success": False, "error": "Sadece TC ve GSM toplu sorgulanabilir."})
+    if q_type not in API_MAP: return jsonify({"success": False, "error": "Bu sorgu tipi toplu aramayı desteklemiyor."})
     
     api = API_MAP[q_type]
     results = []
