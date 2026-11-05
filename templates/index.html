@@ -164,30 +164,21 @@
             <div class="nav-item" onclick="loadTool('tcgsm', this)"><div class="icon"><i class="fa-solid fa-phone"></i></div> GSM Çözümleri</div>
             <div class="nav-item" onclick="loadTool('gsmtc', this)"><div class="icon"><i class="fa-solid fa-phone-flip"></i></div> GSM → TC</div>
             <div class="nav-item" onclick="loadTool('adres', this)"><div class="icon"><i class="fa-solid fa-location-dot"></i></div> Adres Çözümleri</div>
+            <div class="nav-item" onclick="loadTool('plaka_sorgu', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka Sorgu</div>
             
             <div class="nav-title">OSINT ARAÇLARI</div>
             <div class="nav-item" onclick="loadTool('osint_ip', this)"><div class="icon"><i class="fa-solid fa-network-wired"></i></div> IP Sorgu</div>
             <div class="nav-item" onclick="loadTool('osint_domain', this)"><div class="icon"><i class="fa-solid fa-globe"></i></div> Domain Sorgu</div>
             <div class="nav-item" onclick="loadTool('osint_hash', this)"><div class="icon"><i class="fa-solid fa-hashtag"></i></div> Hash Üret</div>
-            
-            <div class="nav-title" style="color:var(--danger);">J-K SORGULARI</div>
-            <div class="nav-item" onclick="loadTool('jk_anne', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Anne Sorgu</div>
-            <div class="nav-item" onclick="loadTool('jk_baba', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Baba Sorgu</div>
-            <div class="nav-item" onclick="loadTool('jk_burc', this)"><div class="icon"><i class="fa-solid fa-star"></i></div> Burç / Yaş</div>
-            <div class="nav-item" onclick="loadTool('jk_dns', this)"><div class="icon"><i class="fa-solid fa-network-wired"></i></div> DNS Sorgu</div>
-            <div class="nav-item" onclick="loadTool('jk_iban', this)"><div class="icon"><i class="fa-solid fa-building-columns"></i></div> İBAN Sorgu</div>
-            <div class="nav-item" onclick="loadTool('jk_operator', this)"><div class="icon"><i class="fa-solid fa-tower-cell"></i></div> Operatör Sorgu</div>
-            <div class="nav-item" onclick="loadTool('jk_aile', this)"><div class="icon"><i class="fa-solid fa-people-group"></i></div> Aile Sorgu (Std)</div>
-            <div class="nav-item" onclick="loadTool('jk_adsoyad', this)"><div class="icon"><i class="fa-solid fa-signature"></i></div> Düz Ad Soyad</div>
-            
-            <div class="nav-title" style="color:var(--gold);">VIP SORGULAR <i class="fa-solid fa-crown"></i></div>
-            <div class="nav-item" onclick="loadTool('jk_soyagaci', this)"><div class="icon"><i class="fa-solid fa-sitemap" style="color:var(--gold);"></i></div> Soyağacı Sorgu</div>
-            <div class="nav-item" onclick="loadTool('jk_tc', this)"><div class="icon"><i class="fa-solid fa-id-card" style="color:var(--gold);"></i></div> TC Sorgu (VIP)</div>
-            <div class="nav-item" onclick="loadTool('jk_aile_wa', this)"><div class="icon"><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i></div> Aile Sorgu (WA)</div>
 
-            <div class="nav-title" style="color:var(--primary);">E-OKUL PLAKA SORGULARI</div>
-            <div class="nav-item" onclick="loadTool('plaka_sorgu', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka Sorgu</div>
-            <div class="nav-item" onclick="loadTool('plaka_adsoyad', this)"><div class="icon"><i class="fa-solid fa-user-tag"></i></div> Plaka (Ad Soyad)</div>
+            <div class="nav-title" style="color:var(--primary);">DÜNYA ÇAPINDA API'LER</div>
+            <div class="nav-item" onclick="loadTool('api_wayback', this)"><div class="icon"><i class="fa-solid fa-clock-rotate-left" style="color:var(--gold);"></i></div> Wayback Arşivi (VIP)</div>
+            <div class="nav-item" onclick="loadTool('api_whois', this)"><div class="icon"><i class="fa-solid fa-magnifying-glass-location" style="color:var(--gold);"></i></div> Domain WHOIS (VIP)</div>
+            <div class="nav-item" onclick="loadTool('api_bin', this)"><div class="icon"><i class="fa-solid fa-credit-card"></i></div> BIN / Kart Sorgu</div>
+            <div class="nav-item" onclick="loadTool('api_currency', this)"><div class="icon"><i class="fa-solid fa-dollar-sign" style="color:var(--gold);"></i></div> Döviz Kurları (VIP)</div>
+            <div class="nav-item" onclick="loadTool('api_crypto', this)"><div class="icon"><i class="fa-brands fa-bitcoin"></i></div> Kripto Fiyatları</div>
+            <div class="nav-item" onclick="loadTool('api_email', this)"><div class="icon"><i class="fa-solid fa-envelope"></i></div> E-Posta Doğrula</div>
+            <div class="nav-item" onclick="loadTool('api_weather', this)"><div class="icon"><i class="fa-solid fa-cloud-sun"></i></div> Hava Durumu</div>
 
             <div class="nav-title">HESABIM</div>
             <div class="nav-item" data-view="history" onclick="showView('history', this)"><div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div> Sorgu Geçmişim</div>
@@ -239,7 +230,7 @@
                         <ul>
                             <li><i class="fa-solid fa-check"></i> Tüm VIP Sorgular</li>
                             <li><i class="fa-solid fa-check"></i> Sınırsız Arama</li>
-                            <li><i class="fa-solid fa-check"></i> WhatsApp'lı Aile Sorgu</li>
+                            <li><i class="fa-solid fa-check"></i> Wayback & Domain WHOIS</li>
                         </ul>
                         <a href="https://t.me/markettchats" target="_blank" class="btn-submit" style="text-decoration:none; font-size:14px; padding:12px;">Satın Al (Telegram)</a>
                     </div>
@@ -250,7 +241,7 @@
                         <ul>
                             <li><i class="fa-solid fa-check"></i> Tüm VIP Sorgular</li>
                             <li><i class="fa-solid fa-check"></i> Sınırsız Arama</li>
-                            <li><i class="fa-solid fa-check"></i> Soyağacı & TC Sorgu</li>
+                            <li><i class="fa-solid fa-check"></i> Döviz Kurları & BIN</li>
                             <li><i class="fa-solid fa-check"></i> Öncelikli Destek</li>
                         </ul>
                         <a href="https://t.me/markettchats" target="_blank" class="btn-submit" style="text-decoration:none; font-size:14px; padding:12px; background:linear-gradient(135deg, #fbbf24, #f59e0b); color:#000;">Satın Al (Telegram)</a>
@@ -262,7 +253,7 @@
                         <ul>
                             <li><i class="fa-solid fa-check"></i> Tüm VIP Sorgular</li>
                             <li><i class="fa-solid fa-check"></i> Sınırsız Arama</li>
-                            <li><i class="fa-solid fa-check"></i> Plaka & E-Okul Sorguları</li>
+                            <li><i class="fa-solid fa-check"></i> Tüm Dünya API'leri</li>
                             <li><i class="fa-solid fa-check"></i> 7/24 Öncelikli Destek</li>
                         </ul>
                         <a href="https://t.me/markettchats" target="_blank" class="btn-submit" style="text-decoration:none; font-size:14px; padding:12px;">Satın Al (Telegram)</a>
@@ -359,7 +350,7 @@
                 if(m.includes('merhaba') || m.includes('selam')) reply = "Merhaba! VIP sistemimiz hakkında bilgi almak ister misiniz?";
                 else if(m.includes('şifre')) reply = "Şifrenizi sağdaki 'Profilim' sekmesinden değiştirebilirsiniz.";
                 else if(m.includes('vip') || m.includes('fiyat')) reply = "VIP paketlerimizi sol menüden inceleyebilirsiniz. Ödeme sonrası hesabınız anında VIP yapılır.";
-                else if(m.includes('plaka')) reply = "Plaka sorgulamak için sol menüdeki 'E-Okul Plaka Sorguları' bölümünü kullanabilirsiniz.";
+                else if(m.includes('plaka')) reply = "Plaka sorgulamak için sol menüdeki 'Plaka Sorgu' bölümünü kullanabilirsiniz.";
                 body.innerHTML += `<div class="msg bot">${reply}</div>`;
                 body.scrollTop = body.scrollHeight;
             }, 600);
@@ -418,24 +409,17 @@
             'osint_domain': { title:'Domain Sorgu', fields:[{ id:'domain', label:'Domain Adı' }] },
             'osint_hash': { title:'Hash Üret', fields:[{ id:'text', label:'Metin' }] },
             
-            // ÜCRETSİZ J-K API'LERİ
-            'jk_anne': { title: 'Anne Sorgu', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'jk_baba': { title: 'Baba Sorgu', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'jk_burc': { title: 'Burç / Yaş / Doğum Günü', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'jk_dns': { title: 'DNS Sorgu', fields: [{ id:'tc', label:'Domain Adı (örn: allah.com)' }] },
-            'jk_iban': { title: 'İBAN Sorgu', fields: [{ id:'tc', label:'IBAN (TR ile başlayan)' }] },
-            'jk_operator': { title: 'Operatör Sorgu', fields: [{ id:'tc', label:'GSM Numarası', pattern:/^\d{10,11}$/ }] },
-            'jk_aile': { title: 'Aile Sorgu (Standart)', fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'jk_adsoyad': { title: 'Düz Ad Soyad Sorgu', fields: [{ id:'adi', label:'Ad' }, { id:'soyadi', label:'Soyad' }] },
-            
-            // VIP J-K API'LERİ
-            'jk_soyagaci': { title: 'Soyağacı Sorgu (VIP)', vip: true, fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'jk_tc': { title: 'TC Sorgu (VIP)', vip: true, fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'jk_aile_wa': { title: 'Aile Sorgu WhatsApp (VIP)', vip: true, fields: [{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-
-            // E-OKUL PLAKA API'LERİ
+            // PLAKA SORGUSU
             'plaka_sorgu': { title: 'Plaka Sorgu', fields: [{ id:'plaka', label:'Plaka (örn: 41HU096)' }] },
-            'plaka_adsoyad': { title: 'Plaka Ad Soyad Sorgu', fields: [{ id:'ad_soyad', label:'Ad Soyad' }] }
+
+            // DÜNYA API'LERİ
+            'api_wayback': { title: 'Wayback Arşivi (VIP)', vip: true, fields: [{ id:'url', label:'Site URL (örn: google.com)' }] },
+            'api_whois': { title: 'Domain WHOIS (VIP)', vip: true, fields: [{ id:'domain', label:'Domain Adı (örn: google.com)' }] },
+            'api_bin': { title: 'BIN / Kart Sorgu', fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi', pattern:/^\d{6,8}$/ }] },
+            'api_currency': { title: 'Döviz Kurları (VIP)', vip: true, fields: [{ id:'dummy', label:'Sorgulamak için boş bırakıp tıklayın', req:false }] },
+            'api_crypto': { title: 'Kripto Fiyatları', fields: [{ id:'dummy', label:'Sorgulamak için boş bırakıp tıklayın', req:false }] },
+            'api_email': { title: 'E-Posta Doğrula', fields: [{ id:'email', label:'E-Posta Adresi' }] },
+            'api_weather': { title: 'Hava Durumu', fields: [{ id:'city', label:'Şehir (örn: Istanbul)' }] }
         };
         
         let currentType = null, lastResult = null;
@@ -454,7 +438,6 @@
         function loadTool(type, el) { 
             const tool = TOOLS[type]; if (!tool) return; 
             
-            // VIP KONTROLÜ
             if (tool.vip && !IS_VIP) {
                 showView('vip', document.querySelector('[data-view="vip"]'));
                 toast('Bu sorgu VIP üyelere özeldir. Lütfen paket satın alın.', 'error');
