@@ -184,7 +184,6 @@
     </style>
 </head>
 <body>
-    <!-- SİBER ARKA PLAN -->
     <canvas id="cyber-bg"></canvas>
 
     <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
@@ -204,7 +203,6 @@
         </div>
     </div>
 
-    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="logo-area"><div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div><h2>SHOP<span>SPHERE</span></h2></div>
         
@@ -252,6 +250,18 @@
                     <div class="nav-item tool-item" onclick="loadTool('api_whois', this)"><div class="icon"><i class="fa-solid fa-magnifying-glass-location"></i></div> Domain WHOIS</div>
                     <div class="nav-item tool-item" onclick="loadTool('api_bin', this)"><div class="icon"><i class="fa-solid fa-credit-card"></i></div> BIN Sorgu</div>
                     <div class="nav-item tool-item" onclick="loadTool('hibp_password', this)"><div class="icon"><i class="fa-solid fa-shield-halved" style="color:var(--danger);"></i></div> Şifre Sızıntı Kontrolü</div>
+                </div>
+            </div>
+
+            <!-- YENİ: OPENARCHIVE ENTEGRASYONU -->
+            <div class="nav-category">
+                <div class="nav-cat-title" onclick="toggleCat(this)">OPENARCHIVE (VIP) <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="nav-items">
+                    <div class="nav-item tool-item" onclick="loadTool('oa_intelx', this)"><div class="icon"><i class="fa-solid fa-magnifying-glass" style="color:var(--danger);"></i></div> IntelX Sorgu</div>
+                    <div class="nav-item tool-item" onclick="loadTool('oa_breach', this)"><div class="icon"><i class="fa-solid fa-triangle-exclamation" style="color:var(--gold);"></i></div> Breach Sorgu</div>
+                    <div class="nav-item tool-item" onclick="loadTool('oa_tiktok', this)"><div class="icon"><i class="fa-brands fa-tiktok"></i></div> TikTok OSINT</div>
+                    <div class="nav-item tool-item" onclick="loadTool('oa_discord', this)"><div class="icon"><i class="fa-brands fa-discord"></i></div> Discord OSINT</div>
+                    <div class="nav-item tool-item" onclick="loadTool('oa_ipinfo', this)"><div class="icon"><i class="fa-solid fa-location-crosshairs"></i></div> OpenArchive IP</div>
                 </div>
             </div>
 
@@ -394,7 +404,7 @@
             </div>
         </div>
 
-        <!-- GEÇMİŞ VE DESTEK (Aynı kalıyor) -->
+        <!-- GEÇMİŞ VE DESTEK -->
         <div id="view-history" class="view">
             <div class="panel">
                 <div class="panel-header">
@@ -521,6 +531,7 @@
         
         document.querySelectorAll('.counter').forEach(el => { const target = parseInt(el.dataset.target || '0', 10); if (target === 0) { el.textContent = '0'; return; } let start = 0; const timer = setInterval(() => { start += Math.ceil(target / 40); if (start >= target) { el.textContent = target.toLocaleString('tr-TR'); clearInterval(timer); } else { el.textContent = start.toLocaleString('tr-TR'); } }, 20); });
         
+        // --- TÜM ARAÇLAR (OPENARCHIVE EKLENDİ) ---
         const TOOLS = {
             'adsoyad': { title: 'Mernis 2026', desc: 'Ad ve soyad ile TC bulun.', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
             'aile': { title: 'Aile Çözümleri', desc: 'TC ile aile bilgilerini bulun.', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
@@ -528,12 +539,20 @@
             'tcgsm': { title: 'GSM Çözümleri', desc: 'TC ile telefon numarası bulun.', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
             'gsmtc': { title: 'GSM → TC', desc: 'Telefon numarası ile TC bulun.', fields:[{ id:'gsm', label:'GSM Numarası', pattern:/^\d{10,11}$/ }] },
             'plaka_sorgu': { title: 'Plaka Sorgu', desc: 'Plaka ile araç sahibini bulun.', fields: [{ id:'plaka', label:'Plaka (örn: 41HU096)' }] },
+            
             'osint_ip': { title:'IP Sorgu', desc: 'IP konumunu bulun.', vip: true, fields:[{ id:'ip', label:'IP Adresi' }] },
             'osint_domain': { title:'Domain Sorgu', desc: 'Domain IP adresini bulun.', vip: true, fields:[{ id:'domain', label:'Domain Adı' }] },
             'api_wayback': { title: 'Wayback Arşivi', desc: 'Sitenin geçmişini görün.', vip: true, fields: [{ id:'url', label:'Site URL (örn: google.com)' }] },
             'api_whois': { title: 'Domain WHOIS', desc: 'Alan adı sahibini bulun.', vip: true, fields: [{ id:'domain', label:'Domain Adı' }] },
             'api_bin': { title: 'BIN / Kart Sorgu', desc: 'Kart ilk 6 hane ile banka bulun.', vip: true, fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi', pattern:/^\d{6,8}$/ }] },
-            'hibp_password': { title: 'Şifre Sızıntı Kontrolü', desc: 'Şifrenizin daha önce veri sızıntılarında çalınıp çalınmadığını kontrol eder.', vip: true, fields: [{ id:'pass', label:'Kontrol Edilecek Şifre' }] }
+            'hibp_password': { title: 'Şifre Sızıntı Kontrolü', desc: 'Şifrenizin daha önce veri sızıntılarında çalınıp çalınmadığını kontrol eder.', vip: true, fields: [{ id:'pass', label:'Kontrol Edilecek Şifre' }] },
+            
+            // YENİ: OPENARCHIVE X ARAÇLARI
+            'oa_intelx': { title:'IntelX Sorgu', desc: 'Sızıntı ve istihbarat araması yapar.', vip: true, fields:[{ id:'q', label:'Aranacak Kelime / E-posta' }] },
+            'oa_breach': { title:'Breach Sorgu', desc: 'Veri ihlallerinde arama yapar.', vip: true, fields:[{ id:'q', label:'E-posta / Kullanıcı Adı' }] },
+            'oa_tiktok': { title:'TikTok OSINT', desc: 'TikTok kullanıcı istihbaratı.', vip: true, fields:[{ id:'q', label:'Kullanıcı Adı' }] },
+            'oa_discord': { title:'Discord OSINT', desc: 'Discord ID ile arama yapar.', vip: true, fields:[{ id:'q', label:'Discord ID' }] },
+            'oa_ipinfo': { title:'OpenArchive IP', desc: 'OpenArchive IP veritabanı.', vip: true, fields:[{ id:'q', label:'IP Adresi' }] }
         };
         
         let currentType = null, lastResult = null;
@@ -545,12 +564,9 @@
         function searchTools() {
             const query = $('toolSearch').value.toLowerCase();
             const items = document.querySelectorAll('.tool-item');
-            
-            // Eğer arama yapılıyorsa tüm kategorileri aç, yoksa normal bırak
             if(query.length > 0) {
                 document.querySelectorAll('.nav-items').forEach(nav => nav.classList.add('open'));
             }
-
             items.forEach(item => {
                 const text = item.innerText.toLowerCase();
                 item.style.display = text.includes(query) ? 'flex' : 'none';
@@ -595,28 +611,15 @@
             $('formattedTable').innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px;"><i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color:var(--purple);"></i></td></tr>';
             switchResultTab('formatted', document.querySelectorAll('.res-tab')[0]);
             
-            // --- GERÇEKÇİ TERMİNAL EFEKTİ (SADECE GÖRSEL) ---
             const term = $('qResultsRaw');
             term.innerHTML = '';
-            const fakeLogs = [
-                "> SSL Handshake başlatıldı...",
-                "> Node bağlantısı kuruluyor (TR-Node-04)...",
-                "> Güvenlik duvarı (WAF) atlatılıyor...",
-                "> Sorgu parametreleri şifreleniyor...",
-                "> Veritabanı taranıyor..."
-            ];
+            const fakeLogs = [ "> SSL Handshake başlatıldı...", "> Node bağlantısı kuruluyor (TR-Node-04)...", "> Güvenlik duvarı (WAF) atlatılıyor...", "> Sorgu parametreleri şifreleniyor...", "> Veritabanı taranıyor..." ];
             let logIndex = 0;
-            const logInterval = setInterval(() => {
-                if(logIndex < fakeLogs.length) {
-                    term.innerHTML += `<span style="color:#64748b;">${fakeLogs[logIndex]}</span><br>`;
-                    logIndex++;
-                }
-            }, 400);
-            // ------------------------------------------------
+            const logInterval = setInterval(() => { if(logIndex < fakeLogs.length) { term.innerHTML += `<span style="color:#64748b;">${fakeLogs[logIndex]}</span><br>`; logIndex++; } }, 400);
 
             try { 
                 const res = await fetch('/api/sorgu', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload) }).then(r => r.json()); 
-                clearInterval(logInterval); // Fake logları durdur
+                clearInterval(logInterval); 
                 
                 if (!res.success) { 
                     $('formattedTable').innerHTML = `<tr><td colspan="2" style="color:#ef4444; text-align:center; padding:20px;">${escapeHtml(res.error)}</td></tr>`;
@@ -644,8 +647,6 @@
 
         function renderResults(data) {
             const items = Array.isArray(data) ? data : [data];
-            
-            // Tablo Doldur
             let tableHtml = '';
             items.forEach((item, idx) => {
                 if (items.length > 1) tableHtml += `<tr><td colspan="2" style="background:rgba(99,102,241,0.1); color:var(--primary); font-weight:800;">Sonuç #${idx+1}</td></tr>`;
@@ -658,7 +659,6 @@
             if (!tableHtml) tableHtml = '<tr><td colspan="2" style="text-align:center; padding:20px;">Sonuç boş.</td></tr>';
             $('formattedTable').innerHTML = tableHtml;
 
-            // JSON Doldur
             const jsonStr = JSON.stringify(data, null, 2);
             const coloredJson = jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
                 let cls = 'json-number';
@@ -673,8 +673,7 @@
             if (!lastResult) return;
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(20); doc.setTextColor(99, 102, 241);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.setTextColor(99, 102, 241);
             doc.text("ShopSphere Sorgu Raporu", 20, 20);
             doc.setFontSize(10); doc.setTextColor(100, 100, 100);
             doc.text("Tarih: " + new Date().toLocaleString('tr-TR'), 20, 28);
