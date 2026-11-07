@@ -40,7 +40,7 @@
         .checkbox-group label a { color: #a855f7; text-decoration: none; font-weight: 600; }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #6366f1, #a855f7); cursor: pointer; transition: .3s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(99,102,241,0.2); }
         .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(168,85,247,0.4); }
-        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; } /* Buton kilitliyken soluk görünmesi için eklendi */
         .alert { display: none; padding: 12px; border-radius: 10px; font-size: 13px; margin-bottom: 15px; align-items: center; gap: 8px; }
         .alert.show { display: flex; }
         .alert-error { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
@@ -289,7 +289,7 @@
                     showAlert($('loginErr'), res.error);
                     resetLoginBtn();
                 }
-            } catch (error) { // _ yerine error kullanıldı
+            } catch (error) { 
                 console.error("Giriş Hatası:", error);
                 showAlert($('loginErr'), 'Bağlantı hatası.');
                 resetLoginBtn();
@@ -327,7 +327,7 @@
                         switchTab('login');
                         $('login-u').value = u;
                         $('login-p').value = p;
-                        resetRegisterBtn(); // Butonu eski haline getirir
+                        resetRegisterBtn(); 
                     }, 1500);
                 } else {
                     showAlert($('regErr'), res.error);
