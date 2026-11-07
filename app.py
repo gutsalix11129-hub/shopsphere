@@ -6,7 +6,6 @@ import time
 import hashlib
 import sqlite3
 import secrets
-import ipaddress
 import traceback
 from datetime import datetime, timezone, timedelta
 from threading import Lock
@@ -19,7 +18,6 @@ app = Flask(__name__)
 
 SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
-OPENARCHIVE_KEY = os.environ.get("OPENARCHIVE_KEY", "BURAYA_TOKEN_GIRIN")
 
 app.secret_key = SECRET_KEY
 app.config.update(
@@ -46,7 +44,6 @@ def init_db():
         CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, query_type TEXT, query_param TEXT, ip TEXT, timestamp TEXT, status TEXT);
         CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
         CREATE TABLE IF NOT EXISTS tickets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, subject TEXT, message TEXT, reply TEXT, status TEXT DEFAULT 'open', created_at TEXT, replied_at TEXT);
-        CREATE TABLE IF NOT EXISTS cache (key TEXT PRIMARY KEY, data TEXT, timestamp REAL);
         CREATE INDEX IF NOT EXISTS idx_logs_user ON logs(user_id);
         """)
         try: c.execute("ALTER TABLE users ADD COLUMN vip INTEGER DEFAULT 0")
@@ -185,8 +182,8 @@ def api_upload_avatar():
     if 'user_id' not in session: return jsonify({"success": False, "error": "Giriş yapın."}), 401
     req = request.json or {}
     img_data = req.get("image")
-    if not img_data or not img_data.startswith("data:image"): return jsonify({"success": False, "error": "Geçersiz resim verisi."})
-    if len(img_data) > 2 * 1024 * 1024: return jsonify({"success": False, "error": "Resim boyutu çok büyük."})
+    if not img_data or not img_data.startswith("data:image"): return jsonify({"success": False, "error": "Geçersiz resim."})
+    if len(img_data) > 2 * 1024 * 1024: return jsonify({"success": False, "error": "Resim çok büyük."})
     with get_db() as c:
         c.execute("UPDATE users SET avatar=? WHERE id=?", (img_data, session['user_id'])); c.commit()
     return jsonify({"success": True})
@@ -225,54 +222,12 @@ def api_sorgu():
     ip = request.remote_addr or "?"
     req = request.json or {}; q_type = req.get("type"); uid, uname = session['user_id'], session['username']
     
-    VIP_TOOLS = ["osint_ip", "osint_domain", "osint_hash", "api_wayback", "api_whois", "api_currency", "api_bin", "api_crypto", "api_email", "api_weather", "hibp_password", "oa_intelx", "oa_breach", "oa_public_status", "oa_public_buckets", "oa_public_sources", "oa_public_forum"]
-    
+    VIP_TOOLS = ["osint_ip", "osint_domain", "api_wayback", "api_whois", "api_bin", "hibp_password"]
     if q_type in VIP_TOOLS:
         with get_db() as c: u_row = c.execute("SELECT vip FROM users WHERE id=?", (uid,)).fetchone()
         if not u_row or u_row[0] != 1: return jsonify({"success": False, "error": "Bu sorgu VIP üyelere özeldir."})
 
-    cache_key = f"{q_type}_{json.dumps(req, sort_keys=True)}"
-    with get_db() as c:
-        row = c.execute("SELECT data, timestamp FROM cache WHERE key=?", (cache_key,)).fetchone()
-        if row:
-            if time.time() - row[1] < 600: return jsonify({"success": True, "data": json.loads(row[0]), "cached": True})
-            else: c.execute("DELETE FROM cache WHERE key=?", (cache_key,)); c.commit()
-
     try:
-        # --- SHOPHERE PUBLIC (200 ÇALIŞAN) API'LERİ ---
-        if q_type.startswith("oa_public_"):
-            OA_PUBLIC_MAP = {
-                "oa_public_status": "https://openarchivex.net/api/v2/status",
-                "oa_public_buckets": "https://openarchivex.net/api/v2/intelx/buckets",
-                "oa_public_sources": "https://openarchivex.net/api/pricing/api-sources",
-                "oa_public_forum": "https://openarchivex.net/api/forum/public/overview"
-            }
-            if q_type in OA_PUBLIC_MAP:
-                r = requests.get(OA_PUBLIC_MAP[q_type], headers={"Accept": "application/json", "User-Agent": "Mozilla/5.0"}, timeout=15)
-                if r.status_code == 200:
-                    data = r.json()
-                    with get_db() as c:
-                        c.execute("INSERT OR REPLACE INTO cache (key, data, timestamp) VALUES (?,?,?)", (cache_key, json.dumps(data), time.time())); c.commit()
-                    log_query(uid, uname, q_type, "Public API", ip, "basarili")
-                    return jsonify({"success": True, "data": data})
-                else: return jsonify({"success": False, "error": f"API Hatası: {r.status_code}"})
-
-        # --- SHOPHERE VIP (401) API'LERİ ---
-        if q_type.startswith("oa_"):
-            OA_MAP = {
-                "oa_intelx": {"url": "https://openarchivex.net/api/v2/intelx/advanced", "method": "POST", "param_key": "q"},
-                "oa_breach": {"url": "https://openarchivex.net/api/openarchive-breach", "method": "GET", "param_key": "q"}
-            }
-            if q_type in OA_MAP:
-                api = OA_MAP[q_type]; val = (req.get(api["param_key"]) or "").strip()
-                headers = {"Authorization": f"Bearer {OPENARCHIVE_KEY}", "Content-Type": "application/json", "Accept": "application/json"}
-                if api["method"] == "POST": r = requests.post(api["url"], headers=headers, json={api["param_key"]: val}, timeout=15)
-                else: r = requests.get(api["url"], headers=headers, params={api["param_key"]: val}, timeout=15)
-                if r.status_code == 401: return jsonify({"success": False, "error": "ShopSphere API Anahtarı geçersiz veya eksik."})
-                log_query(uid, uname, q_type, val, ip, "basarili")
-                return jsonify({"success": True, "data": r.json()})
-
-        # --- MEVCUT SORGULAR ---
         if q_type == "plaka_sorgu":
             plaka = (req.get('plaka') or '').strip().upper()
             r = requests.get(f"https://eokulsorguapi.onrender.com/plaka/api?plaka={plaka}", timeout=15)
@@ -281,9 +236,6 @@ def api_sorgu():
 
         if q_type == "osint_ip": return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=8).json()})
         if q_type == "osint_domain": return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=8).json()})
-        if q_type == "osint_hash":
-            txt = (req.get('text') or '').encode()
-            return jsonify({"success": True, "data": {"MD5": hashlib.md5(txt).hexdigest(), "SHA1": hashlib.sha1(txt).hexdigest(), "SHA256": hashlib.sha256(txt).hexdigest()}})
         if q_type == "api_wayback": return jsonify({"success": True, "data": requests.get(f"http://archive.org/wayback/available?url={req.get('url')}", timeout=15).json()})
         if q_type == "api_whois":
             r = requests.get(f"https://rdap.org/domain/{req.get('domain')}", timeout=15)
@@ -293,15 +245,6 @@ def api_sorgu():
             r = requests.get(f"https://lookup.binlist.net/{req.get('bin')}", headers={"Accept-Version": "3"}, timeout=15)
             if r.status_code == 200: return jsonify({"success": True, "data": r.json()})
             else: return jsonify({"success": False, "error": "BIN bulunamadı."})
-        if q_type == "api_currency": return jsonify({"success": True, "data": requests.get("https://api.frankfurter.app/latest?from=USD&to=TRY,EUR,GBP", timeout=10).json()})
-        if q_type == "api_crypto": return jsonify({"success": True, "data": requests.get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,ripple,solana&vs_currencies=usd,try&include_24hr_change=true", timeout=10).json()})
-        if q_type == "api_email": return jsonify({"success": True, "data": requests.get(f"https://open.kickbox.com/v1/disposable/{req.get('email')}", timeout=10).json()})
-        if q_type == "api_weather":
-            geo = requests.get(f"https://geocoding-api.open-meteo.com/v1/search?name={req.get('city')}&count=1&language=tr&format=json", timeout=10).json()
-            if not geo.get("results"): return jsonify({"success": False, "error": "Şehir bulunamadı."})
-            lat, lon = geo["results"][0]["latitude"], geo["results"][0]["longitude"]
-            w = requests.get(f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true", timeout=10).json()
-            return jsonify({"success": True, "data": {"sehir": geo["results"][0]["name"], "hava_durumu": w["current_weather"]}})
         if q_type == "hibp_password":
             password = (req.get('pass') or '').strip()
             sha1_pw = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
@@ -343,8 +286,6 @@ def api_sorgu():
             log_query(uid, uname, q_type, query_str.strip(), ip, "basarisiz")
             return jsonify({"success": False, "error": "Bulunamadı veya API hatası."})
             
-        with get_db() as c:
-            c.execute("INSERT OR REPLACE INTO cache (key, data, timestamp) VALUES (?,?,?)", (cache_key, json.dumps(result), time.time())); c.commit()
         log_query(uid, uname, q_type, query_str.strip(), ip, "basarili")
         return jsonify({"success": True, "data": result})
     except Exception: 
