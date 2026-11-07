@@ -20,6 +20,10 @@ app = Flask(__name__)
 SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
+# --- YENİ: OPENARCHIVE API ANAHTARI ---
+# Render'da Environment kısmına OPENARCHIVE_KEY ekleyebilir veya buraya yazabilirsin.
+OPENARCHIVE_KEY = os.environ.get("OPENARCHIVE_KEY", "BURAYA_TOKEN_GIRIN")
+
 app.secret_key = SECRET_KEY
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
@@ -228,14 +232,15 @@ def api_sorgu():
     ip = request.remote_addr or "?"
     req = request.json or {}; q_type = req.get("type"); uid, uname = session['user_id'], session['username']
     
-    VIP_TOOLS = ["osint_ip", "osint_domain", "osint_hash", "api_wayback", "api_whois", "api_currency", "api_bin", "api_crypto", "api_email", "api_weather", "hibp_password"]
+    VIP_TOOLS = ["osint_ip", "osint_domain", "osint_hash", "api_wayback", "api_whois", "api_currency", "api_bin", "api_crypto", "api_email", "api_weather", "hibp_password", 
+                 "oa_intelx", "oa_breach", "oa_tiktok", "oa_discord", "oa_ipinfo"]
+    
     if q_type in VIP_TOOLS:
         with get_db() as c:
             u_row = c.execute("SELECT vip FROM users WHERE id=?", (uid,)).fetchone()
         if not u_row or u_row[0] != 1:
             return jsonify({"success": False, "error": "Bu OSINT/Gelişmiş sorgu VIP üyelere özeldir."})
 
-    # --- SQLITE ÖNBELLEK KONTROLÜ ---
     cache_key = f"{q_type}_{json.dumps(req, sort_keys=True)}"
     with get_db() as c:
         row = c.execute("SELECT data, timestamp FROM cache WHERE key=?", (cache_key,)).fetchone()
@@ -247,28 +252,41 @@ def api_sorgu():
                 c.commit()
 
     try:
-        # --- YENİ: ŞİFRE SIZINTI KONTROLÜ (HaveIBeenPwned) ---
-        if q_type == "hibp_password":
-            password = (req.get('pass') or '').strip()
-            if not password: return jsonify({"success": False, "error": "Şifre girin."})
-            
-            sha1_pw = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
-            prefix, suffix = sha1_pw[:5], sha1_pw[5:]
-            
-            r = requests.get(f"https://api.pwnedpasswords.com/range/{prefix}", timeout=10)
-            if r.status_code == 200:
-                hashes = (line.split(':') for line in r.text.splitlines())
-                count = next((int(c) for h, c in hashes if h == suffix), 0)
+        # --- YENİ: OPENARCHIVE API'LERİ ---
+        if q_type.startswith("oa_"):
+            OA_MAP = {
+                "oa_intelx": {"url": "https://openarchivex.net/api/v2/intelx/advanced", "method": "POST", "param_key": "q"},
+                "oa_breach": {"url": "https://openarchivex.net/api/openarchive-breach", "method": "GET", "param_key": "q"},
+                "oa_tiktok": {"url": "https://openarchivex.net/api/tiktok-osint/", "method": "GET", "param_key": "q"},
+                "oa_discord": {"url": "https://openarchivex.net/api/discord-osint/", "method": "GET", "param_key": "q"},
+                "oa_ipinfo": {"url": "https://openarchivex.net/api/ip-info", "method": "GET", "param_key": "q"}
+            }
+            if q_type in OA_MAP:
+                api = OA_MAP[q_type]
+                val = (req.get(api["param_key"]) or "").strip()
                 
-                log_query(uid, uname, q_type, "Sızıntı Kontrolü", ip, "basarili")
-                if count > 0:
-                    return jsonify({"success": True, "data": {"sizinti": True, "kac_kez": count, "mesaj": f"Bu şifre {count} kez veri sızıntısında görülmüş. Kullanmayın!"}})
-                else:
-                    return jsonify({"success": True, "data": {"sizinti": False, "mesaj": "Bu şifre bilinen sızıntılarda bulunamadı. Güvenle kullanabilirsiniz."}})
-            else:
-                return jsonify({"success": False, "error": "API hatası."})
+                headers = {
+                    "Authorization": f"Bearer {OPENARCHIVE_KEY}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                }
+                
+                try:
+                    if api["method"] == "POST":
+                        r = requests.post(api["url"], headers=headers, json={api["param_key"]: val}, timeout=15)
+                    else:
+                        r = requests.get(api["url"], headers=headers, params={api["param_key"]: val}, timeout=15)
+                    
+                    if r.status_code == 401:
+                        return jsonify({"success": False, "error": "OpenArchive API Anahtarı geçersiz veya eksik (401 Yetkisiz)."})
+                    
+                    data = r.json()
+                    log_query(uid, uname, q_type, val, ip, "basarili")
+                    return jsonify({"success": True, "data": data})
+                except Exception as e:
+                    return jsonify({"success": False, "error": f"OpenArchive API Hatası: {str(e)}"})
 
-        # --- ÜCRETSİZ SORGULAR ---
+        # --- MEVCUT SORGULAR ---
         if q_type == "plaka_sorgu":
             plaka = (req.get('plaka') or '').strip().upper()
             if not plaka: return jsonify({"success": False, "error": "Plaka girin."})
@@ -283,7 +301,6 @@ def api_sorgu():
             txt = (req.get('text') or '').encode()
             return jsonify({"success": True, "data": {"MD5": hashlib.md5(txt).hexdigest(), "SHA1": hashlib.sha1(txt).hexdigest(), "SHA256": hashlib.sha256(txt).hexdigest()}})
 
-        # --- DÜNYA API'LERİ (VIP) ---
         if q_type == "api_wayback":
             url = (req.get('url') or '').strip()
             data = requests.get(f"http://archive.org/wayback/available?url={url}", timeout=15).json()
@@ -333,7 +350,6 @@ def api_sorgu():
             log_query(uid, uname, q_type, city, ip, "basarili")
             return jsonify({"success": True, "data": {"sehir": geo["results"][0]["name"], "hava_durumu": w["current_weather"]}})
 
-        # --- MERNİS / GSM / ADRES ---
         API_MAP = {
             "adsoyad": {"url": "https://violetpanel.cc/furkanapi/adsoyadapi.php", "params": {"ad":"ad","soyad":"soyad"}},
             "aile": {"url": "https://violetpanel.cc/furkanapi/ailesorguapi.php", "params": {"tc":"tc"}},
@@ -365,7 +381,6 @@ def api_sorgu():
             log_query(uid, uname, q_type, query_str.strip(), ip, "basarisiz")
             return jsonify({"success": False, "error": "Bulunamadı veya API hatası."})
             
-        # SONUCU SQLITE ÖNBELLEĞE KAYDET
         with get_db() as c:
             c.execute("INSERT OR REPLACE INTO cache (key, data, timestamp) VALUES (?,?,?)", 
                       (cache_key, json.dumps(result), time.time()))
@@ -418,6 +433,8 @@ def admin_dashboard():
         daily_labels = json.dumps(dates); daily_data = json.dumps(daily_counts)
 
     return render_template('admin.html', show_login=False, logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users, vip_users=vip_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"), chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, temp_passes=temp_passes, popular_queries=popular_queries, success_count=success_count, fail_count=fail_count, tickets=tickets)
+
+# ... (Admin rotaları aynı kalıyor) ...
 
 @app.route("/admin-toggle-vip/<int:uid>", methods=["POST"])
 def admin_toggle_vip(uid):
