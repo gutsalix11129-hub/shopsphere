@@ -66,7 +66,7 @@
 
         @media (min-width: 992px) { .sidebar { left: 0; } .main { margin-left: 280px; width: calc(100% - 280px); } .menu-btn { display: none; } }
 
-        /* QUERY TERMINAL EKRANI */
+        /* QUERY PANEL */
         .panel { background: var(--card); border-radius: 20px; padding: 30px; border: 1px solid var(--border); max-width: 900px; margin: 0 auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 25px; }
         .panel-header h2 { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 12px; }
@@ -76,8 +76,8 @@
         
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-size: 12px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 16px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; font-size: 15px; color: #fff; transition: .3s; }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--purple); box-shadow: 0 0 15px rgba(168,85,247,0.2); }
+        .form-group input { width: 100%; padding: 16px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; font-size: 15px; color: #fff; transition: .3s; }
+        .form-group input:focus { outline: none; border-color: var(--purple); box-shadow: 0 0 15px rgba(168,85,247,0.2); }
         
         .tool-desc { background: rgba(99,102,241,0.05); border-left: 3px solid var(--primary); padding: 15px 20px; border-radius: 0 10px 10px 0; margin-bottom: 25px; font-size: 13.5px; color: #cbd5e1; line-height: 1.5; display: flex; gap: 12px; align-items: flex-start; }
         .tool-desc i { color: var(--primary); font-size: 18px; margin-top: 2px; }
@@ -85,20 +85,35 @@
         .btn-submit { background: linear-gradient(135deg, var(--primary), var(--purple)); color: #fff; border: none; padding: 16px 24px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: all .3s; box-shadow: 0 10px 20px rgba(99,102,241,0.2); }
         .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(168,85,247,0.3); }
         
-        /* JSON TERMINAL TASARIMI */
-        .terminal-window { background: #000; border-radius: 12px; border: 1px solid #333; margin-top: 25px; overflow: hidden; display: none; }
+        /* YENİ NESİL SONUÇ EKRANI */
+        .result-container { display: none; margin-top: 25px; animation: fadeIn .4s ease; }
+        .result-toolbar { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 10px 15px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .result-tabs { display: flex; gap: 5px; }
+        .res-tab { background: transparent; color: #94a3b8; border: none; padding: 8px 15px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: .2s; }
+        .res-tab.active { background: rgba(255,255,255,0.1); color: #fff; }
+        
+        .action-buttons { display: flex; gap: 8px; }
+        .btn-mini { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: .2s; }
+        .btn-mini:hover { background: rgba(255,255,255,0.1); }
+
+        .result-content { display: none; }
+        .result-content.active { display: block; }
+
+        /* 1. GÖRSEL TABLO (FORMATTED) */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 14px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: #000; }
+        .data-table th, .data-table td { padding: 14px 18px; border-bottom: 1px solid var(--border); text-align: left; }
+        .data-table th { background: rgba(255,255,255,0.02); color: #94a3b8; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 40%; border-right: 1px solid var(--border); }
+        .data-table td { color: #f8fafc; font-weight: 500; word-break: break-all; }
+        .data-table tr:last-child th, .data-table tr:last-child td { border-bottom: none; }
+
+        /* 2. TERMINAL (RAW JSON) */
+        .terminal-window { background: #000; border-radius: 12px; border: 1px solid #333; overflow: hidden; display: none; }
         .terminal-header { background: #111; padding: 10px 15px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #333; }
         .term-dot { width: 10px; height: 10px; border-radius: 50%; }
         .term-dot.red { background: #ff5f56; } .term-dot.yellow { background: #ffbd2e; } .term-dot.green { background: #27c93f; }
         .terminal-title { margin-left: 10px; font-size: 11px; color: #888; font-family: monospace; }
         .terminal-body { padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 13.5px; color: #a7f3d0; white-space: pre-wrap; max-height: 400px; overflow-y: auto; line-height: 1.5; }
-        .terminal-body::-webkit-scrollbar { width: 8px; }
-        .terminal-body::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         .json-key { color: #60a5fa; } .json-string { color: #fbbf24; } .json-number { color: #a855f7; } .json-boolean { color: #ef4444; }
-
-        .result-toolbar { display: flex; gap: 10px; margin-top: 15px; justify-content: flex-end; }
-        .btn-mini { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; padding: 8px 15px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: .2s; }
-        .btn-mini:hover { background: rgba(255,255,255,0.1); }
 
         /* VIP FİYATLANDIRMA */
         .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
@@ -199,7 +214,6 @@
             <div class="nav-item tool-item" onclick="loadTool('api_wayback', this)"><div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div> Wayback Arşivi</div>
             <div class="nav-item tool-item" onclick="loadTool('api_whois', this)"><div class="icon"><i class="fa-solid fa-magnifying-glass-location"></i></div> Domain WHOIS</div>
             <div class="nav-item tool-item" onclick="loadTool('api_bin', this)"><div class="icon"><i class="fa-solid fa-credit-card"></i></div> BIN Sorgu</div>
-            <!-- YENİ EKLENEN: HIBP ŞİFRE SIZINTI -->
             <div class="nav-item tool-item" onclick="loadTool('hibp_password', this)"><div class="icon"><i class="fa-solid fa-shield-halved" style="color:var(--danger);"></i></div> Şifre Sızıntı Kontrolü <span class="badge-new" style="background:var(--danger);">YENİ</span></div>
 
             <div class="nav-title">HESABIM</div>
@@ -285,6 +299,7 @@
             </div>
         </div>
 
+        <!-- YENİLENMİŞ SORGU EKRANI -->
         <div id="view-query" class="view">
             <div class="panel">
                 <div class="panel-header">
@@ -299,16 +314,40 @@
                     <div id="qInputs"></div>
                     <button type="submit" class="btn-submit" id="submitBtn"><i class="fa-solid fa-bolt"></i> Sorguyu Başlat</button>
                 </form>
-                <div class="result-toolbar" id="resultToolbar"></div>
                 
-                <!-- TERMINAL SONUÇ EKRANI -->
-                <div class="terminal-window" id="terminalWindow">
-                    <div class="terminal-header">
-                        <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
-                        <span class="terminal-title">root@shopsphere:~/output.json</span>
+                <!-- YENİ SONUÇ ALANI -->
+                <div class="result-container" id="resultContainer">
+                    <div class="result-toolbar">
+                        <div class="result-tabs">
+                            <button type="button" class="res-tab active" onclick="switchResultTab('formatted', this)"><i class="fa-solid fa-table"></i> Görsel Tablo</button>
+                            <button type="button" class="res-tab" onclick="switchResultTab('json', this)"><i class="fa-solid fa-code"></i> Ham JSON</button>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn-mini" onclick="downloadPDF()"><i class="fa-solid fa-file-pdf" style="color:#ef4444;"></i> PDF</button>
+                            <button class="btn-mini" onclick="downloadCSV()"><i class="fa-solid fa-file-excel" style="color:#10b981;"></i> Excel</button>
+                            <button class="btn-mini" onclick="copyResult()"><i class="fa-solid fa-copy" style="color:#60a5fa;"></i> Kopyala</button>
+                        </div>
                     </div>
-                    <div class="terminal-body" id="qResults"></div>
+
+                    <!-- 1. GÖRSEL TABLO -->
+                    <div id="res-formatted" class="result-content active">
+                        <table class="data-table" id="formattedTable">
+                            <!-- JS ile doldurulacak -->
+                        </table>
+                    </div>
+
+                    <!-- 2. HAM JSON -->
+                    <div id="res-json" class="result-content">
+                        <div class="terminal-window" style="display:block;">
+                            <div class="terminal-header">
+                                <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+                                <span class="terminal-title">root@shopsphere:~/output.json</span>
+                            </div>
+                            <div class="terminal-body" id="qResultsRaw"></div>
+                        </div>
+                    </div>
                 </div>
+
             </div>
         </div>
 
@@ -380,8 +419,6 @@
             setTimeout(() => {
                 let reply = "Bu konuda size yardımcı olamıyorum, lütfen menüyü kullanın.";
                 if(msg.toLowerCase().includes('vip')) reply = "VIP olmak için sol menüdeki VIP Paketleri sekmesine göz atın.";
-                else if(msg.toLowerCase().includes('plaka')) reply = "Sol menüdeki Plaka Sorgu aracını kullanabilirsiniz.";
-                else if(msg.toLowerCase().includes('sızıntı') || msg.toLowerCase().includes('şifre')) reply = "Sol menüdeki Şifre Sızıntı Kontrolü aracı ile şifrenizin çalınıp çalınmadığını test edebilirsiniz.";
                 body.innerHTML += `<div class="msg bot">${reply}</div>`; body.scrollTop = body.scrollHeight;
             }, 600);
         }
@@ -408,8 +445,6 @@
             'api_wayback': { title: 'Wayback Arşivi', desc: 'Sitenin geçmişini görün.', vip: true, fields: [{ id:'url', label:'Site URL (örn: google.com)' }] },
             'api_whois': { title: 'Domain WHOIS', desc: 'Alan adı sahibini bulun.', vip: true, fields: [{ id:'domain', label:'Domain Adı' }] },
             'api_bin': { title: 'BIN / Kart Sorgu', desc: 'Kart ilk 6 hane ile banka bulun.', vip: true, fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi', pattern:/^\d{6,8}$/ }] },
-            
-            // YENİ EKLENEN ŞİFRE SIZINTI
             'hibp_password': { title: 'Şifre Sızıntı Kontrolü', desc: 'Şifrenizin daha önce veri sızıntılarında çalınıp çalınmadığını kontrol eder.', vip: true, fields: [{ id:'pass', label:'Kontrol Edilecek Şifre' }] }
         };
         
@@ -419,7 +454,6 @@
         
         function toggleMenu() { $('sidebar').classList.toggle('open'); $('overlay').classList.toggle('show'); }
         
-        // ARAMA ÇUBUĞU FONKSİYONU
         function searchTools() {
             const query = $('toolSearch').value.toLowerCase();
             const items = document.querySelectorAll('.tool-item');
@@ -441,9 +475,11 @@
             const tool = TOOLS[type]; if (!tool) return; 
             if (tool.vip && !IS_VIP) { showView('vip', document.querySelector('[data-view="vip"]')); toast('Bu sorgu VIP üyelere özeldir.', 'error'); return; }
             currentType = type; lastResult = null; showView('query', el); 
+            
             $('qTitle').innerText = tool.title; 
-            $('terminalWindow').style.display = 'none'; $('resultToolbar').innerHTML = ''; 
+            $('resultContainer').style.display = 'none'; // Sonuçları gizle
             if(tool.desc) { $('toolDesc').style.display = 'flex'; $('toolDescText').innerText = tool.desc; } else { $('toolDesc').style.display = 'none'; }
+            
             let html = ''; tool.fields.forEach(f => { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" placeholder="${f.label} girin..."></div>`; }); 
             $('qInputs').innerHTML = html; 
         }
@@ -461,24 +497,56 @@
             if (!valid) return toast('Lütfen alanları doğru doldurun.', 'error'); 
             
             isQuerying = true; const btn = $('submitBtn'); setLoading(btn, true, '<i class="fa-solid fa-circle-notch fa-spin"></i> Sorgulanıyor...'); 
-            $('terminalWindow').style.display = 'block'; $('qResults').innerHTML = '<span style="color:#fbbf24;">> Bağlantı kuruluyor...</span>'; $('resultToolbar').innerHTML = ''; 
+            $('resultContainer').style.display = 'block';
+            $('formattedTable').innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px;"><i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color:var(--purple);"></i></td></tr>';
+            $('qResultsRaw').innerHTML = '<span style="color:#fbbf24;">> Bağlantı kuruluyor...</span>';
+            
+            // Sekmeyi otomatik olarak "Görsel Tablo"ya al
+            switchResultTab('formatted', document.querySelectorAll('.res-tab')[0]);
             
             try { 
                 const res = await fetch('/api/sorgu', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload) }).then(r => r.json()); 
                 if (!res.success) { 
-                    $('qResults').innerHTML = `<span style="color:#ef4444;">> HATA: ${escapeHtml(res.error)}</span>`; 
+                    $('formattedTable').innerHTML = `<tr><td colspan="2" style="color:#ef4444; text-align:center; padding:20px;">${escapeHtml(res.error)}</td></tr>`;
+                    $('qResultsRaw').innerHTML = `<span style="color:#ef4444;">> HATA: ${escapeHtml(res.error)}</span>`;
                 } else { 
                     lastResult = res.data; 
-                    renderTerminalData(res.data); 
+                    renderResults(res.data); 
                 } 
             } catch (e) { 
-                $('qResults').innerHTML = `<span style="color:#ef4444;">> Sunucu bağlantı hatası.</span>`; 
+                $('formattedTable').innerHTML = `<tr><td colspan="2" style="color:#ef4444; text-align:center; padding:20px;">Sunucu hatası.</td></tr>`;
+                $('qResultsRaw').innerHTML = `<span style="color:#ef4444;">> Sunucu bağlantı hatası.</span>`;
             } finally { 
                 isQuerying = false; setLoading(btn, false, '<i class="fa-solid fa-bolt"></i> Sorguyu Başlat'); 
             } 
         }
         
-        function renderTerminalData(data) {
+        // SEKMELER ARASI GEÇİŞ
+        function switchResultTab(tab, btn) {
+            document.querySelectorAll('.res-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.result-content').forEach(c => c.classList.remove('active'));
+            if (tab === 'formatted') $('res-formatted').classList.add('active');
+            else $('res-json').classList.add('active');
+        }
+
+        function renderResults(data) {
+            const items = Array.isArray(data) ? data : [data];
+            
+            // 1. Görsel Tabloyu Doldur
+            let tableHtml = '';
+            items.forEach((item, idx) => {
+                if (items.length > 1) tableHtml += `<tr><td colspan="2" style="background:rgba(99,102,241,0.1); color:var(--primary); font-weight:800;">Sonuç #${idx+1}</td></tr>`;
+                for (let [key, val] of Object.entries(item)) {
+                    if (!val || val === 'YOK' || val === 'NULL') continue;
+                    let displayVal = typeof val === 'object' ? JSON.stringify(val) : val;
+                    tableHtml += `<tr><th>${escapeHtml(key)}</th><td>${escapeHtml(displayVal)}</td></tr>`;
+                }
+            });
+            if (!tableHtml) tableHtml = '<tr><td colspan="2" style="text-align:center; padding:20px;">Sonuç boş.</td></tr>';
+            $('formattedTable').innerHTML = tableHtml;
+
+            // 2. Ham JSON'u Doldur
             const jsonStr = JSON.stringify(data, null, 2);
             const coloredJson = jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
                 let cls = 'json-number';
@@ -486,17 +554,9 @@
                 else if (/true|false/.test(match)) { cls = 'json-boolean'; }
                 return `<span class="${cls}">${match}</span>`;
             });
-            $('qResults').innerHTML = `<span style="color:#10b981;">> BAĞLANTI BAŞARILI. VERİLER ALINIYOR...</span><br><br>${coloredJson}`;
-            
-            // YENİ: PDF İndirme Butonu da Eklendi
-            $('resultToolbar').innerHTML = `
-                <button class="btn-mini" onclick="downloadPDF()"><i class="fa-solid fa-file-pdf" style="color:#ef4444;"></i> PDF İndir</button>
-                <button class="btn-mini" onclick="downloadCSV()"><i class="fa-solid fa-file-excel" style="color:#10b981;"></i> Excel İndir</button>
-                <button class="btn-mini" onclick="navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)); toast('Kopyalandı', 'success');"><i class="fa-solid fa-copy" style="color:#60a5fa;"></i> JSON Kopyala</button>
-            `;
+            $('qResultsRaw').innerHTML = `<span style="color:#10b981;">> BAĞLANTI BAŞARILI. VERİLER ALINIYOR...</span><br><br>${coloredJson}`;
         }
         
-        // YENİ: PDF İNDİRME FONKSİYONU
         function downloadPDF() {
             if (!lastResult) return;
             const { jsPDF } = window.jspdf;
@@ -519,7 +579,6 @@
             doc.setFontSize(11);
             let yPos = 48;
             
-            // JSON'u düz metin olarak yazdır
             const textLines = doc.splitTextToSize(JSON.stringify(lastResult, null, 2), 170);
             textLines.forEach(line => {
                 if (yPos > 280) { doc.addPage(); yPos = 20; }
@@ -542,6 +601,8 @@
             items.forEach(it => { const row = []; keys.forEach(k => { const flat = flatten(it).find(([key]) => key === k); let val = flat ? flat[1] : ""; if (typeof val === 'string') val = val.replace(/;/g, ","); row.push(val); }); csv += row.join(";") + "\n"; });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `sorgu_${Date.now()}.csv`; a.click();
         }
+
+        function copyResult() { if (lastResult) navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(() => toast('Sonuçlar JSON olarak kopyalandı.', 'success')); }
 
         $('profileFile').addEventListener('change', function(e) {
             const file = e.target.files[0]; if (!file) return;
