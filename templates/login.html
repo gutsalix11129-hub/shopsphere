@@ -40,6 +40,7 @@
         .checkbox-group label a { color: #a855f7; text-decoration: none; font-weight: 600; }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #6366f1, #a855f7); cursor: pointer; transition: .3s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(99,102,241,0.2); }
         .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(168,85,247,0.4); }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
         .alert { display: none; padding: 12px; border-radius: 10px; font-size: 13px; margin-bottom: 15px; align-items: center; gap: 8px; }
         .alert.show { display: flex; }
         .alert-error { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
@@ -118,27 +119,226 @@
             </div>
         </div>
     </div>
+
     <script>
-        const canvas = document.getElementById('network'); const ctx = canvas.getContext('2d'); let particles = [];
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resize); resize();
-        for(let i=0; i<80; i++) particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5 });
-        function draw() { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle = 'rgba(99, 102, 241, 0.5)'; ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
-            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; if(p.x<0||p.x>canvas.width) p.vx*=-1; if(p.y<0||p.y>canvas.height) p.vy*=-1; ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill();
-                for(let j=i+1; j<particles.length; j++) { let p2 = particles[j], dx = p.x-p2.x, dy = p.y-p2.y, dist = Math.sqrt(dx*dx+dy*dy); if(dist < 120) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); } } }); requestAnimationFrame(draw); }
+        // --- ARKA PLAN ANİMASYONU ---
+        const canvas = document.getElementById('network');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        for (let i = 0; i < 80; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.5)';
+            ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
+
+            particles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    let dx = p.x - p2.x;
+                    let dy = p.y - p2.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            });
+            requestAnimationFrame(draw);
+        }
         draw();
+
+        // --- UYGULAMA MANTIĞI ---
         const $ = id => document.getElementById(id);
-        const CSRF = document.querySelector('meta[name="csrf-token"]').content; const HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
-        let selectedAvatar = "https://api.dicebear.com/7.x/bottts/svg?seed=A"; let currentCaptchaAnswer = 0;
-        function generateCaptcha() { const num1 = Math.floor(Math.random() * 10) + 1, num2 = Math.floor(Math.random() * 10) + 1; currentCaptchaAnswer = num1 + num2; $('captchaText').innerText = `${num1} + ${num2} = ?`; $('captchaInput').value = ''; }
-        function switchTab(name) { ['loginErr', 'regErr', 'regOk'].forEach(id => $(id).classList.remove('show')); document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name)); document.querySelectorAll('.form-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name)); if (name === 'register') generateCaptcha(); }
-        document.querySelectorAll('[data-tab]').forEach(el => el.addEventListener('click', (e) => { e.preventDefault(); switchTab(el.dataset.tab); }));
-        document.querySelectorAll('.avatar-opt:not(.upload-btn)').forEach(img => { img.addEventListener('click', () => { document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('selected')); img.classList.add('selected'); selectedAvatar = img.dataset.url; }); });
+        const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+        const HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
+
+        let selectedAvatar = "https://api.dicebear.com/7.x/bottts/svg?seed=A";
+        let currentCaptchaAnswer = 0;
+
+        // Buton durumlarını sıfırlayan yardımcı fonksiyonlar (Kod tekrarını önler)
+        const resetLoginBtn = () => {
+            const btn = $('loginBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sisteme Bağlan';
+        };
+
+        const resetRegisterBtn = () => {
+            const btn = $('registerBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Ağa Katıl';
+        };
+
+        function generateCaptcha() {
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            currentCaptchaAnswer = num1 + num2;
+            $('captchaText').innerText = `${num1} + ${num2} = ?`;
+            $('captchaInput').value = '';
+        }
+
+        function switchTab(name) {
+            ['loginErr', 'regErr', 'regOk'].forEach(id => $(id).classList.remove('show'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+            document.querySelectorAll('.form-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+            if (name === 'register') generateCaptcha();
+        }
+
+        function showAlert(el, msg) {
+            el.querySelector('span').textContent = msg;
+            el.classList.add('show');
+        }
+
+        // Sekme geçişleri
+        document.querySelectorAll('[data-tab]').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchTab(el.dataset.tab);
+            });
+        });
+
+        // Avatar seçimi
+        document.querySelectorAll('.avatar-opt:not(.upload-btn)').forEach(img => {
+            img.addEventListener('click', () => {
+                document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('selected'));
+                img.classList.add('selected');
+                selectedAvatar = img.dataset.url;
+            });
+        });
         document.querySelector('.avatar-opt:not(.upload-btn)').classList.add('selected');
-        $('avatarFile').addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(event) { const img = new Image(); img.onload = function() { const canvas = document.createElement('canvas'); canvas.width = 150; canvas.height = 150; const ctx = canvas.getContext('2d'); const size = Math.min(img.width, img.height); ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 150, 150); const dataUrl = canvas.toDataURL('image/jpeg', 0.8); const uploadBtn = $('uploadBtn'); uploadBtn.innerHTML = `<img src="${dataUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`; document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('selected')); uploadBtn.classList.add('selected'); selectedAvatar = dataUrl; }; img.src = event.target.result; }; reader.readAsDataURL(file); });
-        function showAlert(el, msg) { el.querySelector('span').textContent = msg; el.classList.add('show'); }
-        $('loginForm').addEventListener('submit', async (e) => { e.preventDefault(); $('loginErr').classList.remove('show'); const u = $('login-u').value.trim(), p = $('login-p').value; if (!u || !p) return showAlert($('loginErr'), 'Lütfen tüm alanları doldurun.'); const btn = $('loginBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Bağlanıyor...'; try { const res = await fetch('/api/login', { method: 'POST', headers: HEADERS, body: JSON.stringify({ username: u, password: p }) }).then(r => r.json()); if (res.success) window.location.href = '/'; else { showAlert($('loginErr'), res.error); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sisteme Bağlan'; } } catch (_) { showAlert($('loginErr'), 'Bağlantı hatası.'); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sisteme Bağlan'; } });
-        $('registerForm').addEventListener('submit', async (e) => { e.preventDefault(); $('regErr').classList.remove('show'); $('regOk').classList.remove('show'); const u = $('reg-u').value.trim(), p = $('reg-p').value, captcha = parseInt($('captchaInput').value); if (!u || !p) return showAlert($('regErr'), 'Tüm alanları doldurun.'); if (captcha !== currentCaptchaAnswer) return showAlert($('regErr'), 'Güvenlik sorusu yanlış.'); if (!$('termsCheck').checked) return showAlert($('regErr'), 'Kullanım koşullarını kabul edin.'); const btn = $('registerBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Kayıt Yapılıyor...'; try { const res = await fetch('/api/register', { method: 'POST', headers: HEADERS, body: JSON.stringify({ username: u, password: p, avatar: selectedAvatar }) }).then(r => r.json()); if (res.success) { showAlert($('regOk'), 'Ağa başarıyla katıldınız! Yönlendiriliyorsunuz...'); setTimeout(() => { switchTab('login'); $('login-u').value = u; $('login-p').value = p; btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Ağa Katıl'; }, 1500); } else { showAlert($('regErr'), res.error); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Ağa Katıl'; } } catch (_) { showAlert($('regErr'), 'Bağlantı hatası.'); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Ağa Katıl'; } });
+
+        // Avatar yükleme
+        $('avatarFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 150;
+                    canvas.height = 150;
+                    const ctx = canvas.getContext('2d');
+                    const size = Math.min(img.width, img.height);
+                    ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 150, 150);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+                    const uploadBtn = $('uploadBtn');
+                    uploadBtn.innerHTML = `<img src="${dataUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+
+                    document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('selected'));
+                    uploadBtn.classList.add('selected');
+                    selectedAvatar = dataUrl;
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Giriş Formu Submit
+        $('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            $('loginErr').classList.remove('show');
+
+            const u = $('login-u').value.trim();
+            const p = $('login-p').value;
+
+            if (!u || !p) return showAlert($('loginErr'), 'Lütfen tüm alanları doldurun.');
+
+            const btn = $('loginBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Bağlanıyor...';
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: HEADERS,
+                    body: JSON.stringify({ username: u, password: p })
+                }).then(r => r.json());
+
+                if (res.success) {
+                    window.location.href = '/';
+                } else {
+                    showAlert($('loginErr'), res.error);
+                    resetLoginBtn();
+                }
+            } catch (error) { // _ yerine error kullanıldı
+                console.error("Giriş Hatası:", error);
+                showAlert($('loginErr'), 'Bağlantı hatası.');
+                resetLoginBtn();
+            }
+        });
+
+        // Kayıt Formu Submit
+        $('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            $('regErr').classList.remove('show');
+            $('regOk').classList.remove('show');
+
+            const u = $('reg-u').value.trim();
+            const p = $('reg-p').value;
+            const captcha = parseInt($('captchaInput').value);
+
+            if (!u || !p) return showAlert($('regErr'), 'Tüm alanları doldurun.');
+            if (captcha !== currentCaptchaAnswer) return showAlert($('regErr'), 'Güvenlik sorusu yanlış.');
+            if (!$('termsCheck').checked) return showAlert($('regErr'), 'Kullanım koşullarını kabul edin.');
+
+            const btn = $('registerBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Kayıt Yapılıyor...';
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: HEADERS,
+                    body: JSON.stringify({ username: u, password: p, avatar: selectedAvatar })
+                }).then(r => r.json());
+
+                if (res.success) {
+                    showAlert($('regOk'), 'Ağa başarıyla katıldınız! Yönlendiriliyorsunuz...');
+                    setTimeout(() => {
+                        switchTab('login');
+                        $('login-u').value = u;
+                        $('login-p').value = p;
+                        resetRegisterBtn(); // Butonu eski haline getirir
+                    }, 1500);
+                } else {
+                    showAlert($('regErr'), res.error);
+                    resetRegisterBtn();
+                }
+            } catch (error) {
+                console.error("Kayıt Hatası:", error);
+                showAlert($('regErr'), 'Bağlantı hatası.');
+                resetRegisterBtn();
+            }
+        });
     </script>
 </body>
 </html>
