@@ -4,196 +4,184 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Giriş & Kayıt | ShopSphere</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Giriş Yap | ShopSphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background: #0f172a; min-height: 100vh; display: flex; overflow: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: #050505; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; color: #fff; }
         
-        .left-side { width: 50%; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); display: flex; flex-direction: column; justify-content: center; padding: 60px; position: relative; overflow: hidden; }
-        .left-side::before { content: ''; position: absolute; width: 500px; height: 500px; background: rgba(37, 99, 235, 0.2); border-radius: 50%; filter: blur(80px); top: -100px; left: -100px; }
-        .left-side::after { content: ''; position: absolute; width: 400px; height: 400px; background: rgba(139, 92, 246, 0.2); border-radius: 50%; filter: blur(80px); bottom: -100px; right: -100px; }
-        
-        .brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 15px; margin-bottom: 40px; }
-        .brand-icon { width: 50px; height: 50px; background: #fff; color: #2563eb; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        .brand h1 { font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -1px; }
-        .brand h1 span { color: #60a5fa; }
-        
-        .hero-text { position: relative; z-index: 1; }
-        .hero-text h2 { font-size: 42px; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 20px; }
-        .hero-text p { font-size: 16px; color: #94a3b8; line-height: 1.6; margin-bottom: 40px; max-width: 450px; }
-        
-        .features { display: flex; flex-direction: column; gap: 20px; position: relative; z-index: 1; }
-        .feature-item { display: flex; align-items: center; gap: 15px; }
-        .feature-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #60a5fa; font-size: 18px; }
-        .feature-text h4 { color: #fff; font-size: 15px; font-weight: 600; }
-        .feature-text p { color: #94a3b8; font-size: 13px; margin-top: 2px; }
+        /* Canvas Arka Plan */
+        canvas#network { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.6; }
 
-        .right-side { width: 50%; display: flex; align-items: center; justify-content: center; padding: 40px; background: #f8fafc; overflow-y: auto; }
-        .card { width: 100%; max-width: 480px; background: #fff; padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+        .glass-card { position: relative; z-index: 1; width: 100%; max-width: 440px; background: rgba(20, 20, 25, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1); }
         
-        .tabs { display: flex; background: #f1f5f9; padding: 6px; border-radius: 14px; margin-bottom: 30px; }
-        .tab { flex: 1; text-align: center; padding: 12px; font-size: 14px; font-weight: 700; color: #64748b; border-radius: 10px; cursor: pointer; transition: .3s; user-select: none; }
-        .tab.active { background: #fff; color: #2563eb; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .brand { text-align: center; margin-bottom: 30px; }
+        .brand-icon { width: 64px; height: 64px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; color: #fff; margin-bottom: 15px; box-shadow: 0 0 30px rgba(99,102,241,0.4); animation: pulse-glow 3s infinite alternate; }
+        @keyframes pulse-glow { 0% { box-shadow: 0 0 20px rgba(99,102,241,0.3); } 100% { box-shadow: 0 0 40px rgba(168,85,247,0.6); } }
+        .brand h1 { font-size: 28px; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .brand p { color: #94a3b8; font-size: 13.5px; margin-top: 5px; }
+
+        .tabs { display: flex; background: rgba(0,0,0,0.4); padding: 5px; border-radius: 14px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); }
+        .tab { flex: 1; text-align: center; padding: 12px; font-size: 14px; font-weight: 700; color: #64748b; border-radius: 10px; cursor: pointer; transition: .3s; }
+        .tab.active { background: rgba(255,255,255,0.1); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         
-        .form-panel { display: none; animation: slideUp .4s ease; }
+        .form-panel { display: none; animation: fadeIn .4s ease; }
         .form-panel.active { display: block; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-        
-        .form-group { margin-bottom: 18px; position: relative; }
-        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 8px; text-transform: uppercase; }
-        .form-group input { width: 100%; padding: 14px 40px 14px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14.5px; color: #1e293b; background: #f8fafc; transition: .2s; }
-        .form-group input:focus { outline: none; border-color: #2563eb; background: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
-        
-        .input-icon { position: absolute; right: 12px; top: 40px; color: #94a3b8; cursor: pointer; background: none; border: none; font-size: 16px; }
-        
-        .avatar-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 15px; }
-        .avatar-opt { width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: .2s; background: #f1f5f9; padding: 2px; object-fit: cover; }
-        .avatar-opt:hover { transform: scale(1.1); }
-        .avatar-opt.selected { border-color: #2563eb; background: rgba(37,99,235,0.1); }
-        .upload-btn { display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #e2e8f0; color: #64748b; font-size: 16px; cursor: pointer; transition: .2s; }
-        .upload-btn:hover { background: #cbd5e1; color: #1e293b; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
-        .captcha-box { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-        .captcha-box span { font-size: 14px; font-weight: 600; color: #475569; }
-        .captcha-box input { width: 80px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center; font-weight: 700; outline: none; }
-        .captcha-box input:focus { border-color: #2563eb; }
+        .form-group { margin-bottom: 18px; position: relative; }
+        .form-group label { display: block; font-size: 11.5px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .form-group input { width: 100%; padding: 15px 40px 15px 15px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; font-size: 14.5px; color: #fff; transition: .3s; }
+        .form-group input:focus { outline: none; border-color: #6366f1; background: rgba(99,102,241,0.05); box-shadow: 0 0 15px rgba(99,102,241,0.2); }
+        .input-icon { position: absolute; right: 15px; top: 40px; color: #64748b; cursor: pointer; background: none; border: none; font-size: 16px; }
+
+        .avatar-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 15px; }
+        .avatar-opt { width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: .2s; background: rgba(255,255,255,0.05); padding: 2px; }
+        .avatar-opt:hover { transform: scale(1.1); }
+        .avatar-opt.selected { border-color: #a855f7; box-shadow: 0 0 10px rgba(168,85,247,0.5); }
+        .upload-btn { display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #94a3b8; font-size: 16px; cursor: pointer; transition: .2s; }
+        
+        .captcha-box { background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.2); padding: 12px 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+        .captcha-box span { font-size: 13px; font-weight: 600; color: #cbd5e1; }
+        .captcha-box input { width: 70px; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; text-align: center; color: #fff; font-weight: 700; outline: none; }
 
         .checkbox-group { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 20px; }
-        .checkbox-group input { width: 18px; height: 18px; margin-top: 2px; cursor: pointer; accent-color: #2563eb; }
-        .checkbox-group label { font-size: 12px; color: #64748b; line-height: 1.5; cursor: pointer; }
-        .checkbox-group label a { color: #2563eb; text-decoration: none; font-weight: 600; }
+        .checkbox-group input { width: 16px; height: 16px; margin-top: 2px; cursor: pointer; accent-color: #6366f1; }
+        .checkbox-group label { font-size: 11.5px; color: #94a3b8; line-height: 1.5; cursor: pointer; }
+        .checkbox-group label a { color: #a855f7; text-decoration: none; font-weight: 600; }
 
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #2563eb, #1d4ed8); cursor: pointer; transition: .2s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
-        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(37,99,235,.3); }
-        .btn:disabled { opacity: .7; cursor: not-allowed; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #6366f1, #a855f7); cursor: pointer; transition: .3s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(99,102,241,0.2); }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(168,85,247,0.4); }
         
-        .alert { display: none; padding: 12px; border-radius: 10px; font-size: 13px; margin-bottom: 15px; align-items: flex-start; gap: 8px; }
+        .alert { display: none; padding: 12px; border-radius: 10px; font-size: 13px; margin-bottom: 15px; align-items: center; gap: 8px; }
         .alert.show { display: flex; }
-        .alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-        .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .alert-error { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        .alert-success { background: rgba(16,185,129,0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
         
-        @media (max-width: 900px) {
-            body { flex-direction: column; overflow-y: auto; }
-            .left-side { width: 100%; padding: 40px 20px; min-height: 300px; }
-            .hero-text h2 { font-size: 28px; }
-            .features { display: none; }
-            .right-side { width: 100%; padding: 20px; }
-            .card { padding: 30px 20px; }
-        }
+        .links { text-align: center; margin-top: 20px; font-size: 13px; color: #64748b; }
+        .links a { color: #a855f7; font-weight: 600; text-decoration: none; }
     </style>
 </head>
 <body>
-    <div class="left-side">
+    <canvas id="network"></canvas>
+    <div class="glass-card">
         <div class="brand">
             <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
             <h1>SHOP<span>SPHERE</span></h1>
+            <p>Geleceğin İstihbarat Ağı</p>
         </div>
-        <div class="hero-text">
-            <h2>Sorgu ve İstihbarat Dünyasına Adım Atın.</h2>
-            <p>En gelişmiş OSINT araçları, sorgu çözümleri ve dünya çapında API ağları tek bir platformda. Hemen kayıt olun, veriye hükmedin.</p>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="login">Giriş Yap</div>
+            <div class="tab" data-tab="register">Kayıt Ol</div>
         </div>
-        <div class="features">
-            <div class="feature-item">
-                <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
-                <div class="feature-text"><h4>Hızlı ve Güvenilir</h4><p>Saniyeler içinde sonuç alın.</p></div>
+        
+        <div class="form-body">
+            <div class="form-panel active" id="panel-login">
+                <div class="alert alert-error" id="loginErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
+                <form id="loginForm" novalidate>
+                    <div class="form-group">
+                        <label>Kullanıcı Adı</label>
+                        <input type="text" id="login-u" placeholder="Ajan adınız..." required>
+                        <i class="fa-solid fa-user input-icon"></i>
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre</label>
+                        <input type="password" id="login-p" placeholder="••••••••" required>
+                        <button type="button" class="input-icon toggle-pw" data-target="login-p"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                    <button type="submit" class="btn" id="loginBtn"><i class="fa-solid fa-right-to-bracket"></i> Sisteme Bağlan</button>
+                </form>
+                <div class="links">Hesabınız yok mu? <a href="#" data-tab="register">Hemen Kayıt Olun</a></div>
             </div>
-            <div class="feature-item">
-                <div class="feature-icon"><i class="fa-solid fa-lock"></i></div>
-                <div class="feature-text"><h4>Gelişmiş Güvenlik</h4><p>Verileriniz ve sorgularınız WAF koruması altında.</p></div>
-            </div>
-        </div>
-    </div>
 
-    <div class="right-side">
-        <div class="card">
-            <div class="tabs">
-                <div class="tab active" data-tab="login">Giriş Yap</div>
-                <div class="tab" data-tab="register">Kayıt Ol</div>
-            </div>
-            
-            <div class="form-body">
-                <div class="form-panel active" id="panel-login">
-                    <div class="alert alert-error" id="loginErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
-                    <form id="loginForm" novalidate>
-                        <div class="form-group">
-                            <label>Kullanıcı Adı</label>
-                            <input type="text" id="login-u" placeholder="Kullanıcı adınız" required>
-                            <i class="fa-solid fa-user input-icon"></i>
+            <div class="form-panel" id="panel-register">
+                <div class="alert alert-error" id="regErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
+                <div class="alert alert-success" id="regOk"><i class="fa-solid fa-circle-check"></i><span></span></div>
+                <form id="registerForm" novalidate>
+                    <div class="form-group">
+                        <label>Profil Avatarı Seç</label>
+                        <div class="avatar-grid" id="avatarGrid">
+                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=A" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=A">
+                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=B" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=B">
+                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=C" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=C">
+                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=D" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=D">
+                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=E" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=E">
+                            <div class="avatar-opt upload-btn" id="uploadBtn" onclick="document.getElementById('avatarFile').click()"><i class="fa-solid fa-upload"></i></div>
                         </div>
-                        <div class="form-group">
-                            <label>Şifre</label>
-                            <input type="password" id="login-p" placeholder="••••••••" required>
-                            <button type="button" class="input-icon toggle-pw" data-target="login-p"><i class="fa-solid fa-eye"></i></button>
-                        </div>
-                        <button type="submit" class="btn" id="loginBtn"><i class="fa-solid fa-right-to-bracket"></i> Giriş Yap</button>
-                    </form>
-                    <div style="text-align: center; margin-top: 20px; font-size: 13.5px; color: #64748b;">Hesabınız yok mu? <a href="#" data-tab="register" style="color: #2563eb; font-weight: 700; text-decoration: none;">Hemen Kayıt Olun</a></div>
-                </div>
+                        <input type="file" id="avatarFile" accept="image/*" style="display:none;">
+                    </div>
+                    <div class="form-group">
+                        <label>Kullanıcı Adı</label>
+                        <input type="text" id="reg-u" placeholder="Ajan adı (min 3)" minlength="3" maxlength="32" required>
+                        <i class="fa-solid fa-user input-icon"></i>
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre</label>
+                        <input type="password" id="reg-p" placeholder="Güçlü bir şifre" minlength="6" required>
+                        <button type="button" class="input-icon toggle-pw" data-target="reg-p"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                    
+                    <div class="captcha-box">
+                        <span id="captchaText">Yükleniyor...</span>
+                        <input type="number" id="captchaInput" placeholder="Sonuç">
+                    </div>
 
-                <div class="form-panel" id="panel-register">
-                    <div class="alert alert-error" id="regErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
-                    <div class="alert alert-success" id="regOk"><i class="fa-solid fa-circle-check"></i><span></span></div>
-                    <form id="registerForm" novalidate>
-                        <div class="form-group">
-                            <label>Profil Resmi Seç</label>
-                            <div class="avatar-grid" id="avatarGrid">
-                                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=A" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=A">
-                                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=B" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=B">
-                                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=C" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=C">
-                                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=D" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=D">
-                                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=E" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=E">
-                                <div class="avatar-opt upload-btn" id="uploadBtn" onclick="document.getElementById('avatarFile').click()"><i class="fa-solid fa-upload"></i></div>
-                            </div>
-                            <input type="file" id="avatarFile" accept="image/*" style="display:none;">
-                        </div>
-                        <div class="form-group">
-                            <label>Kullanıcı Adı</label>
-                            <input type="text" id="reg-u" placeholder="en_az_3_karakter" minlength="3" maxlength="32" required>
-                            <i class="fa-solid fa-user input-icon"></i>
-                        </div>
-                        <div class="form-group">
-                            <label>Şifre</label>
-                            <input type="password" id="reg-p" placeholder="En az 6 karakter" minlength="6" required>
-                            <button type="button" class="input-icon toggle-pw" data-target="reg-p"><i class="fa-solid fa-eye"></i></button>
-                        </div>
-                        <div class="form-group">
-                            <label>Şifre Tekrar</label>
-                            <input type="password" id="reg-p2" placeholder="Şifrenizi tekrar girin" required>
-                            <i class="fa-solid fa-lock input-icon"></i>
-                        </div>
-                        
-                        <div class="captcha-box">
-                            <span id="captchaText">Yükleniyor...</span>
-                            <input type="number" id="captchaInput" placeholder="Sonuç">
-                        </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="termsCheck">
+                        <label for="termsCheck"><a href="#">Kullanım Koşulları</a>'nı okudum, kabul ediyorum.</label>
+                    </div>
 
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="termsCheck">
-                            <label for="termsCheck"><a href="#" target="_blank">Kullanım Koşulları</a> ve <a href="#" target="_blank">Gizlilik Politikası</a>'nı okudum, kabul ediyorum.</label>
-                        </div>
-
-                        <button type="submit" class="btn" id="registerBtn"><i class="fa-solid fa-user-plus"></i> Hesap Oluştur</button>
-                    </form>
-                    <div style="text-align: center; margin-top: 20px; font-size: 13.5px; color: #64748b;">Zaten üye misiniz? <a href="#" data-tab="login" style="color: #2563eb; font-weight: 700; text-decoration: none;">Giriş Yapın</a></div>
-                </div>
+                    <button type="submit" class="btn" id="registerBtn"><i class="fa-solid fa-user-plus"></i> Ağa Katıl</button>
+                </form>
+                <div class="links">Zaten üye misiniz? <a href="#" data-tab="login">Giriş Yapın</a></div>
             </div>
         </div>
     </div>
 
     <script>
+        // Canvas Arka Plan Efekti
+        const canvas = document.getElementById('network');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+
+        for(let i=0; i<80; i++) particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5 });
+        
+        function draw() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.5)';
+            ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
+            
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy;
+                if(p.x<0||p.x>canvas.width) p.vx*=-1;
+                if(p.y<0||p.y>canvas.height) p.vy*=-1;
+                ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill();
+                
+                for(let j=i+1; j<particles.length; j++) {
+                    let p2 = particles[j], dx = p.x-p2.x, dy = p.y-p2.y, dist = Math.sqrt(dx*dx+dy*dy);
+                    if(dist < 120) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); }
+                }
+            });
+            requestAnimationFrame(draw);
+        }
+        draw();
+
+        // Form İşlemleri
         const $ = id => document.getElementById(id);
         const CSRF = document.querySelector('meta[name="csrf-token"]').content;
         const HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
         let selectedAvatar = "https://api.dicebear.com/7.x/bottts/svg?seed=A";
-        
         let currentCaptchaAnswer = 0;
+        
         function generateCaptcha() {
-            const num1 = Math.floor(Math.random() * 10) + 1;
-            const num2 = Math.floor(Math.random() * 10) + 1;
+            const num1 = Math.floor(Math.random() * 10) + 1, num2 = Math.floor(Math.random() * 10) + 1;
             currentCaptchaAnswer = num1 + num2;
-            $('captchaText').innerText = `İnsan Doğrulaması: ${num1} + ${num2} = ?`;
+            $('captchaText').innerText = `${num1} + ${num2} = ?`;
             $('captchaInput').value = '';
         }
 
@@ -208,8 +196,7 @@
         document.querySelectorAll('.avatar-opt:not(.upload-btn)').forEach(img => {
             img.addEventListener('click', () => {
                 document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('selected'));
-                img.classList.add('selected');
-                selectedAvatar = img.dataset.url;
+                img.classList.add('selected'); selectedAvatar = img.dataset.url;
             });
         });
         document.querySelector('.avatar-opt:not(.upload-btn)').classList.add('selected');
@@ -220,31 +207,18 @@
             reader.onload = function(event) {
                 const img = new Image();
                 img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = 150; canvas.height = 150;
-                    const size = Math.min(img.width, img.height);
+                    const canvas = document.createElement('canvas'); canvas.width = 150; canvas.height = 150;
+                    const ctx = canvas.getContext('2d'); const size = Math.min(img.width, img.height);
                     ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 150, 150);
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                    
                     const uploadBtn = $('uploadBtn');
                     uploadBtn.innerHTML = `<img src="${dataUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                     document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('selected'));
-                    uploadBtn.classList.add('selected');
-                    selectedAvatar = dataUrl; 
+                    uploadBtn.classList.add('selected'); selectedAvatar = dataUrl; 
                 };
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
-        });
-
-        document.querySelectorAll('.toggle-pw').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const inp = $(btn.dataset.target);
-                const show = inp.type === 'password';
-                inp.type = show ? 'text' : 'password';
-                btn.innerHTML = show ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
-            });
         });
 
         function showAlert(el, msg) { el.querySelector('span').textContent = msg; el.classList.add('show'); }
@@ -252,37 +226,29 @@
         $('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault(); $('loginErr').classList.remove('show');
             const u = $('login-u').value.trim(), p = $('login-p').value;
-            if (!u || !p) return showAlert($('loginErr'), 'Lütfen kullanıcı adı ve şifre girin.');
-            
-            const btn = $('loginBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Giriş Yapılıyor...';
+            if (!u || !p) return showAlert($('loginErr'), 'Lütfen tüm alanları doldurun.');
+            const btn = $('loginBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Bağlanıyor...';
             try {
                 const res = await fetch('/api/login', { method: 'POST', headers: HEADERS, body: JSON.stringify({ username: u, password: p }) }).then(r => r.json());
                 if (res.success) window.location.href = '/';
-                else { showAlert($('loginErr'), res.error); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Giriş Yap'; }
-            } catch (_) { showAlert($('loginErr'), 'Bağlantı hatası.'); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Giriş Yap'; }
+                else { showAlert($('loginErr'), res.error); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sisteme Bağlan'; }
+            } catch (_) { showAlert($('loginErr'), 'Bağlantı hatası.'); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sisteme Bağlan'; }
         });
 
         $('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault(); $('regErr').classList.remove('show'); $('regOk').classList.remove('show');
-            const u = $('reg-u').value.trim(), p = $('reg-p').value, p2 = $('reg-p2').value;
-            const captcha = parseInt($('captchaInput').value);
-            
-            if (!u || !p || !p2) return showAlert($('regErr'), 'Tüm alanları doldurun.');
-            if (p !== p2) return showAlert($('regErr'), 'Şifreler eşleşmiyor.');
+            const u = $('reg-u').value.trim(), p = $('reg-p').value, captcha = parseInt($('captchaInput').value);
+            if (!u || !p) return showAlert($('regErr'), 'Tüm alanları doldurun.');
             if (captcha !== currentCaptchaAnswer) return showAlert($('regErr'), 'Güvenlik sorusu yanlış.');
-            if (!$('termsCheck').checked) return showAlert($('regErr'), 'Lütfen kullanım koşullarını kabul edin.');
-
-            const btn = $('registerBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kayıt Yapılıyor...';
+            if (!$('termsCheck').checked) return showAlert($('regErr'), 'Kullanım koşullarını kabul edin.');
+            const btn = $('registerBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Kayıt Yapılıyor...';
             try {
                 const res = await fetch('/api/register', { method: 'POST', headers: HEADERS, body: JSON.stringify({ username: u, password: p, avatar: selectedAvatar }) }).then(r => r.json());
                 if (res.success) { 
-                    showAlert($('regOk'), 'Hesabınız oluşturuldu! Giriş sekmesine atanıyorsunuz...'); 
-                    setTimeout(() => {
-                        switchTab('login'); $('login-u').value = u; $('login-p').value = p;
-                        btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Hesap Oluştur';
-                    }, 1500);
-                } else { showAlert($('regErr'), res.error); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Hesap Oluştur'; }
-            } catch (_) { showAlert($('regErr'), 'Bağlantı hatası.'); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Hesap Oluştur'; }
+                    showAlert($('regOk'), 'Ağa başarıyla katıldınız! Yönlendiriliyorsunuz...'); 
+                    setTimeout(() => { switchTab('login'); $('login-u').value = u; $('login-p').value = p; btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Ağa Katıl'; }, 1500);
+                } else { showAlert($('regErr'), res.error); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Ağa Katıl'; }
+            } catch (_) { showAlert($('regErr'), 'Bağlantı hatası.'); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Ağa Katıl'; }
         });
     </script>
 </body>
