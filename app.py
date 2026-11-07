@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 import os
 import re
@@ -29,6 +30,7 @@ app.config.update(
 )
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
+# Render için /tmp dizini
 DB_DIR = "/var/data" if os.path.exists("/var/data") else "/tmp"
 if os.name == 'nt': DB_DIR = "."
 DB_FILE = os.path.join(DB_DIR, "siber_karargah.db")
@@ -45,6 +47,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, query_type TEXT, query_param TEXT, ip TEXT, timestamp TEXT, status TEXT);
         CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
         CREATE TABLE IF NOT EXISTS tickets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, subject TEXT, message TEXT, reply TEXT, status TEXT DEFAULT 'open', created_at TEXT, replied_at TEXT);
+        CREATE TABLE IF NOT EXISTS cache (key TEXT PRIMARY KEY, data TEXT, timestamp REAL);
         CREATE INDEX IF NOT EXISTS idx_logs_user ON logs(user_id);
         """)
         try: c.execute("ALTER TABLE users ADD COLUMN vip INTEGER DEFAULT 0")
@@ -227,20 +230,26 @@ def api_sorgu():
     ip = request.remote_addr or "?"
     req = request.json or {}; q_type = req.get("type"); uid, uname = session['user_id'], session['username']
     
-    # VIP KONTROLÜ (OSINT ve Gelişmiş API'ler VIP)
     VIP_TOOLS = ["osint_ip", "osint_domain", "osint_hash", "api_wayback", "api_whois", "api_currency", "api_bin", "api_crypto", "api_email", "api_weather"]
     if q_type in VIP_TOOLS:
         with get_db() as c:
             u_row = c.execute("SELECT vip FROM users WHERE id=?", (uid,)).fetchone()
         if not u_row or u_row[0] != 1:
             return jsonify({"success": False, "error": "Bu OSINT/Gelişmiş sorgu VIP üyelere özeldir. Lütfen VIP paket satın alın."})
-    
+
+    # --- SQLITE ÖNBELLEK KONTROLÜ (RAM YEMEZ) ---
+    cache_key = f"{q_type}_{json.dumps(req, sort_keys=True)}"
+    with get_db() as c:
+        row = c.execute("SELECT data, timestamp FROM cache WHERE key=?", (cache_key,)).fetchone()
+        if row:
+            if time.time() - row[1] < 600:  # 10 dakika geçerli
+                return jsonify({"success": True, "data": json.loads(row[0]), "cached": True})
+            else:
+                c.execute("DELETE FROM cache WHERE key=?", (cache_key,))
+                c.commit()
+
     try:
-        # --- ÜCRETSİZ SORGULAR (Mernis, GSM, Plaka vb.) ---
-        if q_type == "osint_hash":
-            txt = (req.get('text') or '').encode()
-            return jsonify({"success": True, "data": {"MD5": hashlib.md5(txt).hexdigest(), "SHA1": hashlib.sha1(txt).hexdigest(), "SHA256": hashlib.sha256(txt).hexdigest()}})
-        
+        # --- ÜCRETSİZ SORGULAR ---
         if q_type == "plaka_sorgu":
             plaka = (req.get('plaka') or '').strip().upper()
             if not plaka: return jsonify({"success": False, "error": "Plaka girin."})
@@ -251,6 +260,9 @@ def api_sorgu():
 
         if q_type == "osint_ip": return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=8).json()})
         if q_type == "osint_domain": return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=8).json()})
+        if q_type == "osint_hash":
+            txt = (req.get('text') or '').encode()
+            return jsonify({"success": True, "data": {"MD5": hashlib.md5(txt).hexdigest(), "SHA1": hashlib.sha1(txt).hexdigest(), "SHA256": hashlib.sha256(txt).hexdigest()}})
 
         # --- DÜNYA API'LERİ (VIP) ---
         if q_type == "api_wayback":
@@ -302,7 +314,7 @@ def api_sorgu():
             log_query(uid, uname, q_type, city, ip, "basarili")
             return jsonify({"success": True, "data": {"sehir": geo["results"][0]["name"], "hava_durumu": w["current_weather"]}})
 
-        # --- MERNİS / GSM / ADRES (ÜCRETSİZ) ---
+        # --- MERNİS / GSM / ADRES ---
         API_MAP = {
             "adsoyad": {"url": "https://violetpanel.cc/furkanapi/adsoyadapi.php", "params": {"ad":"ad","soyad":"soyad"}},
             "aile": {"url": "https://violetpanel.cc/furkanapi/ailesorguapi.php", "params": {"tc":"tc"}},
@@ -334,60 +346,16 @@ def api_sorgu():
             log_query(uid, uname, q_type, query_str.strip(), ip, "basarisiz")
             return jsonify({"success": False, "error": "Bulunamadı veya API hatası."})
             
+        # SONUCU SQLITE ÖNBELLEĞE KAYDET
+        with get_db() as c:
+            c.execute("INSERT OR REPLACE INTO cache (key, data, timestamp) VALUES (?,?,?)", 
+                      (cache_key, json.dumps(result), time.time()))
+            c.commit()
+
         log_query(uid, uname, q_type, query_str.strip(), ip, "basarili")
         return jsonify({"success": True, "data": result})
     except Exception: 
         return jsonify({"success": False, "error": "Bağlantı hatası oluştu."})
-
-@app.route("/api/bulk_sorgu", methods=["POST"])
-def api_bulk_sorgu():
-    if get_setting("maintenance") == "1": return jsonify({"success": False, "error": "Sistem bakımda."})
-    if 'user_id' not in session: return jsonify({"success": False}), 401
-    
-    uid = session['user_id']
-    with get_db() as c:
-        u_row = c.execute("SELECT vip FROM users WHERE id=?", (uid,)).fetchone()
-    if not u_row or u_row[0] != 1:
-        return jsonify({"success": False, "error": "Toplu sorgu VIP üyelere özeldir."})
-
-    ip = request.remote_addr or "?"
-    req = request.json or {}; q_type = req.get("type"); items = req.get("items", [])
-    uname = session['username']
-    
-    if not items or not isinstance(items, list): return jsonify({"success": False, "error": "Geçersiz veri."})
-    if len(items) > 20: return jsonify({"success": False, "error": "Tek seferde en fazla 20 sorgu yapabilirsiniz."})
-    
-    API_MAP = {
-        "aile": {"url": "https://violetpanel.cc/furkanapi/ailesorguapi.php", "param_key": "tc", "pattern": r"^\d{11}$"},
-        "adres": {"url": "https://violetpanel.cc/furkanapi/adrespro.php", "param_key": "tc", "pattern": r"^\d{11}$"},
-        "tcgsm": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "param_key": "tc", "pattern": r"^\d{11}$"},
-        "gsmtc": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "param_key": "gsm", "pattern": r"^\d{10,11}$"},
-    }
-    if q_type not in API_MAP: return jsonify({"success": False, "error": "Bu sorgu tipi toplu aramayı desteklemiyor."})
-    
-    api = API_MAP[q_type]
-    results = []
-    
-    for item in items:
-        item = str(item).strip()
-        if not re.match(api["pattern"], item):
-            results.append({"query": item, "success": False, "error": "Format hatası"})
-            continue
-        try:
-            time.sleep(0.8) 
-            r = requests.get(api["url"], params={api["param_key"]: item}, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
-            data = r.json()
-            is_ok = data.get("success") in [True, "true"] or data.get("durum") in ["basarili", "başarılı"]
-            result = data.get("data") or data.get("veri") or data.get("result")
-            if is_ok and result:
-                results.append({"query": item, "success": True, "data": result})
-                log_query(uid, uname, f"bulk_{q_type}", item, ip, "basarili")
-            else:
-                results.append({"query": item, "success": False, "error": "Bulunamadı"})
-                log_query(uid, uname, f"bulk_{q_type}", item, ip, "basarisiz")
-        except Exception:
-            results.append({"query": item, "success": False, "error": "Bağlantı hatası"})
-    return jsonify({"success": True, "results": results})
 
 @app.route("/admin-panel-x9", methods=["GET", "POST"])
 def admin_dashboard():
