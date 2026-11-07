@@ -11,7 +11,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background: #0f172a; min-height: 100vh; display: flex; overflow: hidden; }
         
-        /* SOL TARAF - GÖRSEL VE BİLGİ */
         .left-side { width: 50%; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); display: flex; flex-direction: column; justify-content: center; padding: 60px; position: relative; overflow: hidden; }
         .left-side::before { content: ''; position: absolute; width: 500px; height: 500px; background: rgba(37, 99, 235, 0.2); border-radius: 50%; filter: blur(80px); top: -100px; left: -100px; }
         .left-side::after { content: ''; position: absolute; width: 400px; height: 400px; background: rgba(139, 92, 246, 0.2); border-radius: 50%; filter: blur(80px); bottom: -100px; right: -100px; }
@@ -31,7 +30,6 @@
         .feature-text h4 { color: #fff; font-size: 15px; font-weight: 600; }
         .feature-text p { color: #94a3b8; font-size: 13px; margin-top: 2px; }
 
-        /* SAĞ TARAF - FORM */
         .right-side { width: 50%; display: flex; align-items: center; justify-content: center; padding: 40px; background: #f8fafc; overflow-y: auto; }
         .card { width: 100%; max-width: 480px; background: #fff; padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
         
@@ -57,7 +55,6 @@
         .upload-btn { display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #e2e8f0; color: #64748b; font-size: 16px; cursor: pointer; transition: .2s; }
         .upload-btn:hover { background: #cbd5e1; color: #1e293b; }
 
-        /* DOĞRULAMA (CAPTCHA) */
         .captcha-box { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
         .captcha-box span { font-size: 14px; font-weight: 600; color: #475569; }
         .captcha-box input { width: 80px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center; font-weight: 700; outline: none; }
@@ -88,7 +85,6 @@
     </style>
 </head>
 <body>
-    <!-- SOL TARAF (GÖRSEL ALAN) -->
     <div class="left-side">
         <div class="brand">
             <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
@@ -101,22 +97,15 @@
         <div class="features">
             <div class="feature-item">
                 <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
-                <div class="feature-text">
-                    <h4>Hızlı ve Güvenilir</h4>
-                    <p>Saniyeler içinde sonuç alın.</p>
-                </div>
+                <div class="feature-text"><h4>Hızlı ve Güvenilir</h4><p>Saniyeler içinde sonuç alın.</p></div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon"><i class="fa-solid fa-lock"></i></div>
-                <div class="feature-text">
-                    <h4>Gelişmiş Güvenlik</h4>
-                    <p>Verileriniz ve sorgularınız WAF koruması altında.</p>
-                </div>
+                <div class="feature-text"><h4>Gelişmiş Güvenlik</h4><p>Verileriniz ve sorgularınız WAF koruması altında.</p></div>
             </div>
         </div>
     </div>
 
-    <!-- SAĞ TARAF (FORM ALANI) -->
     <div class="right-side">
         <div class="card">
             <div class="tabs">
@@ -125,7 +114,6 @@
             </div>
             
             <div class="form-body">
-                <!-- GİRİŞ FORMU -->
                 <div class="form-panel active" id="panel-login">
                     <div class="alert alert-error" id="loginErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
                     <form id="loginForm" novalidate>
@@ -144,7 +132,6 @@
                     <div style="text-align: center; margin-top: 20px; font-size: 13.5px; color: #64748b;">Hesabınız yok mu? <a href="#" data-tab="register" style="color: #2563eb; font-weight: 700; text-decoration: none;">Hemen Kayıt Olun</a></div>
                 </div>
 
-                <!-- KAYIT FORMU -->
                 <div class="form-panel" id="panel-register">
                     <div class="alert alert-error" id="regErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
                     <div class="alert alert-success" id="regOk"><i class="fa-solid fa-circle-check"></i><span></span></div>
@@ -177,13 +164,11 @@
                             <i class="fa-solid fa-lock input-icon"></i>
                         </div>
                         
-                        <!-- İNSAN DOĞRULAMASI (CAPTCHA) -->
                         <div class="captcha-box">
                             <span id="captchaText">Yükleniyor...</span>
                             <input type="number" id="captchaInput" placeholder="Sonuç">
                         </div>
 
-                        <!-- SÖZLEŞME ONAYI -->
                         <div class="checkbox-group">
                             <input type="checkbox" id="termsCheck">
                             <label for="termsCheck"><a href="#" target="_blank">Kullanım Koşulları</a> ve <a href="#" target="_blank">Gizlilik Politikası</a>'nı okudum, kabul ediyorum.</label>
@@ -203,7 +188,6 @@
         const HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
         let selectedAvatar = "https://api.dicebear.com/7.x/bottts/svg?seed=A";
         
-        // CAPTCHA (Basit Matematik Sorusu)
         let currentCaptchaAnswer = 0;
         function generateCaptcha() {
             const num1 = Math.floor(Math.random() * 10) + 1;
@@ -213,7 +197,6 @@
             $('captchaInput').value = '';
         }
 
-        // Sekme Değiştirme
         function switchTab(name) {
             ['loginErr', 'regErr', 'regOk'].forEach(id => $(id).classList.remove('show'));
             document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
@@ -222,7 +205,6 @@
         }
         document.querySelectorAll('[data-tab]').forEach(el => el.addEventListener('click', (e) => { e.preventDefault(); switchTab(el.dataset.tab); }));
 
-        // Avatar Seçimi
         document.querySelectorAll('.avatar-opt:not(.upload-btn)').forEach(img => {
             img.addEventListener('click', () => {
                 document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('selected'));
@@ -232,7 +214,6 @@
         });
         document.querySelector('.avatar-opt:not(.upload-btn)').classList.add('selected');
 
-        // Fotoğraf Yükleme ve Kırpma
         $('avatarFile').addEventListener('change', function(e) {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -257,7 +238,6 @@
             reader.readAsDataURL(file);
         });
 
-        // Şifre Göster/Gizle
         document.querySelectorAll('.toggle-pw').forEach(btn => {
             btn.addEventListener('click', () => {
                 const inp = $(btn.dataset.target);
@@ -267,10 +247,8 @@
             });
         });
 
-        // Hata / Başarı Mesajı
         function showAlert(el, msg) { el.querySelector('span').textContent = msg; el.classList.add('show'); }
 
-        // GİRİŞ YAPMA
         $('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault(); $('loginErr').classList.remove('show');
             const u = $('login-u').value.trim(), p = $('login-p').value;
@@ -284,7 +262,6 @@
             } catch (_) { showAlert($('loginErr'), 'Bağlantı hatası.'); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Giriş Yap'; }
         });
 
-        // KAYIT OLMA
         $('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault(); $('regErr').classList.remove('show'); $('regOk').classList.remove('show');
             const u = $('reg-u').value.trim(), p = $('reg-p').value, p2 = $('reg-p2').value;
@@ -292,7 +269,7 @@
             
             if (!u || !p || !p2) return showAlert($('regErr'), 'Tüm alanları doldurun.');
             if (p !== p2) return showAlert($('regErr'), 'Şifreler eşleşmiyor.');
-            if (captcha !== currentCaptchaAnswer) return showAlert($('regErr'), 'Güvenlik sorusu yanlış. Lütfen tekrar deneyin.');
+            if (captcha !== currentCaptchaAnswer) return showAlert($('regErr'), 'Güvenlik sorusu yanlış.');
             if (!$('termsCheck').checked) return showAlert($('regErr'), 'Lütfen kullanım koşullarını kabul edin.');
 
             const btn = $('registerBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kayıt Yapılıyor...';
