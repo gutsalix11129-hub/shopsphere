@@ -19,9 +19,6 @@ app = Flask(__name__)
 
 SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
-
-# --- YENİ: OPENARCHIVE API ANAHTARI ---
-# Render'da Environment kısmına OPENARCHIVE_KEY ekleyebilir veya buraya yazabilirsin.
 OPENARCHIVE_KEY = os.environ.get("OPENARCHIVE_KEY", "BURAYA_TOKEN_GIRIN")
 
 app.secret_key = SECRET_KEY
@@ -233,13 +230,13 @@ def api_sorgu():
     req = request.json or {}; q_type = req.get("type"); uid, uname = session['user_id'], session['username']
     
     VIP_TOOLS = ["osint_ip", "osint_domain", "osint_hash", "api_wayback", "api_whois", "api_currency", "api_bin", "api_crypto", "api_email", "api_weather", "hibp_password", 
-                 "oa_intelx", "oa_breach", "oa_tiktok", "oa_discord", "oa_ipinfo"]
+                 "oa_intelx", "oa_breach", "oa_tiktok", "oa_discord", "oa_ipinfo", "oa_public_status", "oa_public_buckets", "oa_public_sources", "oa_public_forum"]
     
     if q_type in VIP_TOOLS:
         with get_db() as c:
             u_row = c.execute("SELECT vip FROM users WHERE id=?", (uid,)).fetchone()
         if not u_row or u_row[0] != 1:
-            return jsonify({"success": False, "error": "Bu OSINT/Gelişmiş sorgu VIP üyelere özeldir."})
+            return jsonify({"success": False, "error": "Bu OSINT/Gelişmiş sorgu VIP üyelere özeldir. Lütfen VIP paket satın alın."})
 
     cache_key = f"{q_type}_{json.dumps(req, sort_keys=True)}"
     with get_db() as c:
@@ -252,7 +249,29 @@ def api_sorgu():
                 c.commit()
 
     try:
-        # --- YENİ: OPENARCHIVE API'LERİ ---
+        # --- OPENARCHIVE PUBLIC (200 ÇALIŞAN) API'LERİ ---
+        if q_type.startswith("oa_public_"):
+            OA_PUBLIC_MAP = {
+                "oa_public_status": "https://openarchivex.net/api/v2/status",
+                "oa_public_buckets": "https://openarchivex.net/api/v2/intelx/buckets",
+                "oa_public_sources": "https://openarchivex.net/api/pricing/api-sources",
+                "oa_public_forum": "https://openarchivex.net/api/forum/public/overview"
+            }
+            if q_type in OA_PUBLIC_MAP:
+                url = OA_PUBLIC_MAP[q_type]
+                headers = {"Accept": "application/json", "User-Agent": "Mozilla/5.0"}
+                try:
+                    r = requests.get(url, headers=headers, timeout=15)
+                    if r.status_code == 200:
+                        data = r.json()
+                        log_query(uid, uname, q_type, "Public API", ip, "basarili")
+                        return jsonify({"success": True, "data": data})
+                    else:
+                        return jsonify({"success": False, "error": f"API Hatası: {r.status_code}"})
+                except Exception as e:
+                    return jsonify({"success": False, "error": "Bağlantı hatası."})
+
+        # --- OPENARCHIVE VIP (401) API'LERİ ---
         if q_type.startswith("oa_"):
             OA_MAP = {
                 "oa_intelx": {"url": "https://openarchivex.net/api/v2/intelx/advanced", "method": "POST", "param_key": "q"},
@@ -264,13 +283,7 @@ def api_sorgu():
             if q_type in OA_MAP:
                 api = OA_MAP[q_type]
                 val = (req.get(api["param_key"]) or "").strip()
-                
-                headers = {
-                    "Authorization": f"Bearer {OPENARCHIVE_KEY}",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                }
-                
+                headers = {"Authorization": f"Bearer {OPENARCHIVE_KEY}", "Content-Type": "application/json", "Accept": "application/json"}
                 try:
                     if api["method"] == "POST":
                         r = requests.post(api["url"], headers=headers, json={api["param_key"]: val}, timeout=15)
@@ -278,13 +291,13 @@ def api_sorgu():
                         r = requests.get(api["url"], headers=headers, params={api["param_key"]: val}, timeout=15)
                     
                     if r.status_code == 401:
-                        return jsonify({"success": False, "error": "OpenArchive API Anahtarı geçersiz veya eksik (401 Yetkisiz)."})
+                        return jsonify({"success": False, "error": "OpenArchive API Anahtarı geçersiz veya eksik (401)."})
                     
                     data = r.json()
                     log_query(uid, uname, q_type, val, ip, "basarili")
                     return jsonify({"success": True, "data": data})
                 except Exception as e:
-                    return jsonify({"success": False, "error": f"OpenArchive API Hatası: {str(e)}"})
+                    return jsonify({"success": False, "error": f"Hata: {str(e)}"})
 
         # --- MEVCUT SORGULAR ---
         if q_type == "plaka_sorgu":
@@ -391,6 +404,7 @@ def api_sorgu():
     except Exception: 
         return jsonify({"success": False, "error": "Bağlantı hatası oluştu."})
 
+# --- ADMIN ROTALARI ---
 @app.route("/admin-panel-x9", methods=["GET", "POST"])
 def admin_dashboard():
     ip = request.remote_addr or "?"
@@ -433,8 +447,6 @@ def admin_dashboard():
         daily_labels = json.dumps(dates); daily_data = json.dumps(daily_counts)
 
     return render_template('admin.html', show_login=False, logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users, vip_users=vip_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"), chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, temp_passes=temp_passes, popular_queries=popular_queries, success_count=success_count, fail_count=fail_count, tickets=tickets)
-
-# ... (Admin rotaları aynı kalıyor) ...
 
 @app.route("/admin-toggle-vip/<int:uid>", methods=["POST"])
 def admin_toggle_vip(uid):
