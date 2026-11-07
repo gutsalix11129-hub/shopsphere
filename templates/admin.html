@@ -12,8 +12,6 @@
         :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --border: #334155; --primary: #3b82f6; --danger: #ef4444; --success: #10b981; --warn: #f59e0b; --gold: #fbbf24; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background: var(--bg); color: var(--text); min-height: 100vh; }
-        
-        /* GİRİŞ EKRANI */
         .login-container { display: flex; align-items: center; justify-content: center; height: 100vh; padding: 20px; background: radial-gradient(circle at top right, #7f1d1d 0%, #0f172a 55%, #020617 100%); }
         .login-card { background: #fff; padding: 40px; border-radius: 16px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,.6); }
         .login-card h1 { color: var(--danger); font-size: 24px; font-weight: 800; margin-bottom: 5px; }
@@ -23,8 +21,6 @@
         .login-card button { width: 100%; padding: 14px; background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 15px; transition: .2s; }
         .login-card button:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(239,68,68,.3); }
         .alert-error { background: #fef2f2; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; border: 1px solid #fecaca; }
-        
-        /* PANEL EKRANI */
         .admin-container { max-width: 1400px; margin: 0 auto; padding: 20px; display: none; }
         .admin-container.active { display: block; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; background: var(--card); padding: 18px 24px; border-radius: 14px; border: 1px solid var(--border); }
@@ -33,60 +29,45 @@
         .btn { padding: 10px 16px; border-radius: 9px; font-size: 13.5px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px; transition: .2s; }
         .btn-primary { background: var(--primary); color: white; } .btn-danger { background: var(--danger); color: white; } .btn-success { background: var(--success); color: white; } .btn-warn { background: var(--warn); color: white; } .btn-gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; }
         .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 7px; }
-        
         .banner { display: flex; gap: 12px; padding: 14px 18px; border-radius: 11px; margin-bottom: 20px; font-size: 13.5px; }
         .banner.danger { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
         .banner.warn { background: rgba(245,158,11,0.1); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
-        
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 22px; }
         .stat-card { background: var(--card); padding: 20px; border-radius: 14px; border: 1px solid var(--border); position: relative; overflow: hidden; }
         .stat-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary); }
         .stat-card.green::before { background: var(--success); } .stat-card.red::before { background: var(--danger); } .stat-card.gold::before { background: var(--gold); }
         .stat-card h3 { font-size: 12px; color: #94a3b8; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; }
         .stat-card p { font-size: 26px; font-weight: 800; }
-        
         .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
         @media(max-width: 768px) { .charts-row { grid-template-columns: 1fr; } }
         .chart-card { background: var(--card); padding: 22px; border-radius: 14px; border: 1px solid var(--border); min-height: 280px; }
         .chart-card h3 { font-size: 14px; margin-bottom: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-        
         .mid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
         @media(max-width: 900px) { .mid-grid { grid-template-columns: 1fr; } }
-        
         .card { background: var(--card); border-radius: 14px; padding: 22px; margin-bottom: 22px; border: 1px solid var(--border); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
         .card h2 { font-size: 17px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
-        
         .search-box { position: relative; width: 300px; }
         .search-box input { width: 100%; padding: 10px 15px 10px 40px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; }
         .search-box input:focus { outline: none; border-color: var(--primary); }
         .search-box i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #64748b; }
-        
         .table-wrap { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
         th, td { padding: 12px 14px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
         th { background: #0f172a; color: #94a3b8; font-weight: 600; font-size: 11.5px; text-transform: uppercase; }
         tbody tr:hover { background: rgba(255,255,255,0.02); }
-        
         .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 10.5px; font-weight: 700; }
         .badge-ok { background: rgba(16,185,129,0.15); color: #34d399; } .badge-bad { background: rgba(239,68,68,0.15); color: #f87171; }
         .badge-info { background: rgba(59,130,246,0.15); color: #60a5fa; } .badge-count { background: rgba(245,158,11,0.15); color: #fbbf24; } .badge-vip { background: rgba(251,191,36,0.15); color: var(--gold); border: 1px solid rgba(251,191,36,0.3); }
-        
         .ip-badge { font-family: monospace; background: #0f172a; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); color: #cbd5e1; font-size: 12px; }
         .param-text { color: #cbd5e1; background: #0f172a; padding: 3px 8px; border-radius: 6px; font-size: 12px; display: inline-block; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        
         .actions { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
         .actions form { display: inline; margin: 0; }
-        
-        .bc-form { display: flex; gap: 10px; flex-wrap: wrap; }
-        .bc-form input { flex: 1; min-width: 250px; padding: 12px; border: 1px solid var(--border); border-radius: 9px; font-size: 14px; background: #0f172a; color: white; }
-        
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(4px); }
         .modal.show { display: flex; }
         .modal-content { background: var(--card); padding: 24px; border-radius: 14px; max-width: 850px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; border: 1px solid var(--border); }
         .modal-body { overflow-y: auto; margin: 15px 0; flex: 1; }
         code { background: #0f172a; padding: 2px 7px; border-radius: 5px; font-family: monospace; color: #f87171; }
-        
         .test-form { display: grid; grid-template-columns: 200px 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         @media(max-width: 600px) { .test-form { grid-template-columns: 1fr; } }
         .test-form select, .test-form input { padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; }
@@ -139,7 +120,6 @@
             <div class="stat-card red"><h3>Banlı Kullanıcı</h3><p>{{ banned_users }}</p></div>
         </div>
 
-        <!-- KULLANICI VE VIP YÖNETİMİ -->
         <div class="card">
             <div class="card-header">
                 <h2><i class="fa-solid fa-users-gear" style="color:var(--gold);"></i> Kullanıcı & VIP Yönetim Merkezi</h2>
@@ -169,14 +149,12 @@
                             </td>
                             <td>
                                 <div class="actions">
-                                    <!-- VIP VER / AL BUTONU -->
                                     <form method="POST" action="/admin-toggle-vip/{{ u[0] }}" onsubmit="return confirm('VIP durumu değiştirilsin mi?')">
                                         <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm {{ 'btn-warn' if u[6]==1 else 'btn-gold' }}" title="{{ 'VIP İptal Et' if u[6]==1 else 'VIP Ver' }}">
                                             <i class="fa-solid fa-crown"></i> {{ 'VIP Al' if u[6]==1 else 'VIP Ver' }}
                                         </button>
                                     </form>
-
                                     <button class="btn btn-sm btn-primary" onclick="showHistory({{ u[0] }}, '{{ u[1] }}')" title="Geçmiş"><i class="fa-solid fa-clock-rotate-left"></i> Geçmiş</button>
                                     <form method="POST" action="/admin-ban/{{ u[0] }}" onsubmit="return confirm('Ban işlemi yapılsın mı?')"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="btn btn-sm {{ 'btn-success' if u[3]==1 else 'btn-danger' }}">{{ 'Unban' if u[3]==1 else 'Ban' }}</button></form>
                                     <form method="POST" action="/admin-reset-pass/{{ u[0] }}" onsubmit="return confirm('Şifre sıfırlansın mı?')"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="btn btn-sm btn-warn" title="Şifre Sıfırla"><i class="fa-solid fa-key"></i></button></form>
@@ -190,11 +168,8 @@
             </div>
         </div>
 
-        <!-- DESTEK TALEPLERİ -->
         <div class="card">
-            <div class="card-header">
-                <h2><i class="fa-solid fa-headset" style="color:var(--primary);"></i> Gelen Destek Talepleri</h2>
-            </div>
+            <div class="card-header"><h2><i class="fa-solid fa-headset" style="color:var(--primary);"></i> Gelen Destek Talepleri</h2></div>
             <div class="table-wrap">
                 <table>
                     <thead><tr><th>Kullanıcı</th><th>Konu / Mesaj</th><th>Durum</th><th>Tarih</th><th style="text-align:right;">İşlem / Cevap</th></tr></thead>
@@ -228,7 +203,6 @@
             </div>
         </div>
 
-        <!-- CANLI TEST ARACI VE İSTATİSTİKLER -->
         <div class="mid-grid">
             <div class="card">
                 <div class="card-header"><h2><i class="fa-solid fa-flask" style="color:var(--primary);"></i> Canlı API Test Aracı</h2></div>
@@ -278,7 +252,6 @@
             </div>
         </div>
 
-        <!-- GRAFİKLER -->
         <div class="charts-row">
             <div class="chart-card">
                 <h3><i class="fa-solid fa-chart-line" style="color:var(--primary);"></i> Son 7 Günün Sorgu Trafiği</h3>
@@ -290,7 +263,6 @@
             </div>
         </div>
 
-        <!-- MANUEL KULLANICI EKLEME VE DUYURU -->
         <div class="mid-grid">
             <div class="card">
                 <div class="card-header"><h2><i class="fa-solid fa-user-plus" style="color:var(--primary);"></i> Manuel Kullanıcı Ekle</h2></div>
@@ -318,7 +290,6 @@
             </div>
         </div>
 
-        <!-- LOGLAR -->
         <div class="card">
             <div class="card-header">
                 <h2><i class="fa-solid fa-list-ul"></i> Sistem Sorgu Geçmişi (Son 500)</h2>
@@ -347,7 +318,6 @@
         </div>
     </div>
 
-    <!-- GEÇMİŞ MODALI -->
     <div class="modal" id="historyModal">
         <div class="modal-content">
             <div style="display:flex; align-items:center; border-bottom:1px solid var(--border); padding-bottom:15px;">
@@ -362,19 +332,13 @@
         function filterUsers() {
             let input = document.getElementById("userSearch").value.toLowerCase();
             let rows = document.getElementById("userTable").getElementsByTagName("tr");
-            for (let i = 1; i < rows.length; i++) {
-                rows[i].style.display = rows[i].innerText.toLowerCase().includes(input) ? "" : "none";
-            }
+            for (let i = 1; i < rows.length; i++) rows[i].style.display = rows[i].innerText.toLowerCase().includes(input) ? "" : "none";
         }
-
         function filterLogs() {
             let input = document.getElementById("logSearchInput").value.toLowerCase();
             let rows = document.getElementById("globalLogTable").getElementsByTagName("tr");
-            for (let i = 1; i < rows.length; i++) {
-                rows[i].style.display = rows[i].innerText.toLowerCase().includes(input) ? "" : "none";
-            }
+            for (let i = 1; i < rows.length; i++) rows[i].style.display = rows[i].innerText.toLowerCase().includes(input) ? "" : "none";
         }
-
         function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
         
         async function showHistory(uid, uname) {
@@ -389,15 +353,13 @@
                     let isOk = h.status === 'basarili';
                     html += `<tr><td style="color:#94a3b8;">${escapeHtml(h.time)}</td><td><span class="badge badge-info">${escapeHtml(h.type)}</span></td><td><span class="param-text">${escapeHtml(h.param)}</span></td><td><span class="ip-badge">${escapeHtml(h.ip)}</span></td><td><span class="badge ${isOk?'badge-ok':'badge-bad'}">${escapeHtml(h.status).toUpperCase()}</span></td></tr>`;
                 });
-                html += '</tbody></table>';
-                document.getElementById('modalBody').innerHTML = html;
+                document.getElementById('modalBody').innerHTML = html + '</tbody></table>';
             } catch (_) { document.getElementById('modalBody').innerHTML = '<p style="color:red; text-align:center;">Bağlantı hatası.</p>'; }
         }
 
         function updateTestInputs() {
             const type = document.getElementById('testType').value;
-            const p1 = document.getElementById('testParam1');
-            const p2 = document.getElementById('testParam2');
+            const p1 = document.getElementById('testParam1'); const p2 = document.getElementById('testParam2');
             if(type === 'adsoyad') { p1.placeholder = 'Ad'; p2.placeholder = 'Soyad'; p2.style.display = 'block'; } 
             else if (type === 'aile') { p1.placeholder = 'TC Kimlik No'; p2.style.display = 'none'; } 
             else if (type === 'plaka_sorgu') { p1.placeholder = 'Plaka (örn: 41HU096)'; p2.style.display = 'none'; } 
@@ -427,57 +389,19 @@
             } catch(e) { resBox.style.color = '#ef4444'; resBox.textContent = "Bağlantı hatası."; }
         }
 
-        // GRAFİKLER (Hata Veren Kısım Düzeltildi)
-        const dailyLabels = JSON.parse('{{ daily_labels | safe }}');
-        const dailyData = JSON.parse('{{ daily_data | safe }}');
-        const chartLabels = JSON.parse('{{ chart_labels | safe }}');
-        const chartData = JSON.parse('{{ chart_data | safe }}');
+        const dailyLabels = JSON.parse('{{ daily_labels | safe }}'); const dailyData = JSON.parse('{{ daily_data | safe }}');
+        const chartLabels = JSON.parse('{{ chart_labels | safe }}'); const chartData = JSON.parse('{{ chart_data | safe }}');
 
         if (document.getElementById('dailyChart') && dailyLabels.length > 0) {
             new Chart(document.getElementById('dailyChart').getContext('2d'), {
-                type: 'line', 
-                data: { 
-                    labels: dailyLabels, 
-                    datasets: [{ 
-                        label: 'Sorgu', 
-                        data: dailyData, 
-                        borderColor: '#3b82f6', 
-                        backgroundColor: 'rgba(59,130,246,0.1)', 
-                        fill: true, 
-                        tension: 0.4 
-                    }] 
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } }, 
-                    scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } 
-                }
+                type: 'line', data: { labels: dailyLabels, datasets: [{ label: 'Sorgu', data: dailyData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } }
             });
         }
-        
         if (document.getElementById('pieChart') && chartLabels.length > 0) {
             new Chart(document.getElementById('pieChart').getContext('2d'), {
-                type: 'doughnut', 
-                data: { 
-                    labels: chartLabels, 
-                    datasets: [{ 
-                        data: chartData, 
-                        backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6'], 
-                        borderWidth: 0 
-                    }] 
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    cutout: '65%', 
-                    plugins: { 
-                        legend: { 
-                            position: 'bottom', 
-                            labels: { color: '#94a3b8' } 
-                        } 
-                    } 
-                }
+                type: 'doughnut', data: { labels: chartLabels, datasets: [{ data: chartData, backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
             });
         }
     </script>
