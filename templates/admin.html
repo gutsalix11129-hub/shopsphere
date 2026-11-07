@@ -427,7 +427,7 @@
             } catch(e) { resBox.style.color = '#ef4444'; resBox.textContent = "Bağlantı hatası."; }
         }
 
-        // GRAFİKLER
+        // GRAFİKLER (Hata Veren Kısım Düzeltildi)
         const dailyLabels = JSON.parse('{{ daily_labels | safe }}');
         const dailyData = JSON.parse('{{ daily_data | safe }}');
         const chartLabels = JSON.parse('{{ chart_labels | safe }}');
@@ -435,14 +435,49 @@
 
         if (document.getElementById('dailyChart') && dailyLabels.length > 0) {
             new Chart(document.getElementById('dailyChart').getContext('2d'), {
-                type: 'line', data: { labels: dailyLabels, datasets: [{ label: 'Sorgu', data: dailyData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } }
+                type: 'line', 
+                data: { 
+                    labels: dailyLabels, 
+                    datasets: [{ 
+                        label: 'Sorgu', 
+                        data: dailyData, 
+                        borderColor: '#3b82f6', 
+                        backgroundColor: 'rgba(59,130,246,0.1)', 
+                        fill: true, 
+                        tension: 0.4 
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } 
+                }
             });
         }
+        
         if (document.getElementById('pieChart') && chartLabels.length > 0) {
             new Chart(document.getElementById('pieChart').getContext('2d'), {
-                type: 'doughnut', data: { labels: chartLabels, datasets: [{ data: chartData, backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
+                type: 'doughnut', 
+                data: { 
+                    labels: chartLabels, 
+                    datasets: [{ 
+                        data: chartData, 
+                        backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6'], 
+                        borderWidth: 0 
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    cutout: '65%', 
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom', 
+                            labels: { color: '#94a3b8' } 
+                        } 
+                    } 
+                }
             });
         }
     </script>
