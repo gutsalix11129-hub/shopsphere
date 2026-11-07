@@ -2,239 +2,114 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>İstihbarat Paneli | ShopSphere</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <title>Panel | ShopSphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --bg:#050505; --card:#0f0f13; --border:rgba(255,255,255,0.08); --primary:#6366f1; --purple:#a855f7; --success:#10b981; --danger:#ef4444; }
-        * { box-sizing:border-box; margin:0; padding:0; font-family:'Plus Jakarta Sans',sans-serif; }
-        body { background:var(--bg); color:#fff; display:flex; min-height:100vh; overflow-x:hidden; }
-        
-        #cyber-bg { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; opacity:0.3; pointer-events:none; }
-        
-        .sidebar { width:280px; background:rgba(10,10,15,0.95); backdrop-filter:blur(20px); position:fixed; height:100vh; left:-280px; top:0; transition:transform .3s; z-index:1000; border-right:1px solid var(--border); display:flex; flex-direction:column; }
-        .sidebar.open { left:0; }
-        .logo-area { padding:20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:15px; }
-        .logo-icon { width:40px; height:40px; background:linear-gradient(135deg,var(--primary),var(--purple)); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px; }
-        .logo-area h2 { font-size:20px; font-weight:800; }
-        
-        .nav-section { padding:15px; overflow-y:auto; flex:1; }
-        .nav-category { margin-bottom:10px; }
-        .nav-cat-title { display:flex; justify-content:space-between; font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; padding:10px; cursor:pointer; }
-        .nav-items { display:none; }
-        .nav-items.open { display:block; }
-        .nav-item { display:flex; align-items:center; padding:12px; border-radius:10px; color:#94a3b8; font-size:13px; font-weight:600; cursor:pointer; transition:.2s; }
-        .nav-item:hover, .nav-item.active { background:rgba(99,102,241,0.15); color:#fff; }
-        .nav-item .icon { width:20px; margin-right:10px; text-align:center; }
-        
-        .main { flex:1; padding:25px; margin-left:0; transition:.3s; position:relative; z-index:1; width:100%; }
-        @media (min-width:992px) { .sidebar { left:0; } .main { margin-left:280px; width:calc(100% - 280px); } }
-        
-        .topbar { display:flex; justify-content:space-between; align-items:center; background:var(--card); padding:15px 25px; border-radius:16px; margin-bottom:25px; border:1px solid var(--border); }
-        .menu-btn { background:none; border:none; color:#fff; font-size:24px; cursor:pointer; }
-        
-        .panel { background:var(--card); border-radius:20px; padding:30px; border:1px solid var(--border); max-width:1000px; margin:0 auto; }
-        .form-group { margin-bottom:20px; }
-        .form-group label { display:block; font-size:12px; font-weight:700; color:#94a3b8; margin-bottom:8px; text-transform:uppercase; }
-        .form-group input { width:100%; padding:15px; background:#000; border:1px solid #333; border-radius:12px; color:#fff; font-size:14px; }
-        .form-group input:focus { outline:none; border-color:var(--primary); }
-        
-        .btn-submit { background:linear-gradient(135deg,var(--primary),var(--purple)); color:#fff; border:none; padding:16px; border-radius:12px; font-weight:800; width:100%; cursor:pointer; transition:.3s; }
-        .btn-submit:hover { transform:translateY(-2px); box-shadow:0 10px 20px rgba(168,85,247,0.3); }
-        
-        .data-table { width:100%; border-collapse:collapse; margin-top:20px; font-size:14px; }
-        .data-table th, .data-table td { padding:15px; border-bottom:1px solid #222; text-align:left; }
-        .data-table th { color:#94a3b8; font-size:12px; text-transform:uppercase; }
-        
-        .terminal-window { background:#000; border-radius:12px; border:1px solid #333; margin-top:20px; display:none; }
-        .terminal-header { background:#111; padding:10px; display:flex; gap:8px; border-bottom:1px solid #333; }
-        .term-dot { width:10px; height:10px; border-radius:50%; }
-        .terminal-body { padding:20px; font-family:'JetBrains Mono',monospace; font-size:13px; color:#a7f3d0; white-space:pre-wrap; max-height:400px; overflow-y:auto; }
-        
-        .api-key-box { background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.3); padding:15px; border-radius:12px; margin-bottom:20px; }
-        .api-key-box input { width:100%; padding:12px; background:#000; border:1px solid #444; border-radius:8px; color:#fff; margin-top:10px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: #050505; color: #fff; display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: #0f0f13; border-right: 1px solid #222; padding: 20px; overflow-y: auto; }
+        .sidebar h2 { font-size: 18px; margin-bottom: 30px; text-align: center; }
+        .sidebar h2 span { color: #a855f7; }
+        .nav-item { padding: 12px; border-radius: 10px; cursor: pointer; color: #888; font-size: 13px; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+        .nav-item:hover, .nav-item.active { background: rgba(99,102,241,0.2); color: #fff; }
+        .nav-cat { font-size: 11px; color: #555; text-transform: uppercase; margin: 20px 0 10px 10px; font-weight: bold; }
+        .main { flex: 1; padding: 30px; }
+        .box { background: #0f0f13; border: 1px solid #222; border-radius: 16px; padding: 30px; max-width: 850px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; }
+        .form-group input { width: 100%; padding: 15px; background: #000; border: 1px solid #333; border-radius: 10px; color: #fff; }
+        .btn { width: 100%; padding: 15px; background: linear-gradient(135deg, #6366f1, #a855f7); border: none; border-radius: 10px; color: #fff; font-weight: bold; cursor: pointer; }
+        .term { background: #000; border: 1px solid #333; border-radius: 10px; padding: 15px; font-family: monospace; font-size: 13px; color: #10b981; white-space: pre-wrap; margin-top: 20px; max-height: 400px; overflow-y: auto; display: none; }
+        .api-box { background: rgba(251,191,36,0.1); border: 1px solid #fbbf24; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: none; }
+        .api-box input { width: 100%; padding: 10px; background: #000; border: 1px solid #555; border-radius: 8px; color: #fff; margin-top: 5px; }
+        .admin-link { color: #fbbf24 !important; border: 1px solid rgba(251,191,36,0.3); margin-top: 20px; }
     </style>
 </head>
 <body>
-    <canvas id="cyber-bg"></canvas>
-    
-    <aside class="sidebar" id="sidebar">
-        <div class="logo-area"><div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div><h2>SHOP<span style="color:var(--purple)">SPHERE</span></h2></div>
-        <div class="nav-section">
-            <div class="nav-item active" onclick="showView('dashboard', this)"><div class="icon"><i class="fa-solid fa-house"></i></div> Ana Sayfa</div>
-            
-            <div class="nav-category">
-                <div class="nav-cat-title open" onclick="toggleCat(this)">OPENARCHIVEX INTEL <i class="fa-solid fa-chevron-down"></i></div>
-                <div class="nav-items open">
-                    <div class="nav-item" onclick="loadTool('oax_status', this)"><div class="icon"><i class="fa-solid fa-server"></i></div> Sistem Durumu</div>
-                    <div class="nav-item" onclick="loadTool('oax_providers', this)"><div class="icon"><i class="fa-solid fa-database"></i></div> Sağlayıcılar</div>
-                    <div class="nav-item" onclick="loadTool('oax_pricing', this)"><div class="icon"><i class="fa-solid fa-tags"></i></div> API Fiyatlandırma</div>
-                    <div class="nav-item" onclick="loadTool('oax_sources', this)"><div class="icon"><i class="fa-solid fa-layer-group"></i></div> Kaynaklar (Sources)</div>
-                    <div class="nav-item" onclick="loadTool('oax_forum', this)"><div class="icon"><i class="fa-solid fa-comments"></i></div> Forum Özeti</div>
-                    <div class="nav-item" onclick="loadTool('oax_intelx_search', this)"><div class="icon"><i class="fa-solid fa-magnifying-glass"></i></div> IntelX Arama</div>
-                    <div class="nav-item" onclick="loadTool('oax_discord', this)"><div class="icon"><i class="fa-brands fa-discord"></i></div> Discord OSINT</div>
-                    <div class="nav-item" onclick="loadTool('oax_tiktok', this)"><div class="icon"><i class="fa-brands fa-tiktok"></i></div> TikTok OSINT</div>
-                </div>
-            </div>
-            
-            <div class="nav-category">
-                <div class="nav-cat-title" onclick="toggleCat(this)">TEMEL SORGULAR <i class="fa-solid fa-chevron-down"></i></div>
-                <div class="nav-items">
-                    <div class="nav-item" onclick="loadTool('plaka_sorgu', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka Sorgu</div>
-                </div>
-            </div>
-            
-            <div class="nav-item" onclick="logout()" style="color:var(--danger); margin-top:20px;"><div class="icon"><i class="fa-solid fa-right-from-bracket"></i></div> Çıkış Yap</div>
+    <div class="sidebar">
+        <h2>SHOP<span>SPHERE</span></h2>
+        
+        <div class="nav-cat">OPENARCHIVEX</div>
+        <div class="nav-item" onclick="load('oax_status', this)"><i class="fa-solid fa-server"></i> Sistem Durumu</div>
+        <div class="nav-item" onclick="load('oax_providers', this)"><i class="fa-solid fa-database"></i> Sağlayıcılar</div>
+        <div class="nav-item" onclick="load('oax_pricing', this)"><i class="fa-solid fa-tags"></i> Fiyatlandırma</div>
+        <div class="nav-item" onclick="load('oax_sources', this)"><i class="fa-solid fa-layer-group"></i> Kaynaklar</div>
+        <div class="nav-item" onclick="load('oax_forum', this)"><i class="fa-solid fa-comments"></i> Forum</div>
+        <div class="nav-item" onclick="load('oax_intelx_search', this)"><i class="fa-solid fa-magnifying-glass"></i> IntelX Arama</div>
+        <div class="nav-item" onclick="load('oax_discord', this)"><i class="fa-brands fa-discord"></i> Discord OSINT</div>
+        <div class="nav-item" onclick="load('oax_tiktok', this)"><i class="fa-brands fa-tiktok"></i> TikTok OSINT</div>
+        
+        <div class="nav-cat">TEMEL SORGULAR</div>
+        <div class="nav-item" onclick="load('adsoyad', this)"><i class="fa-solid fa-user"></i> Mernis Sorgu</div>
+        <div class="nav-item" onclick="load('aile', this)"><i class="fa-solid fa-users"></i> Aile Sorgu</div>
+        <div class="nav-item" onclick="load('plaka_sorgu', this)"><i class="fa-solid fa-car"></i> Plaka Sorgu</div>
+        <div class="nav-item" onclick="load('api_whois', this)"><i class="fa-solid fa-globe"></i> WHOIS Sorgu</div>
+        <div class="nav-item" onclick="load('api_bin', this)"><i class="fa-solid fa-credit-card"></i> BIN Sorgu</div>
+        
+        <a href="/admin-panel-x9" class="nav-item admin-link"><i class="fa-solid fa-shield-halved"></i> Admin Paneli</a>
+        <div class="nav-item" onclick="logout()" style="color:#ef4444; margin-top: 10px;"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</div>
+    </div>
+    <div class="main">
+        <div class="box" id="box">
+            <h2 style="margin-bottom:20px;">Hoş Geldin, {{ username }}</h2>
+            <p style="color:#888;">Sol menüden bir araç seç.</p>
         </div>
-    </aside>
-
-    <main class="main">
-        <header class="topbar">
-            <button class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
-            <div style="font-size:14px; color:#94a3b8;">Hoş Geldin, <b>{{ username }}</b></div>
-            <div style="font-family:monospace; color:var(--primary); font-weight:bold;" id="clock">00:00</div>
-        </header>
-
-        <div id="view-dashboard" class="view active">
-            <div class="panel" style="text-align:center; padding:50px;">
-                <i class="fa-solid fa-shield-virus" style="font-size:60px; color:var(--purple); margin-bottom:20px;"></i>
-                <h1 style="font-size:28px; margin-bottom:10px;">Sistem Çevrimiçi</h1>
-                <p style="color:#94a3b8;">Sol menüden bir istihbarat aracı seçin.</p>
-            </div>
-        </div>
-
-        <div id="view-query" class="view" style="display:none;">
-            <div class="panel">
-                <h2 id="qTitle" style="margin-bottom:20px; font-size:22px;">Terminal</h2>
-                
-                <div class="api-key-box" id="apiKeyBox" style="display:none;">
-                    <label style="font-size:12px; font-weight:bold; color:#fbbf24;"><i class="fa-solid fa-key"></i> OpenArchiveX API Key (Zorunlu)</label>
-                    <input type="password" id="oaxKey" placeholder="API anahtarınızı buraya yapıştırın...">
-                    <p style="font-size:11px; color:#94a3b8; margin-top:5px;">Bu anahtar sadece oturumunuz boyunca tarayıcınızda saklanır.</p>
-                </div>
-
-                <form id="queryForm" onsubmit="event.preventDefault(); runQuery();">
-                    <div id="qInputs"></div>
-                    <button type="submit" class="btn-submit" id="submitBtn">Sorguyu Başlat</button>
-                </form>
-                
-                <div id="resTable" style="display:none;">
-                    <table class="data-table" id="formattedTable"></table>
-                </div>
-
-                <div class="terminal-window" id="termWindow">
-                    <div class="terminal-header"><div class="term-dot" style="background:#ff5f56"></div><div class="term-dot" style="background:#ffbd2e"></div><div class="term-dot" style="background:#27c93f"></div></div>
-                    <div class="terminal-body" id="qResultsRaw"></div>
-                </div>
-            </div>
-        </div>
-    </main>
-
+    </div>
     <script>
         const $ = id => document.getElementById(id);
-        const CSRF = document.querySelector('meta[name="csrf-token"]').content;
-        const HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
-
-        // Arka plan ve Saat
-        const c = $('cyber-bg'), ctx = c.getContext('2d'); let p = [];
-        function resize() { c.width = innerWidth; c.height = innerHeight; } resize(); addEventListener('resize', resize);
-        for(let i=0; i<40; i++) p.push({x:Math.random()*c.width, y:Math.random()*c.height, vx:(Math.random()-0.5)*0.4, vy:(Math.random()-0.5)*0.4});
-        function draw() { ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle='rgba(99,102,241,0.5)'; p.forEach((pt, i) => { pt.x+=pt.vx; pt.y+=pt.vy; if(pt.x<0||pt.x>c.width) pt.vx*=-1; if(pt.y<0||pt.y>c.height) pt.vy*=-1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 1.5, 0, 7); ctx.fill(); }); requestAnimationFrame(draw); } draw();
-        setInterval(()=>{ $('clock').innerText = new Date().toLocaleTimeString('tr-TR'); }, 1000);
-
-        function toggleMenu() { $('sidebar').classList.toggle('open'); }
-        function toggleCat(el) { el.classList.toggle('open'); el.nextElementSibling.classList.toggle('open'); }
-        function showView(v, el) {
-            if(el) { document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active')); el.classList.add('active'); }
-            document.querySelectorAll('.view').forEach(x=>x.style.display='none');
-            $('view-'+v).style.display='block';
-            if(innerWidth < 992) toggleMenu();
-        }
-
+        const H = { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content };
         const TOOLS = {
-            'oax_status': { title: 'OpenArchiveX Sistem Durumu', desc: 'Sunucu durumlarını gösterir.', fields: [] },
-            'oax_providers': { title: 'Sağlayıcılar', desc: 'Mevcut veri sağlayıcıları listeler.', fields: [] },
-            'oax_pricing': { title: 'API Fiyatlandırma', desc: 'API paket fiyatlarını gösterir.', fields: [] },
-            'oax_sources': { title: 'Sızıntı Kaynakları', desc: 'Tüm açık kaynakları listeler.', fields: [] },
-            'oax_forum': { title: 'Forum Özeti', desc: 'Public forum gönderilerini gösterir.', fields: [] },
-            'oax_intelx_search': { title: 'IntelX Arama', desc: 'Sızıntılarda arama yapar (API Key gerekir).', api: true, fields: [{ id:'query', label:'Aranacak Kelime (Email, IP, TC vb.)' }] },
-            'oax_discord': { title: 'Discord OSINT', desc: 'Discord kullanıcı sorgular (API Key gerekir).', api: true, fields: [{ id:'username', label:'Discord Kullanıcı Adı / ID' }] },
-            'oax_tiktok': { title: 'TikTok OSINT', desc: 'TikTok kullanıcı sorgular (API Key gerekir).', api: true, fields: [{ id:'username', label:'TikTok Kullanıcı Adı' }] },
-            'plaka_sorgu': { title: 'Plaka Sorgu', desc: 'Plaka ile araç sahibini bulun.', fields: [{ id:'plaka', label:'Plaka (örn: 34ABC123)' }] }
+            'oax_status': { t: 'Sistem Durumu', f: [] },
+            'oax_providers': { t: 'Sağlayıcılar', f: [] },
+            'oax_pricing': { t: 'API Fiyatlandırma', f: [] },
+            'oax_sources': { t: 'Sızıntı Kaynakları', f: [] },
+            'oax_forum': { t: 'Forum Özeti', f: [] },
+            'oax_intelx_search': { t: 'IntelX Arama', api: true, f: [{ id: 'query', l: 'Aranacak Kelime' }] },
+            'oax_discord': { t: 'Discord OSINT', api: true, f: [{ id: 'username', l: 'Kullanıcı Adı' }] },
+            'oax_tiktok': { t: 'TikTok OSINT', api: true, f: [{ id: 'username', l: 'Kullanıcı Adı' }] },
+            'adsoyad': { t: 'Mernis Sorgu', f: [{ id: 'ad', l: 'Ad' }, { id: 'soyad', l: 'Soyad' }] },
+            'aile': { t: 'Aile Sorgu', f: [{ id: 'tc', l: 'TC Kimlik No' }] },
+            'plaka_sorgu': { t: 'Plaka Sorgu', f: [{ id: 'plaka', l: 'Plaka (örn: 34ABC123)' }] },
+            'api_whois': { t: 'WHOIS Sorgu', f: [{ id: 'domain', l: 'Domain (örn: google.com)' }] },
+            'api_bin': { t: 'BIN Sorgu', f: [{ id: 'bin', l: 'Kart İlk 6 Hane' }] }
         };
-
-        let currentType = null;
-        function loadTool(type, el) {
-            const tool = TOOLS[type]; if(!tool) return;
-            currentType = type;
-            showView('query', el);
-            
-            $('qTitle').innerText = tool.title;
-            $('resTable').style.display = 'none';
-            $('termWindow').style.display = 'none';
-            $('qResultsRaw').innerHTML = '';
-            
-            // API Key kutusunu göster/gizle
+        let current = null;
+        function load(type, el) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+            current = type;
+            const tool = TOOLS[type];
+            let html = `<h2 style="margin-bottom:20px;">${tool.t}</h2>`;
             if(tool.api) {
-                $('apiKeyBox').style.display = 'block';
-                $('oaxKey').value = localStorage.getItem('oax_api_key') || '';
-            } else {
-                $('apiKeyBox').style.display = 'none';
+                html += `<div class="api-box" style="display:block;"><label style="font-size:12px; color:#fbbf24; font-weight:bold;">OpenArchiveX API Key</label><input type="password" id="oaxKey" placeholder="API Key girin..."></div>`;
             }
-
-            let html = '';
-            tool.fields.forEach(f => { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" required></div>`; });
-            $('qInputs').innerHTML = html;
+            html += `<form id="qForm">`;
+            tool.f.forEach(f => { html += `<div class="form-group"><label>${f.l}</label><input type="text" id="inp_${f.id}" required></div>`; });
+            html += `<button type="submit" class="btn" id="btn">Sorgula</button></form><div class="term" id="term"></div>`;
+            $('box').innerHTML = html;
+            $('qForm').onsubmit = e => { e.preventDefault(); run(); };
         }
-
-        async function runQuery() {
-            const payload = { type: currentType };
-            TOOLS[currentType].fields.forEach(f => { payload[f.id] = $('inp_'+f.id).value.trim(); });
-            
-            if(TOOLS[currentType].api) {
-                const key = $('oaxKey').value.trim();
-                if(!key) return alert("Lütfen OpenArchiveX API Key girin!");
-                localStorage.setItem('oax_api_key', key);
-                payload.api_key = key;
+        async function run() {
+            const payload = { type: current };
+            TOOLS[current].f.forEach(f => { payload[f.id] = $('inp_'+f.id).value.trim(); });
+            if(TOOLS[current].api) {
+                const k = $('oaxKey').value.trim();
+                if(!k) return alert('API Key gerekli!');
+                payload.api_key = k;
             }
-
-            const btn = $('submitBtn'); btn.disabled = true; btn.innerText = 'İşleniyor...';
-            $('resTable').style.display = 'none';
-            $('termWindow').style.display = 'block';
-            $('qResultsRaw').innerHTML = '<span style="color:#fbbf24;">> Sunucuya bağlanılıyor...</span>';
-
+            const btn = $('btn'), term = $('term');
+            btn.disabled = true; btn.innerText = 'Bekleniyor...';
+            term.style.display = 'block'; term.innerText = '> İstek gönderiliyor...';
             try {
-                const res = await fetch('/api/sorgu', { method:'POST', headers:HEADERS, body:JSON.stringify(payload) }).then(r=>r.json());
-                
-                if(!res.success) {
-                    $('qResultsRaw').innerHTML = `<span style="color:#ef4444;">> HATA: ${res.error}</span>`;
-                } else {
-                    // JSON Çıktısını Renklendir
-                    const jsonStr = JSON.stringify(res.data, null, 2);
-                    $('qResultsRaw').innerHTML = `<span style="color:#10b981;">> BAŞARILI. VERİ ALINDI (${jsonStr.length} byte)</span><br><br>${jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, m => { let c='json-number'; if(/^"/.test(m)) c=/:$/.test(m)?'json-key':'json-string'; else if(/true|false/.test(m)) c='json-boolean'; return `<span style="color:${c==='json-key'?'#60a5fa':(c==='json-string'?'#fbbf24':'#a855f7')}">${m}</span>`; })}`;
-                    
-                    // Tabloya Dök
-                    if(typeof res.data === 'object') {
-                        let html = '<thead><tr><th>Anahtar</th><th>Değer</th></tr></thead><tbody>';
-                        const obj = Array.isArray(res.data) ? res.data[0] : res.data;
-                        for(let [k, v] of Object.entries(obj)) {
-                            if(typeof v === 'object') v = JSON.stringify(v);
-                            html += `<tr><td style="color:#a5b4fc; font-weight:bold;">${k}</td><td>${v}</td></tr>`;
-                        }
-                        $('formattedTable').innerHTML = html + '</tbody>';
-                        $('resTable').style.display = 'block';
-                    }
-                }
-            } catch(e) {
-                $('qResultsRaw').innerHTML = '<span style="color:#ef4444;">> Bağlantı hatası oluştu.</span>';
-            }
-            btn.disabled = false; btn.innerText = 'Sorguyu Başlat';
+                const r = await fetch('/api/sorgu', { method:'POST', headers:H, body:JSON.stringify(payload) }).then(x=>x.json());
+                if(r.success) term.innerText = '> BAŞARILI\n\n' + JSON.stringify(r.data, null, 2);
+                else term.innerText = '> HATA: ' + r.error;
+            } catch(e) { term.innerText = '> Bağlantı hatası.'; }
+            btn.disabled = false; btn.innerText = 'Sorgula';
         }
-
-        async function logout() { await fetch('/api/logout', {method:'POST', headers:HEADERS}); location.href='/login'; }
+        async function logout() { await fetch('/api/logout', {method:'POST', headers:H}); location.href='/login'; }
     </script>
 </body>
 </html>
