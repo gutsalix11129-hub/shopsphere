@@ -241,12 +241,12 @@
             </div>
 
             <div class="nav-category">
-                <div class="nav-cat-title" onclick="toggleCat(this)">OPENARCHIVE (VIP) <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="nav-cat-title" onclick="toggleCat(this)">SHOPSPHERE PREMIUM (VIP) <i class="fa-solid fa-chevron-down"></i></div>
                 <div class="nav-items">
-                    <div class="nav-item tool-item" onclick="loadTool('oa_public_status', this)"><div class="icon"><i class="fa-solid fa-server" style="color:var(--success);"></i></div> OA Sistem Durumu</div>
-                    <div class="nav-item tool-item" onclick="loadTool('oa_public_buckets', this)"><div class="icon"><i class="fa-solid fa-database" style="color:var(--primary);"></i></div> OA Veri Kovaları</div>
-                    <div class="nav-item tool-item" onclick="loadTool('oa_public_sources', this)"><div class="icon"><i class="fa-solid fa-list" style="color:var(--gold);"></i></div> OA Kaynakları</div>
-                    <div class="nav-item tool-item" onclick="loadTool('oa_public_forum', this)"><div class="icon"><i class="fa-solid fa-comments" style="color:var(--purple);"></i></div> OA Forum</div>
+                    <div class="nav-item tool-item" onclick="loadTool('oa_public_status', this)"><div class="icon"><i class="fa-solid fa-server" style="color:var(--success);"></i></div> Sistem Durumu</div>
+                    <div class="nav-item tool-item" onclick="loadTool('oa_public_buckets', this)"><div class="icon"><i class="fa-solid fa-database" style="color:var(--primary);"></i></div> Veri Kategorileri</div>
+                    <div class="nav-item tool-item" onclick="loadTool('oa_public_sources', this)"><div class="icon"><i class="fa-solid fa-list" style="color:var(--gold);"></i></div> API Kaynakları</div>
+                    <div class="nav-item tool-item" onclick="loadTool('oa_public_forum', this)"><div class="icon"><i class="fa-solid fa-comments" style="color:var(--purple);"></i></div> Topluluk Forumu</div>
                     <div class="nav-item tool-item" onclick="loadTool('oa_intelx', this)"><div class="icon"><i class="fa-solid fa-magnifying-glass" style="color:var(--danger);"></i></div> IntelX Sorgu</div>
                     <div class="nav-item tool-item" onclick="loadTool('oa_breach', this)"><div class="icon"><i class="fa-solid fa-triangle-exclamation" style="color:var(--gold);"></i></div> Breach Sorgu</div>
                 </div>
@@ -526,10 +526,10 @@
             'api_bin': { title: 'BIN / Kart Sorgu', desc: 'Kart ilk 6 hane ile banka bulun.', vip: true, fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi', pattern:/^\d{6,8}$/ }] },
             'hibp_password': { title: 'Şifre Sızıntı Kontrolü', desc: 'Şifrenizin daha önce veri sızıntılarında çalınıp çalınmadığını kontrol eder.', vip: true, fields: [{ id:'pass', label:'Kontrol Edilecek Şifre' }] },
             
-            'oa_public_status': { title:'OA Sistem Durumu', desc: 'OpenArchiveX sistem sağlığını ve durumunu gösterir.', vip: true, fields: [] },
-            'oa_public_buckets': { title:'OA Veri Kovaları', desc: 'OpenArchiveX üzerindeki IntelX veri kategorilerini listeler.', vip: true, fields: [] },
-            'oa_public_sources': { title:'OA API Kaynakları', desc: 'OpenArchiveX API tarafından kullanılan kaynakları listeler.', vip: true, fields: [] },
-            'oa_public_forum': { title:'OA Forum Verileri', desc: 'OpenArchiveX halka açık forum verilerini gösterir.', vip: true, fields: [] },
+            'oa_public_status': { title:'Sistem Durumu', desc: 'ShopSphere sistem sağlığını ve durumunu gösterir.', vip: true, fields: [] },
+            'oa_public_buckets': { title:'Veri Kategorileri', desc: 'ShopSphere üzerindeki veri kategorilerini listeler.', vip: true, fields: [] },
+            'oa_public_sources': { title:'API Kaynakları', desc: 'ShopSphere API tarafından kullanılan kaynakları listeler.', vip: true, fields: [] },
+            'oa_public_forum': { title:'Topluluk Forumu', desc: 'ShopSphere halka açık forum verilerini gösterir.', vip: true, fields: [] },
 
             'oa_intelx': { title:'IntelX Sorgu (VIP)', desc: 'Sızıntı ve istihbarat araması yapar.', vip: true, fields:[{ id:'q', label:'Aranacak Kelime / E-posta' }] },
             'oa_breach': { title:'Breach Sorgu (VIP)', desc: 'Veri ihlallerinde arama yapar.', vip: true, fields:[{ id:'q', label:'E-posta / Kullanıcı Adı' }] }
