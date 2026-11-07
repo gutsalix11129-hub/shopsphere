@@ -7,8 +7,9 @@ import hashlib
 import sqlite3
 import secrets
 import traceback
+import random
 from datetime import datetime, timezone, timedelta
-from threading import Lock
+from contextlib import contextmanager
 import requests
 from flask import Flask, request, jsonify, render_template, session, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -16,8 +17,13 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
 
+# --- GÜVENLİK AYARLARI ---
 SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+
+if not ADMIN_PASSWORD:
+    ADMIN_PASSWORD = "admin123"
+    app.logger.warning("DİKKAT: ADMIN_PASSWORD çevre değişkeni ayarlanmamış! Varsayılan 'admin123' kullanılıyor. Lütfen üretim ortamında değiştirin.")
 
 app.secret_key = SECRET_KEY
 app.config.update(
@@ -32,10 +38,16 @@ DB_DIR = "/var/data" if os.path.exists("/var/data") else "/tmp"
 if os.name == 'nt': DB_DIR = "."
 DB_FILE = os.path.join(DB_DIR, "siber_karargah.db")
 
+# --- VERİTABANI BAĞLANTISI (SIZINTI DÜZELTİLDİ) ---
+@contextmanager
 def get_db():
+    """SQLite bağlantısının işi bittiğinde otomatik kapanmasını sağlar."""
     conn = sqlite3.connect(DB_FILE, timeout=20)
     conn.execute("PRAGMA journal_mode=WAL;")
-    return conn
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 def init_db():
     with get_db() as c:
@@ -46,8 +58,11 @@ def init_db():
         CREATE TABLE IF NOT EXISTS tickets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, subject TEXT, message TEXT, reply TEXT, status TEXT DEFAULT 'open', created_at TEXT, replied_at TEXT);
         CREATE INDEX IF NOT EXISTS idx_logs_user ON logs(user_id);
         """)
-        try: c.execute("ALTER TABLE users ADD COLUMN vip INTEGER DEFAULT 0")
-        except: pass
+        
+        # Sütun var mı yok mu kontrolü (Daha güvenli ALTER TABLE)
+        columns = [row[1] for row in c.execute("PRAGMA table_info(users)").fetchall()]
+        if 'vip' not in columns:
+            c.execute("ALTER TABLE users ADD COLUMN vip INTEGER DEFAULT 0")
         
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('maintenance', '0')")
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('broadcast', 'Sistemimize hoş geldiniz!')")
@@ -60,6 +75,7 @@ def csrf_token():
     return session["_csrf"]
 app.jinja_env.globals["csrf_token"] = csrf_token
 
+# --- GÜVENLİK DUVARI (WAF & RATE LIMIT) ---
 BANNED_IPS = {}
 WAF_PATTERNS = [re.compile(r"(?i)(union\s+select|<script>|javascript:|onerror=|\.\./|\.\.\\)")]
 
@@ -88,8 +104,15 @@ def check_rate_limit(key, max_req=30):
     now = time.time()
     RATE_LIMIT.setdefault(key, [])
     RATE_LIMIT[key] = [t for t in RATE_LIMIT[key] if now - t < 60]
+    
     if len(RATE_LIMIT[key]) >= max_req: return False
     RATE_LIMIT[key].append(now)
+    
+    # Bellek sızıntısını önlemek için eski IP'leri temizle (%1 ihtimalle)
+    if random.random() < 0.01:
+        keys_to_del = [k for k, v in RATE_LIMIT.items() if not v or now - v[-1] > 60]
+        for k in keys_to_del: del RATE_LIMIT[k]
+        
     return True
 
 def get_setting(k):
@@ -106,9 +129,11 @@ def log_query(uid, uname, q_type, param, ip, status):
         with get_db() as c:
             c.execute("INSERT INTO logs (user_id, username, query_type, query_param, ip, timestamp, status) VALUES (?,?,?,?,?,?,?)",
                       (uid, uname, q_type, param, ip, datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), status)); c.commit()
-    except: pass
+    except Exception as e:
+        app.logger.error(f"Log kayıt hatası: {e}")
 
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,32}$")
+VIP_TOOLS = ["osint_ip", "osint_domain", "api_wayback", "api_whois", "api_bin", "hibp_password"]
 
 @app.route("/")
 def home():
@@ -222,7 +247,6 @@ def api_sorgu():
     ip = request.remote_addr or "?"
     req = request.json or {}; q_type = req.get("type"); uid, uname = session['user_id'], session['username']
     
-    VIP_TOOLS = ["osint_ip", "osint_domain", "api_wayback", "api_whois", "api_bin", "hibp_password"]
     if q_type in VIP_TOOLS:
         with get_db() as c: u_row = c.execute("SELECT vip FROM users WHERE id=?", (uid,)).fetchone()
         if not u_row or u_row[0] != 1: return jsonify({"success": False, "error": "Bu sorgu VIP üyelere özeldir."})
@@ -230,23 +254,43 @@ def api_sorgu():
     try:
         if q_type == "plaka_sorgu":
             plaka = (req.get('plaka') or '').strip().upper()
+            if not plaka: return jsonify({"success": False, "error": "Plaka gerekli."})
             r = requests.get(f"https://eokulsorguapi.onrender.com/plaka/api?plaka={plaka}", timeout=15)
             log_query(uid, uname, q_type, plaka, ip, "basarili")
             return jsonify({"success": True, "data": r.json()})
 
-        if q_type == "osint_ip": return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=8).json()})
-        if q_type == "osint_domain": return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=8).json()})
-        if q_type == "api_wayback": return jsonify({"success": True, "data": requests.get(f"http://archive.org/wayback/available?url={req.get('url')}", timeout=15).json()})
+        if q_type == "osint_ip": 
+            ip_addr = req.get('ip')
+            if not ip_addr: return jsonify({"success": False, "error": "IP adresi gerekli."})
+            return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{ip_addr}", timeout=8).json()})
+        
+        if q_type == "osint_domain": 
+            domain = req.get('domain')
+            if not domain: return jsonify({"success": False, "error": "Domain gerekli."})
+            return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={domain}&type=A", timeout=8).json()})
+        
+        if q_type == "api_wayback": 
+            url = req.get('url')
+            if not url: return jsonify({"success": False, "error": "URL gerekli."})
+            return jsonify({"success": True, "data": requests.get(f"http://archive.org/wayback/available?url={url}", timeout=15).json()})
+        
         if q_type == "api_whois":
-            r = requests.get(f"https://rdap.org/domain/{req.get('domain')}", timeout=15)
+            domain = req.get('domain')
+            if not domain: return jsonify({"success": False, "error": "Domain gerekli."})
+            r = requests.get(f"https://rdap.org/domain/{domain}", timeout=15)
             if r.status_code == 200: return jsonify({"success": True, "data": r.json()})
             else: return jsonify({"success": False, "error": "Domain bulunamadı."})
+        
         if q_type == "api_bin":
-            r = requests.get(f"https://lookup.binlist.net/{req.get('bin')}", headers={"Accept-Version": "3"}, timeout=15)
+            bin_num = req.get('bin')
+            if not bin_num: return jsonify({"success": False, "error": "BIN gerekli."})
+            r = requests.get(f"https://lookup.binlist.net/{bin_num}", headers={"Accept-Version": "3"}, timeout=15)
             if r.status_code == 200: return jsonify({"success": True, "data": r.json()})
             else: return jsonify({"success": False, "error": "BIN bulunamadı."})
+        
         if q_type == "hibp_password":
             password = (req.get('pass') or '').strip()
+            if not password: return jsonify({"success": False, "error": "Şifre gerekli."})
             sha1_pw = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
             prefix, suffix = sha1_pw[:5], sha1_pw[5:]
             r = requests.get(f"https://api.pwnedpasswords.com/range/{prefix}", timeout=10)
@@ -273,7 +317,7 @@ def api_sorgu():
             params[rk] = val[:100]; query_str += f"{rk}={val[:100]} "
             
         if not params: return jsonify({"success": False, "error": "Eksik parametre."})
-        time.sleep(0.8) 
+        time.sleep(0.8) # Dış API'ye spam atmamak için (Opsiyonel)
         
         r = requests.get(api_info["url"], params=params, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
         try: data = r.json()
@@ -288,7 +332,8 @@ def api_sorgu():
             
         log_query(uid, uname, q_type, query_str.strip(), ip, "basarili")
         return jsonify({"success": True, "data": result})
-    except Exception: 
+    except Exception as e: 
+        app.logger.error(f"Sorgu Hatası ({q_type}): {traceback.format_exc()}")
         return jsonify({"success": False, "error": "Bağlantı hatası oluştu."})
 
 @app.route("/admin-panel-x9", methods=["GET", "POST"])
@@ -383,9 +428,17 @@ def admin_delete_user(uid):
         c.execute("DELETE FROM users WHERE id=?", (uid,)); c.execute("DELETE FROM logs WHERE user_id=?", (uid,)); c.commit()
     return redirect("/admin-panel-x9")
 
+# --- GÜVENLİ HATA YÖNETİMİ ---
 @app.errorhandler(500)
 def server_error(e):
-    return f"<h1 style='color:red;'>500 - Hata Detayı</h1><pre style='background:#f4f4f4; padding:20px;'>{traceback.format_exc()}</pre>", 500
+    # Hatayı sunucu loglarına yaz
+    app.logger.error(f"500 Internal Server Error: {traceback.format_exc()}")
+    
+    # Hata detayını SADECE debug modundaysa göster (Canlıda göstermek büyük güvenlik açığıdır)
+    if app.debug:
+        return f"<h1 style='color:red;'>500 - Hata Detayı (Debug Modu)</h1><pre style='background:#f4f4f4; padding:20px;'>{traceback.format_exc()}</pre>", 500
+    
+    return "Sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.", 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
