@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 import os
 import re
@@ -30,7 +29,6 @@ app.config.update(
 )
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
-# Render için /tmp dizini
 DB_DIR = "/var/data" if os.path.exists("/var/data") else "/tmp"
 if os.name == 'nt': DB_DIR = "."
 DB_FILE = os.path.join(DB_DIR, "siber_karargah.db")
@@ -230,25 +228,46 @@ def api_sorgu():
     ip = request.remote_addr or "?"
     req = request.json or {}; q_type = req.get("type"); uid, uname = session['user_id'], session['username']
     
-    VIP_TOOLS = ["osint_ip", "osint_domain", "osint_hash", "api_wayback", "api_whois", "api_currency", "api_bin", "api_crypto", "api_email", "api_weather"]
+    VIP_TOOLS = ["osint_ip", "osint_domain", "osint_hash", "api_wayback", "api_whois", "api_currency", "api_bin", "api_crypto", "api_email", "api_weather", "hibp_password"]
     if q_type in VIP_TOOLS:
         with get_db() as c:
             u_row = c.execute("SELECT vip FROM users WHERE id=?", (uid,)).fetchone()
         if not u_row or u_row[0] != 1:
-            return jsonify({"success": False, "error": "Bu OSINT/Gelişmiş sorgu VIP üyelere özeldir. Lütfen VIP paket satın alın."})
+            return jsonify({"success": False, "error": "Bu OSINT/Gelişmiş sorgu VIP üyelere özeldir."})
 
-    # --- SQLITE ÖNBELLEK KONTROLÜ (RAM YEMEZ) ---
+    # --- SQLITE ÖNBELLEK KONTROLÜ ---
     cache_key = f"{q_type}_{json.dumps(req, sort_keys=True)}"
     with get_db() as c:
         row = c.execute("SELECT data, timestamp FROM cache WHERE key=?", (cache_key,)).fetchone()
         if row:
-            if time.time() - row[1] < 600:  # 10 dakika geçerli
+            if time.time() - row[1] < 600:
                 return jsonify({"success": True, "data": json.loads(row[0]), "cached": True})
             else:
                 c.execute("DELETE FROM cache WHERE key=?", (cache_key,))
                 c.commit()
 
     try:
+        # --- YENİ: ŞİFRE SIZINTI KONTROLÜ (HaveIBeenPwned) ---
+        if q_type == "hibp_password":
+            password = (req.get('pass') or '').strip()
+            if not password: return jsonify({"success": False, "error": "Şifre girin."})
+            
+            sha1_pw = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
+            prefix, suffix = sha1_pw[:5], sha1_pw[5:]
+            
+            r = requests.get(f"https://api.pwnedpasswords.com/range/{prefix}", timeout=10)
+            if r.status_code == 200:
+                hashes = (line.split(':') for line in r.text.splitlines())
+                count = next((int(c) for h, c in hashes if h == suffix), 0)
+                
+                log_query(uid, uname, q_type, "Sızıntı Kontrolü", ip, "basarili")
+                if count > 0:
+                    return jsonify({"success": True, "data": {"sizinti": True, "kac_kez": count, "mesaj": f"Bu şifre {count} kez veri sızıntısında görülmüş. Kullanmayın!"}})
+                else:
+                    return jsonify({"success": True, "data": {"sizinti": False, "mesaj": "Bu şifre bilinen sızıntılarda bulunamadı. Güvenle kullanabilirsiniz."}})
+            else:
+                return jsonify({"success": False, "error": "API hatası."})
+
         # --- ÜCRETSİZ SORGULAR ---
         if q_type == "plaka_sorgu":
             plaka = (req.get('plaka') or '').strip().upper()
