@@ -53,6 +53,13 @@
         .stat-card .value { font-size: 36px; font-weight: 800; color: var(--text); margin-top: 10px; line-height: 1.2; }
         @media (min-width: 992px) { .sidebar { left: 0; } .main { margin-left: 280px; width: calc(100% - 280px); } .menu-btn { display: none; } .stats-grid { grid-template-columns: repeat(3, 1fr); } }
         
+        /* REHBER KARTLARI */
+        .guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 22px; }
+        .guide-card { background: var(--card-bg); padding: 20px; border-radius: 14px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+        .guide-card i { font-size: 24px; color: var(--primary); }
+        .guide-card h3 { font-size: 16px; font-weight: 700; }
+        .guide-card p { font-size: 13px; color: #64748b; line-height: 1.5; }
+        
         .panel { background: var(--card-bg); border-radius: 16px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,.05); border: 1px solid var(--border); margin-bottom: 22px; max-width: 900px; margin-left: auto; margin-right: auto; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 18px; margin-bottom: 25px; }
         .panel-header h2 { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
@@ -62,6 +69,11 @@
         .form-group label { display: block; font-size: 13px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
         .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 15px; font-weight: 500; background: var(--bg); color: var(--text); transition: .2s; outline: none; }
         .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+        
+        /* SORGU AÇIKLAMASI */
+        .tool-desc { background: rgba(37,99,235,0.05); border-left: 4px solid var(--primary); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 13.5px; color: #475569; line-height: 1.5; display: flex; align-items: flex-start; gap: 10px; }
+        .tool-desc i { color: var(--primary); font-size: 18px; margin-top: 2px; }
+
         .btn-submit { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; padding: 16px 24px; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: all .2s; box-shadow: 0 8px 20px rgba(37,99,235,.3); }
         .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(37,99,235,.4); }
         .btn-submit:disabled { opacity: .7; cursor: not-allowed; }
@@ -75,7 +87,7 @@
         
         .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
         .badge-ok { background: rgba(16,185,129,0.15); color: #10b981; } .badge-bad { background: rgba(239,68,68,0.15); color: #ef4444; }
-        .badge-info { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .badge-info { background: rgba(59,130,246,0.15); color: #60a5fa; } .badge-vip { background: rgba(251,191,36,0.15); color: var(--gold); border: 1px solid rgba(251,191,36,0.3); }
         
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 999; display: none; backdrop-filter: blur(3px); }
         .overlay.show { display: block; }
@@ -131,7 +143,7 @@
 
     <div class="assistant-window" id="assistantWindow">
         <div class="assistant-header"><span><i class="fa-solid fa-headset"></i> Canlı Asistan</span><button onclick="toggleAssistant()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:18px;">&times;</button></div>
-        <div class="assistant-body" id="assistantBody"><div class="msg bot">Merhaba! Size nasıl yardımcı olabilirim?</div></div>
+        <div class="assistant-body" id="assistantBody"><div class="msg bot">Merhaba! Ne aramak istemiştiniz? Size en uygun aracı bulabilirim.</div></div>
         <div style="padding: 10px; border-top: 1px solid var(--border); display: flex; gap: 5px;">
             <input type="text" id="assistantInput" placeholder="Bir şey yazın..." style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text);" onkeypress="if(event.key==='Enter') sendAssistantMsg()">
             <button onclick="sendAssistantMsg()" style="background:var(--primary); color:#fff; border:none; border-radius:8px; padding:0 15px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
@@ -158,30 +170,29 @@
             </div>
             {% endif %}
             
-            <div class="nav-title">TEMEL SORGULAR</div>
+            <div class="nav-title">TEMEL SORGULAR (ÜCRETSİZ)</div>
             <div class="nav-item" onclick="loadTool('adsoyad', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Mernis 2026</div>
             <div class="nav-item" onclick="loadTool('aile', this)"><div class="icon"><i class="fa-solid fa-users"></i></div> Aile Çözümleri</div>
             <div class="nav-item" onclick="loadTool('tcgsm', this)"><div class="icon"><i class="fa-solid fa-phone"></i></div> GSM Çözümleri</div>
             <div class="nav-item" onclick="loadTool('gsmtc', this)"><div class="icon"><i class="fa-solid fa-phone-flip"></i></div> GSM → TC</div>
             <div class="nav-item" onclick="loadTool('adres', this)"><div class="icon"><i class="fa-solid fa-location-dot"></i></div> Adres Çözümleri</div>
             <div class="nav-item" onclick="loadTool('plaka_sorgu', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka Sorgu</div>
-            
-            <div class="nav-title">OSINT ARAÇLARI</div>
-            <div class="nav-item" onclick="loadTool('osint_ip', this)"><div class="icon"><i class="fa-solid fa-network-wired"></i></div> IP Sorgu</div>
-            <div class="nav-item" onclick="loadTool('osint_domain', this)"><div class="icon"><i class="fa-solid fa-globe"></i></div> Domain Sorgu</div>
-            <div class="nav-item" onclick="loadTool('osint_hash', this)"><div class="icon"><i class="fa-solid fa-hashtag"></i></div> Hash Üret</div>
 
-            <div class="nav-title" style="color:var(--primary);">DÜNYA ÇAPINDA API'LER</div>
-            <div class="nav-item" onclick="loadTool('api_wayback', this)"><div class="icon"><i class="fa-solid fa-clock-rotate-left" style="color:var(--gold);"></i></div> Wayback Arşivi (VIP)</div>
-            <div class="nav-item" onclick="loadTool('api_whois', this)"><div class="icon"><i class="fa-solid fa-magnifying-glass-location" style="color:var(--gold);"></i></div> Domain WHOIS (VIP)</div>
-            <div class="nav-item" onclick="loadTool('api_bin', this)"><div class="icon"><i class="fa-solid fa-credit-card"></i></div> BIN / Kart Sorgu</div>
-            <div class="nav-item" onclick="loadTool('api_currency', this)"><div class="icon"><i class="fa-solid fa-dollar-sign" style="color:var(--gold);"></i></div> Döviz Kurları (VIP)</div>
-            <div class="nav-item" onclick="loadTool('api_crypto', this)"><div class="icon"><i class="fa-brands fa-bitcoin"></i></div> Kripto Fiyatları</div>
-            <div class="nav-item" onclick="loadTool('api_email', this)"><div class="icon"><i class="fa-solid fa-envelope"></i></div> E-Posta Doğrula</div>
-            <div class="nav-item" onclick="loadTool('api_weather', this)"><div class="icon"><i class="fa-solid fa-cloud-sun"></i></div> Hava Durumu</div>
+            <div class="nav-title" style="color:var(--gold);">OSINT & DÜNYA API'LERİ (VIP) <i class="fa-solid fa-crown"></i></div>
+            <div class="nav-item" onclick="loadTool('osint_ip', this)"><div class="icon"><i class="fa-solid fa-network-wired" style="color:var(--gold);"></i></div> IP Sorgu</div>
+            <div class="nav-item" onclick="loadTool('osint_domain', this)"><div class="icon"><i class="fa-solid fa-globe" style="color:var(--gold);"></i></div> Domain Sorgu</div>
+            <div class="nav-item" onclick="loadTool('osint_hash', this)"><div class="icon"><i class="fa-solid fa-hashtag" style="color:var(--gold);"></i></div> Hash Üret</div>
+            <div class="nav-item" onclick="loadTool('api_wayback', this)"><div class="icon"><i class="fa-solid fa-clock-rotate-left" style="color:var(--gold);"></i></div> Wayback Arşivi</div>
+            <div class="nav-item" onclick="loadTool('api_whois', this)"><div class="icon"><i class="fa-solid fa-magnifying-glass-location" style="color:var(--gold);"></i></div> Domain WHOIS</div>
+            <div class="nav-item" onclick="loadTool('api_bin', this)"><div class="icon"><i class="fa-solid fa-credit-card" style="color:var(--gold);"></i></div> BIN / Kart Sorgu</div>
+            <div class="nav-item" onclick="loadTool('api_currency', this)"><div class="icon"><i class="fa-solid fa-dollar-sign" style="color:var(--gold);"></i></div> Döviz Kurları</div>
+            <div class="nav-item" onclick="loadTool('api_crypto', this)"><div class="icon"><i class="fa-brands fa-bitcoin" style="color:var(--gold);"></i></div> Kripto Fiyatları</div>
+            <div class="nav-item" onclick="loadTool('api_email', this)"><div class="icon"><i class="fa-solid fa-envelope" style="color:var(--gold);"></i></div> E-Posta Doğrula</div>
+            <div class="nav-item" onclick="loadTool('api_weather', this)"><div class="icon"><i class="fa-solid fa-cloud-sun" style="color:var(--gold);"></i></div> Hava Durumu</div>
 
             <div class="nav-title">HESABIM</div>
             <div class="nav-item" data-view="history" onclick="showView('history', this)"><div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div> Sorgu Geçmişim</div>
+            <div class="nav-item" data-view="bulk" onclick="showView('bulk', this)"><div class="icon"><i class="fa-solid fa-layer-group"></i></div> Toplu Sorgu <span class="badge-new" style="background:var(--gold); color:#000;">VIP</span></div>
             <div class="nav-item" data-view="ticket" onclick="showView('ticket', this)"><div class="icon"><i class="fa-solid fa-headset"></i></div> Destek Talebi</div>
 
             <div class="nav-title">DESTEK</div>
@@ -207,6 +218,26 @@
                     <a href="https://t.me/markettchats" target="_blank" class="tg-btn"><i class="fa-brands fa-telegram"></i> Market Chat</a>
                 </div>
             </div>
+            
+            <!-- YENİ KULLANICI REHBERİ -->
+            <div class="guide-grid">
+                <div class="guide-card">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <h3>1. Sorgu Tipini Seçin</h3>
+                    <p>Sol menüden arama yapmak istediğiniz kategoriyi (Mernis, GSM, OSINT vb.) seçin.</p>
+                </div>
+                <div class="guide-card">
+                    <i class="fa-solid fa-keyboard"></i>
+                    <h3>2. Bilgileri Girin</h3>
+                    <p>Açılan ekranda gerekli bilgileri (TC, Ad Soyad, IP vb.) girip "Sorgula" butonuna tıklayın.</p>
+                </div>
+                <div class="guide-card">
+                    <i class="fa-solid fa-file-excel"></i>
+                    <h3>3. Sonucu İndirin</h3>
+                    <p>Sonuçlar ekranda görünecektir. İsterseniz "Excel/CSV İndir" butonuyla kaydedebilirsiniz.</p>
+                </div>
+            </div>
+
             <div class="stats-grid">
                 <div class="stat-card"><h4>Toplam Kullanıcı</h4><div class="value counter" data-target="{{ total_users }}">0</div></div>
                 <div class="stat-card green"><h4>Toplam Sorgu</h4><div class="value counter" data-target="{{ total_queries }}">0</div></div>
@@ -228,9 +259,9 @@
                         <h3>1 Günlük VIP</h3>
                         <div class="price">50 ₺ <span>/ gün</span></div>
                         <ul>
-                            <li><i class="fa-solid fa-check"></i> Tüm VIP Sorgular</li>
+                            <li><i class="fa-solid fa-check"></i> Tüm OSINT Araçları</li>
                             <li><i class="fa-solid fa-check"></i> Sınırsız Arama</li>
-                            <li><i class="fa-solid fa-check"></i> Wayback & Domain WHOIS</li>
+                            <li><i class="fa-solid fa-check"></i> Toplu Sorgu</li>
                         </ul>
                         <a href="https://t.me/markettchats" target="_blank" class="btn-submit" style="text-decoration:none; font-size:14px; padding:12px;">Satın Al (Telegram)</a>
                     </div>
@@ -269,12 +300,41 @@
                     <h2><i class="fa-solid fa-magnifying-glass" style="color:var(--primary);"></i> <span id="qTitle">Sorgu</span></h2>
                     <button class="close-btn" onclick="showView('dashboard', document.querySelector('[data-view=\'dashboard\']'))"><i class="fa-solid fa-xmark"></i> Kapat</button>
                 </div>
+                <!-- SORGU AÇIKLAMASI -->
+                <div class="tool-desc" id="toolDesc" style="display:none;">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span id="toolDescText"></span>
+                </div>
                 <form id="queryForm" onsubmit="event.preventDefault(); runQuery();">
                     <div id="qInputs"></div>
                     <button type="submit" class="btn-submit" id="submitBtn"><i class="fa-solid fa-bolt"></i> Sorgula</button>
                 </form>
                 <div class="result-toolbar" id="resultToolbar" style="display:flex; gap:8px; margin-top:15px; flex-wrap:wrap;"></div>
                 <div id="qResults"></div>
+            </div>
+        </div>
+
+        <div id="view-bulk" class="view">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-layer-group" style="color:var(--primary);"></i> Toplu Sorgu (Max 20)</h2>
+                    <button class="close-btn" onclick="showView('dashboard', document.querySelector('[data-view=\'dashboard\']'))"><i class="fa-solid fa-xmark"></i> Kapat</button>
+                </div>
+                <div class="form-group">
+                    <label>Sorgu Tipi</label>
+                    <select id="bulkType">
+                        <option value="aile">Aile (TC)</option>
+                        <option value="adres">Adres (TC)</option>
+                        <option value="tcgsm">TC → GSM</option>
+                        <option value="gsmtc">GSM → TC</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Veriler (Her satıra bir veri)</label>
+                    <textarea id="bulkData" rows="6" placeholder="11111111110&#10;22222222220&#10;33333333330"></textarea>
+                </div>
+                <button class="btn-submit" onclick="runBulkQuery()" id="bulkBtn"><i class="fa-solid fa-rocket"></i> Toplu Sorguyu Başlat</button>
+                <div id="bulkResults" style="margin-top:20px;"></div>
             </div>
         </div>
 
@@ -400,26 +460,24 @@
         document.querySelectorAll('.counter').forEach(el => { const target = parseInt(el.dataset.target || '0', 10); if (target === 0) { el.textContent = '0'; return; } let start = 0; const timer = setInterval(() => { start += Math.ceil(target / 50); if (start >= target) { el.textContent = target.toLocaleString('tr-TR'); clearInterval(timer); } else { el.textContent = start.toLocaleString('tr-TR'); } }, 20); });
         
         const TOOLS = {
-            'adsoyad': { title: 'Mernis 2026', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
-            'aile':  { title:'Aile Çözümleri', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'adres': { title:'Adres Çözümleri', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'tcgsm': { title:'GSM Çözümleri', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'gsmtc': { title:'GSM → TC', fields:[{ id:'gsm', label:'GSM Numarası', pattern:/^\d{10,11}$/ }] },
-            'osint_ip': { title:'IP Sorgu', fields:[{ id:'ip', label:'IP Adresi' }] },
-            'osint_domain': { title:'Domain Sorgu', fields:[{ id:'domain', label:'Domain Adı' }] },
-            'osint_hash': { title:'Hash Üret', fields:[{ id:'text', label:'Metin' }] },
+            'adsoyad': { title: 'Mernis 2026', desc: 'Ad ve soyad bilgisiyle kişinin TC kimlik numarasını ve temel bilgilerini bulur.', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
+            'aile':  { title:'Aile Çözümleri', desc: 'TC kimlik numarası ile kişinin anne, baba, eş ve çocuk bilgilerine ulaşır.', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'adres': { title:'Adres Çözümleri', desc: 'TC kimlik numarası ile kişinin kayıtlı olduğu güncel adres bilgilerini verir.', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'tcgsm': { title:'GSM Çözümleri', desc: 'TC kimlik numarası ile kişinin üzerine kayıtlı telefon numaralarını listeler.', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'gsmtc': { title:'GSM → TC', desc: 'Telefon numarası ile numaranın kayıtlı olduğu kişinin TC kimlik numarasını bulur.', fields:[{ id:'gsm', label:'GSM Numarası', pattern:/^\d{10,11}$/ }] },
+            'plaka_sorgu': { title: 'Plaka Sorgu', desc: 'Araç plakası ile aracın sahibi, markası ve modeli hakkında bilgi verir.', fields: [{ id:'plaka', label:'Plaka (örn: 41HU096)' }] },
             
-            // PLAKA SORGUSU
-            'plaka_sorgu': { title: 'Plaka Sorgu', fields: [{ id:'plaka', label:'Plaka (örn: 41HU096)' }] },
-
-            // DÜNYA API'LERİ
-            'api_wayback': { title: 'Wayback Arşivi (VIP)', vip: true, fields: [{ id:'url', label:'Site URL (örn: google.com)' }] },
-            'api_whois': { title: 'Domain WHOIS (VIP)', vip: true, fields: [{ id:'domain', label:'Domain Adı (örn: google.com)' }] },
-            'api_bin': { title: 'BIN / Kart Sorgu', fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi', pattern:/^\d{6,8}$/ }] },
-            'api_currency': { title: 'Döviz Kurları (VIP)', vip: true, fields: [{ id:'dummy', label:'Sorgulamak için boş bırakıp tıklayın', req:false }] },
-            'api_crypto': { title: 'Kripto Fiyatları', fields: [{ id:'dummy', label:'Sorgulamak için boş bırakıp tıklayın', req:false }] },
-            'api_email': { title: 'E-Posta Doğrula', fields: [{ id:'email', label:'E-Posta Adresi' }] },
-            'api_weather': { title: 'Hava Durumu', fields: [{ id:'city', label:'Şehir (örn: Istanbul)' }] }
+            // VIP ARAÇLAR
+            'osint_ip': { title:'IP Sorgu', desc: 'Bir IP adresinin konumunu, servis sağlayıcısını ve detaylarını gösterir.', vip: true, fields:[{ id:'ip', label:'IP Adresi' }] },
+            'osint_domain': { title:'Domain Sorgu', desc: 'Bir web sitesinin barındığı sunucunun IP adresini ve DNS kayıtlarını bulur.', vip: true, fields:[{ id:'domain', label:'Domain Adı' }] },
+            'osint_hash': { title:'Hash Üret', desc: 'Girilen metnin MD5, SHA1 ve SHA256 şifreleme özetlerini (hash) oluşturur.', vip: true, fields:[{ id:'text', label:'Metin' }] },
+            'api_wayback': { title: 'Wayback Arşivi', desc: 'Bir web sitesinin geçmişte nasıl göründüğünü arşiv kayıtlarından bulur.', vip: true, fields: [{ id:'url', label:'Site URL (örn: google.com)' }] },
+            'api_whois': { title: 'Domain WHOIS', desc: 'Bir alan adının kime ait olduğunu, ne zaman alındığını ve kayıt bilgilerini sorgular.', vip: true, fields: [{ id:'domain', label:'Domain Adı (örn: google.com)' }] },
+            'api_bin': { title: 'BIN / Kart Sorgu', desc: 'Kredi kartının ilk 6 hanesiyle kartın ait olduğu banka ve ülkeyi bulur.', vip: true, fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi', pattern:/^\d{6,8}$/ }] },
+            'api_currency': { title: 'Döviz Kurları', desc: 'Anlık USD, EUR ve GBP kurlarını Türk Lirası cinsinden gösterir.', vip: true, fields: [{ id:'dummy', label:'Sorgulamak için boş bırakıp tıklayın', req:false }] },
+            'api_crypto': { title: 'Kripto Fiyatları', desc: 'Bitcoin, Ethereum ve diğer popüler kripto paraların anlık fiyatlarını gösterir.', vip: true, fields: [{ id:'dummy', label:'Sorgulamak için boş bırakıp tıklayın', req:false }] },
+            'api_email': { title: 'E-Posta Doğrula', desc: 'Bir e-posta adresinin geçerli olup olmadığını ve spam olup olmadığını kontrol eder.', vip: true, fields: [{ id:'email', label:'E-Posta Adresi' }] },
+            'api_weather': { title: 'Hava Durumu', desc: 'Seçilen şehir için anlık hava durumu ve sıcaklık bilgisi verir.', vip: true, fields: [{ id:'city', label:'Şehir (örn: Istanbul)' }] }
         };
         
         let currentType = null, lastResult = null;
@@ -444,7 +502,14 @@
                 return;
             }
 
-            currentType = type; lastResult = null; showView('query', el); $('qTitle').innerText = tool.title; $('qResults').innerHTML = ''; $('resultToolbar').innerHTML = ''; 
+            currentType = type; lastResult = null; showView('query', el); 
+            $('qTitle').innerText = tool.title; 
+            $('qResults').innerHTML = ''; $('resultToolbar').innerHTML = ''; 
+            
+            // Açıklama Kutusunu Güncelle
+            if(tool.desc) { $('toolDesc').style.display = 'flex'; $('toolDescText').innerText = tool.desc; }
+            else { $('toolDesc').style.display = 'none'; }
+
             let html = ''; tool.fields.forEach(f => { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" placeholder="${f.label} girin..."></div>`; }); 
             $('qInputs').innerHTML = html; 
         }
@@ -530,6 +595,37 @@
         }
         function copyResult() { if (lastResult) navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(() => toast('Sonuçlar kopyalandı!', 'success')); }
         
+        async function runBulkQuery() {
+            const type = $('bulkType').value;
+            const raw = $('bulkData').value.trim();
+            if (!raw) return toast('Lütfen veri girin.', 'error');
+            const items = raw.split('\n').map(s => s.trim()).filter(s => s);
+            if (items.length > 20) return toast('En fazla 20 sorgu yapabilirsiniz.', 'error');
+            
+            const btn = $('bulkBtn');
+            setLoading(btn, true, '<i class="fa-solid fa-spinner fa-spin"></i> Sorgulanıyor...');
+            $('bulkResults').innerHTML = `<div class="spinner-lg"></div><p style="text-align:center; color:#64748b; font-size:13px;">API'yi yormamak için her sorgu arasında 0.8 sn bekleniyor...</p>`;
+            
+            try {
+                const res = await fetch('/api/bulk_sorgu', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ type: type, items: items }) }).then(r => r.json());
+                if (!res.success) { $('bulkResults').innerHTML = `<div class="empty-state error">${escapeHtml(res.error)}</div>`; }
+                else {
+                    let html = '<table class="data-table"><thead><tr><th>Sorgulanan Veri</th><th>Durum</th><th>Sonuç Detayı</th></tr></thead><tbody>';
+                    res.results.forEach(r => {
+                        if (r.success) {
+                            let details = flatten(r.data).map(([k,v]) => `<b>${k}:</b> ${v}`).join('<br>');
+                            html += `<tr><td>${r.query}</td><td><span class="badge badge-ok">BAŞARILI</span></td><td style="font-size:12px;">${details}</td></tr>`;
+                        } else {
+                            html += `<tr><td>${r.query}</td><td><span class="badge badge-bad">BAŞARISIZ</span></td><td>${r.error}</td></tr>`;
+                        }
+                    });
+                    html += '</tbody></table>';
+                    $('bulkResults').innerHTML = html;
+                }
+            } catch (_) { $('bulkResults').innerHTML = `<div class="empty-state error">Bağlantı hatası.</div>`; }
+            finally { setLoading(btn, false, '<i class="fa-solid fa-rocket"></i> Toplu Sorguyu Başlat'); }
+        }
+
         async function loadMyHistory() {
             $('historyContent').innerHTML = '<div class="spinner-lg"></div>';
             try {
