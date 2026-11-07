@@ -16,7 +16,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
-
 SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 OPENARCHIVE_KEY = os.environ.get("OPENARCHIVE_KEY", "BURAYA_TOKEN_GIRIN")
@@ -51,7 +50,6 @@ def init_db():
         """)
         try: c.execute("ALTER TABLE users ADD COLUMN vip INTEGER DEFAULT 0")
         except: pass
-        
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('maintenance', '0')")
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('broadcast', 'Sistemimize hoş geldiniz!')")
         c.commit()
@@ -71,14 +69,12 @@ def firewall():
     ip = request.remote_addr or "0.0.0.0"
     now = time.time()
     if ip in BANNED_IPS and now < BANNED_IPS[ip]:
-        return jsonify({"success": False, "error": "IP engellendi. Çok fazla istek attınız."}), 403
-    
+        return jsonify({"success": False, "error": "IP engellendi."}), 403
     data_str = str(request.args) + str(request.form) + str(request.get_json(silent=True))
     for pattern in WAF_PATTERNS:
         if pattern.search(data_str):
             BANNED_IPS[ip] = now + 900
-            return jsonify({"success": False, "error": "Güvenlik ihlali tespit edildi! IP'niz 15 dk banlandı."}), 403
-
+            return jsonify({"success": False, "error": "Güvenlik ihlali!"}), 403
     if request.method in ("POST", "PUT", "DELETE"):
         token = request.headers.get("X-CSRF-Token") or request.form.get("_csrf")
         stored = session.get("_csrf")
@@ -122,7 +118,6 @@ def home():
         total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
         user_queries = c.execute("SELECT COUNT(*) FROM logs WHERE user_id=?", (session['user_id'],)).fetchone()[0]
-    
     avatar = row[2] if row[2] else f"https://api.dicebear.com/7.x/bottts/svg?seed={row[0]}"
     is_vip = row[3] == 1
     return render_template('index.html', total_users=total_users, total_queries=total_queries, user_queries=user_queries, username=row[0], created=row[1], avatar=avatar, is_vip=is_vip)
@@ -185,13 +180,10 @@ def api_upload_avatar():
     if 'user_id' not in session: return jsonify({"success": False, "error": "Giriş yapın."}), 401
     req = request.json or {}
     img_data = req.get("image")
-    if not img_data or not img_data.startswith("data:image"):
-        return jsonify({"success": False, "error": "Geçersiz resim verisi."})
-    if len(img_data) > 2 * 1024 * 1024: 
-        return jsonify({"success": False, "error": "Resim boyutu çok büyük."})
+    if not img_data or not img_data.startswith("data:image"): return jsonify({"success": False, "error": "Geçersiz resim."})
+    if len(img_data) > 2 * 1024 * 1024: return jsonify({"success": False, "error": "Resim çok büyük."})
     with get_db() as c:
-        c.execute("UPDATE users SET avatar=? WHERE id=?", (img_data, session['user_id']))
-        c.commit()
+        c.execute("UPDATE users SET avatar=? WHERE id=?", (img_data, session['user_id'])); c.commit()
     return jsonify({"success": True})
 
 @app.route("/api/my_history")
@@ -205,8 +197,7 @@ def api_my_history():
 def api_create_ticket():
     if 'user_id' not in session: return jsonify({"success": False}), 401
     req = request.json or {}
-    subject = (req.get("subject") or "").strip()
-    message = (req.get("message") or "").strip()
+    subject, message = (req.get("subject") or "").strip(), (req.get("message") or "").strip()
     if not subject or not message: return jsonify({"success": False, "error": "Konu ve mesaj zorunludur."})
     with get_db() as c:
         c.execute("INSERT INTO tickets (user_id, username, subject, message, status, created_at) VALUES (?,?,?,?, 'open', ?)", 
@@ -225,31 +216,23 @@ def api_my_tickets():
 def api_sorgu():
     if get_setting("maintenance") == "1": return jsonify({"success": False, "error": "Sistem bakımda."})
     if 'user_id' not in session: return jsonify({"success": False, "error": "Giriş yapın."}), 401
-    
     ip = request.remote_addr or "?"
     req = request.json or {}; q_type = req.get("type"); uid, uname = session['user_id'], session['username']
     
-    VIP_TOOLS = ["osint_ip", "osint_domain", "osint_hash", "api_wayback", "api_whois", "api_currency", "api_bin", "api_crypto", "api_email", "api_weather", "hibp_password", 
-                 "oa_intelx", "oa_breach", "oa_tiktok", "oa_discord", "oa_ipinfo", "oa_public_status", "oa_public_buckets", "oa_public_sources", "oa_public_forum"]
+    VIP_TOOLS = ["osint_ip", "osint_domain", "osint_hash", "api_wayback", "api_whois", "api_currency", "api_bin", "api_crypto", "api_email", "api_weather", "hibp_password", "oa_intelx", "oa_breach", "oa_tiktok", "oa_discord", "oa_ipinfo", "oa_public_status", "oa_public_buckets", "oa_public_sources", "oa_public_forum"]
     
     if q_type in VIP_TOOLS:
-        with get_db() as c:
-            u_row = c.execute("SELECT vip FROM users WHERE id=?", (uid,)).fetchone()
-        if not u_row or u_row[0] != 1:
-            return jsonify({"success": False, "error": "Bu OSINT/Gelişmiş sorgu VIP üyelere özeldir. Lütfen VIP paket satın alın."})
+        with get_db() as c: u_row = c.execute("SELECT vip FROM users WHERE id=?", (uid,)).fetchone()
+        if not u_row or u_row[0] != 1: return jsonify({"success": False, "error": "Bu sorgu VIP üyelere özeldir."})
 
     cache_key = f"{q_type}_{json.dumps(req, sort_keys=True)}"
     with get_db() as c:
         row = c.execute("SELECT data, timestamp FROM cache WHERE key=?", (cache_key,)).fetchone()
         if row:
-            if time.time() - row[1] < 600:
-                return jsonify({"success": True, "data": json.loads(row[0]), "cached": True})
-            else:
-                c.execute("DELETE FROM cache WHERE key=?", (cache_key,))
-                c.commit()
+            if time.time() - row[1] < 600: return jsonify({"success": True, "data": json.loads(row[0]), "cached": True})
+            else: c.execute("DELETE FROM cache WHERE key=?", (cache_key,)); c.commit()
 
     try:
-        # --- OPENARCHIVE PUBLIC (200 ÇALIŞAN) API'LERİ ---
         if q_type.startswith("oa_public_"):
             OA_PUBLIC_MAP = {
                 "oa_public_status": "https://openarchivex.net/api/v2/status",
@@ -258,20 +241,12 @@ def api_sorgu():
                 "oa_public_forum": "https://openarchivex.net/api/forum/public/overview"
             }
             if q_type in OA_PUBLIC_MAP:
-                url = OA_PUBLIC_MAP[q_type]
-                headers = {"Accept": "application/json", "User-Agent": "Mozilla/5.0"}
-                try:
-                    r = requests.get(url, headers=headers, timeout=15)
-                    if r.status_code == 200:
-                        data = r.json()
-                        log_query(uid, uname, q_type, "Public API", ip, "basarili")
-                        return jsonify({"success": True, "data": data})
-                    else:
-                        return jsonify({"success": False, "error": f"API Hatası: {r.status_code}"})
-                except Exception as e:
-                    return jsonify({"success": False, "error": "Bağlantı hatası."})
+                r = requests.get(OA_PUBLIC_MAP[q_type], headers={"Accept": "application/json", "User-Agent": "Mozilla/5.0"}, timeout=15)
+                if r.status_code == 200:
+                    log_query(uid, uname, q_type, "Public API", ip, "basarili")
+                    return jsonify({"success": True, "data": r.json()})
+                else: return jsonify({"success": False, "error": f"API Hatası: {r.status_code}"})
 
-        # --- OPENARCHIVE VIP (401) API'LERİ ---
         if q_type.startswith("oa_"):
             OA_MAP = {
                 "oa_intelx": {"url": "https://openarchivex.net/api/v2/intelx/advanced", "method": "POST", "param_key": "q"},
@@ -281,86 +256,44 @@ def api_sorgu():
                 "oa_ipinfo": {"url": "https://openarchivex.net/api/ip-info", "method": "GET", "param_key": "q"}
             }
             if q_type in OA_MAP:
-                api = OA_MAP[q_type]
-                val = (req.get(api["param_key"]) or "").strip()
+                api = OA_MAP[q_type]; val = (req.get(api["param_key"]) or "").strip()
                 headers = {"Authorization": f"Bearer {OPENARCHIVE_KEY}", "Content-Type": "application/json", "Accept": "application/json"}
-                try:
-                    if api["method"] == "POST":
-                        r = requests.post(api["url"], headers=headers, json={api["param_key"]: val}, timeout=15)
-                    else:
-                        r = requests.get(api["url"], headers=headers, params={api["param_key"]: val}, timeout=15)
-                    
-                    if r.status_code == 401:
-                        return jsonify({"success": False, "error": "OpenArchive API Anahtarı geçersiz veya eksik (401)."})
-                    
-                    data = r.json()
-                    log_query(uid, uname, q_type, val, ip, "basarili")
-                    return jsonify({"success": True, "data": data})
-                except Exception as e:
-                    return jsonify({"success": False, "error": f"Hata: {str(e)}"})
+                if api["method"] == "POST": r = requests.post(api["url"], headers=headers, json={api["param_key"]: val}, timeout=15)
+                else: r = requests.get(api["url"], headers=headers, params={api["param_key"]: val}, timeout=15)
+                if r.status_code == 401: return jsonify({"success": False, "error": "OpenArchive API Anahtarı geçersiz (401)."})
+                log_query(uid, uname, q_type, val, ip, "basarili")
+                return jsonify({"success": True, "data": r.json()})
 
-        # --- MEVCUT SORGULAR ---
         if q_type == "plaka_sorgu":
             plaka = (req.get('plaka') or '').strip().upper()
-            if not plaka: return jsonify({"success": False, "error": "Plaka girin."})
             r = requests.get(f"https://eokulsorguapi.onrender.com/plaka/api?plaka={plaka}", timeout=15)
-            data = r.json()
             log_query(uid, uname, q_type, plaka, ip, "basarili")
-            return jsonify({"success": True, "data": data})
+            return jsonify({"success": True, "data": r.json()})
 
         if q_type == "osint_ip": return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=8).json()})
         if q_type == "osint_domain": return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=8).json()})
         if q_type == "osint_hash":
             txt = (req.get('text') or '').encode()
             return jsonify({"success": True, "data": {"MD5": hashlib.md5(txt).hexdigest(), "SHA1": hashlib.sha1(txt).hexdigest(), "SHA256": hashlib.sha256(txt).hexdigest()}})
-
-        if q_type == "api_wayback":
-            url = (req.get('url') or '').strip()
-            data = requests.get(f"http://archive.org/wayback/available?url={url}", timeout=15).json()
-            log_query(uid, uname, q_type, url, ip, "basarili")
-            return jsonify({"success": True, "data": data})
-
+        if q_type == "api_wayback": return jsonify({"success": True, "data": requests.get(f"http://archive.org/wayback/available?url={req.get('url')}", timeout=15).json()})
         if q_type == "api_whois":
-            domain = (req.get('domain') or '').strip()
-            r = requests.get(f"https://rdap.org/domain/{domain}", timeout=15)
-            if r.status_code == 200:
-                log_query(uid, uname, q_type, domain, ip, "basarili")
-                return jsonify({"success": True, "data": r.json()})
+            r = requests.get(f"https://rdap.org/domain/{req.get('domain')}", timeout=15)
+            if r.status_code == 200: return jsonify({"success": True, "data": r.json()})
             else: return jsonify({"success": False, "error": "Domain bulunamadı."})
-
         if q_type == "api_bin":
-            bin_no = (req.get('bin') or '').strip()
-            r = requests.get(f"https://lookup.binlist.net/{bin_no}", headers={"Accept-Version": "3"}, timeout=15)
-            if r.status_code == 200:
-                log_query(uid, uname, q_type, bin_no, ip, "basarili")
-                return jsonify({"success": True, "data": r.json()})
+            r = requests.get(f"https://lookup.binlist.net/{req.get('bin')}", headers={"Accept-Version": "3"}, timeout=15)
+            if r.status_code == 200: return jsonify({"success": True, "data": r.json()})
             else: return jsonify({"success": False, "error": "BIN bulunamadı."})
-
-        if q_type == "api_currency":
-            r = requests.get("https://api.frankfurter.app/latest?from=USD&to=TRY,EUR,GBP", timeout=10)
-            log_query(uid, uname, q_type, "USD", ip, "basarili")
-            return jsonify({"success": True, "data": r.json()})
-
-        if q_type == "api_crypto":
-            r = requests.get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,ripple,solana&vs_currencies=usd,try&include_24hr_change=true", timeout=10)
-            log_query(uid, uname, q_type, "Crypto", ip, "basarili")
-            return jsonify({"success": True, "data": r.json()})
-
+        if q_type == "api_currency": return jsonify({"success": True, "data": requests.get("https://api.frankfurter.app/latest?from=USD&to=TRY,EUR,GBP", timeout=10).json()})
+        if q_type == "api_crypto": return jsonify({"success": True, "data": requests.get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,ripple,solana&vs_currencies=usd,try&include_24hr_change=true", timeout=10).json()})
         if q_type == "api_email":
-            email = (req.get('email') or '').strip()
-            r = requests.get(f"https://open.kickbox.com/v1/disposable/{email}", timeout=10)
-            if r.status_code == 200:
-                log_query(uid, uname, q_type, email, ip, "basarili")
-                return jsonify({"success": True, "data": r.json()})
-            else: return jsonify({"success": False, "error": "Geçersiz e-posta."})
-
+            r = requests.get(f"https://open.kickbox.com/v1/disposable/{req.get('email')}", timeout=10)
+            return jsonify({"success": True, "data": r.json()})
         if q_type == "api_weather":
-            city = (req.get('city') or '').strip()
-            geo = requests.get(f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=tr&format=json", timeout=10).json()
+            geo = requests.get(f"https://geocoding-api.open-meteo.com/v1/search?name={req.get('city')}&count=1&language=tr&format=json", timeout=10).json()
             if not geo.get("results"): return jsonify({"success": False, "error": "Şehir bulunamadı."})
-            lat = geo["results"][0]["latitude"]; lon = geo["results"][0]["longitude"]
+            lat, lon = geo["results"][0]["latitude"], geo["results"][0]["longitude"]
             w = requests.get(f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true", timeout=10).json()
-            log_query(uid, uname, q_type, city, ip, "basarili")
             return jsonify({"success": True, "data": {"sehir": geo["results"][0]["name"], "hava_durumu": w["current_weather"]}})
 
         API_MAP = {
@@ -372,51 +305,38 @@ def api_sorgu():
         }
         if q_type not in API_MAP: return jsonify({"success": False, "error": "Geçersiz sorgu."})
         
-        api_info = API_MAP[q_type]; params = {}; query_str = ""
+        api_info = API_MAP[q_type]; params = {}
         for k, rk in api_info["params"].items():
             val = (req.get(k) or "").strip()
-            if not val: continue
-            if rk == "tc" and not re.fullmatch(r"\d{11}", val): return jsonify({"success": False, "error": "TC 11 haneli sayı olmalı."})
-            if rk == "gsm" and not re.fullmatch(r"\d{10,11}", val): return jsonify({"success": False, "error": "GSM 10-11 haneli sayı olmalı."})
-            params[rk] = val[:100]; query_str += f"{rk}={val[:100]} "
-            
+            if val: params[rk] = val[:100]
         if not params: return jsonify({"success": False, "error": "Eksik parametre."})
-        time.sleep(0.8) 
         
+        time.sleep(0.8) 
         r = requests.get(api_info["url"], params=params, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
-        try: data = r.json()
-        except ValueError: return jsonify({"success": False, "error": "Dış API limiti aşıldı."})
-
+        data = r.json()
         is_ok = data.get("success") in [True, "true"] or data.get("durum") in ["basarili", "başarılı"] or data.get("status") == "success"
         result = data.get("data") or data.get("veri") or data.get("result")
         
         if not is_ok or not result: 
-            log_query(uid, uname, q_type, query_str.strip(), ip, "basarisiz")
-            return jsonify({"success": False, "error": "Bulunamadı veya API hatası."})
+            log_query(uid, uname, q_type, str(params), ip, "basarisiz")
+            return jsonify({"success": False, "error": "Bulunamadı."})
             
         with get_db() as c:
-            c.execute("INSERT OR REPLACE INTO cache (key, data, timestamp) VALUES (?,?,?)", 
-                      (cache_key, json.dumps(result), time.time()))
-            c.commit()
-
-        log_query(uid, uname, q_type, query_str.strip(), ip, "basarili")
+            c.execute("INSERT OR REPLACE INTO cache (key, data, timestamp) VALUES (?,?,?)", (cache_key, json.dumps(result), time.time())); c.commit()
+        log_query(uid, uname, q_type, str(params), ip, "basarili")
         return jsonify({"success": True, "data": result})
     except Exception: 
-        return jsonify({"success": False, "error": "Bağlantı hatası oluştu."})
+        return jsonify({"success": False, "error": "Bağlantı hatası."})
 
-# --- ADMIN ROTALARI ---
 @app.route("/admin-panel-x9", methods=["GET", "POST"])
 def admin_dashboard():
     ip = request.remote_addr or "?"
     if not session.get("admin"):
         error = None
         if request.method == "POST":
-            if not check_rate_limit(f"admin_{ip}", max_req=5): error = "Çok fazla deneme."
-            else:
-                girilen_sifre = request.form.get("pass", "")
-                if secrets.compare_digest(str(girilen_sifre).encode('utf-8'), str(ADMIN_PASSWORD).encode('utf-8')):
-                    session["admin"] = True; session["admin_since"] = time.time(); return redirect("/admin-panel-x9")
-                else: error = "Hatalı şifre."
+            if check_rate_limit(f"admin_{ip}", max_req=5) and secrets.compare_digest(str(request.form.get("pass", "")).encode('utf-8'), str(ADMIN_PASSWORD).encode('utf-8')):
+                session["admin"] = True; session["admin_since"] = time.time(); return redirect("/admin-panel-x9")
+            error = "Hatalı şifre veya çok fazla deneme."
         return render_template('admin.html', show_login=True, login_error=error, total_users=0, total_queries=0, banned_users=0, users=[], logs=[], maint="0", current_bc="", chart_labels="[]", chart_data="[]", daily_labels="[]", daily_data="[]", temp_passes={}, popular_queries=[], success_count=0, fail_count=0, tickets=[], vip_users=0)
 
     if time.time() - session.get("admin_since", 0) > 3600:
@@ -425,22 +345,16 @@ def admin_dashboard():
     temp_passes = session.pop("_temp_passes", {})
     with get_db() as c:
         logs = c.execute("SELECT * FROM logs ORDER BY id DESC LIMIT 500").fetchall()
-        users = c.execute("""
-            SELECT u.id, u.username, u.password, u.banned, u.created_at, COUNT(l.id) as query_count, u.vip
-            FROM users u LEFT JOIN logs l ON u.id = l.user_id
-            GROUP BY u.id ORDER BY u.id DESC
-        """).fetchall()
+        users = c.execute("SELECT u.id, u.username, u.password, u.banned, u.created_at, COUNT(l.id), u.vip FROM users u LEFT JOIN logs l ON u.id = l.user_id GROUP BY u.id ORDER BY u.id DESC").fetchall()
         tickets = c.execute("SELECT * FROM tickets ORDER BY status ASC, id DESC").fetchall()
         total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
         total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         banned_users = c.execute("SELECT COUNT(*) FROM users WHERE banned=1").fetchone()[0]
         vip_users = c.execute("SELECT COUNT(*) FROM users WHERE vip=1").fetchone()[0]
         q_stats = c.execute("SELECT query_type, COUNT(*) FROM logs GROUP BY query_type").fetchall()
-        
-        popular_queries = c.execute("SELECT query_type, query_param, COUNT(*) as count FROM logs WHERE status='basarili' AND query_param != '' GROUP BY query_param ORDER BY count DESC LIMIT 10").fetchall()
+        popular_queries = c.execute("SELECT query_type, query_param, COUNT(*) FROM logs WHERE status='basarili' AND query_param != '' GROUP BY query_param ORDER BY 3 DESC LIMIT 10").fetchall()
         success_count = c.execute("SELECT COUNT(*) FROM logs WHERE status='basarili'").fetchone()[0]
         fail_count = c.execute("SELECT COUNT(*) FROM logs WHERE status='basarisiz'").fetchone()[0]
-        
         chart_labels = json.dumps([q[0] for q in q_stats]); chart_data = json.dumps([q[1] for q in q_stats])
         dates = [(datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(6, -1, -1)]
         daily_counts = [c.execute("SELECT COUNT(*) FROM logs WHERE timestamp LIKE ?", (f"{d}%",)).fetchone()[0] for d in dates]
@@ -451,9 +365,7 @@ def admin_dashboard():
 @app.route("/admin-toggle-vip/<int:uid>", methods=["POST"])
 def admin_toggle_vip(uid):
     if not session.get("admin"): return redirect("/")
-    with get_db() as c: 
-        c.execute("UPDATE users SET vip = CASE WHEN vip=1 THEN 0 ELSE 1 END WHERE id=?", (uid,))
-        c.commit()
+    with get_db() as c: c.execute("UPDATE users SET vip = CASE WHEN vip=1 THEN 0 ELSE 1 END WHERE id=?", (uid,)); c.commit()
     return redirect("/admin-panel-x9")
 
 @app.route("/admin-reply-ticket/<int:tid>", methods=["POST"])
@@ -462,8 +374,7 @@ def admin_reply_ticket(tid):
     reply = request.form.get("reply", "").strip()
     if reply:
         with get_db() as c:
-            c.execute("UPDATE tickets SET reply=?, status='closed', replied_at=? WHERE id=?", (reply, datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), tid))
-            c.commit()
+            c.execute("UPDATE tickets SET reply=?, status='closed', replied_at=? WHERE id=?", (reply, datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), tid)); c.commit()
     return redirect("/admin-panel-x9")
 
 @app.route("/admin-logout-x9", methods=["POST"])
@@ -480,8 +391,7 @@ def admin_history(uid):
 def admin_reset_pass(uid):
     if not session.get("admin"): return redirect("/")
     tmp = secrets.token_urlsafe(9)
-    with get_db() as c:
-        c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(tmp), uid)); c.commit()
+    with get_db() as c: c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(tmp), uid)); c.commit()
     tp = session.get("_temp_passes", {}); tp[str(uid)] = tmp; session["_temp_passes"] = dict(list(tp.items())[-5:])
     return redirect("/admin-panel-x9")
 
