@@ -7,6 +7,8 @@
     <title>Dashboard | ShopSphere</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PDF İndirme Kütüphanesi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root { --bg: #050505; --card: #0f0f13; --text: #f8fafc; --border: rgba(255,255,255,0.08); --primary: #6366f1; --purple: #a855f7; --success: #10b981; --danger: #ef4444; --gold: #fbbf24; --telegram: #229ED9; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -34,6 +36,10 @@
         .nav-item:hover, .nav-item.active { background: rgba(99,102,241,0.1); color: #fff; border-color: rgba(99,102,241,0.3); transform: translateX(5px); }
         .nav-item .icon { width: 24px; font-size: 16px; margin-right: 12px; text-align: center; }
         .nav-item .badge-new { background: var(--purple); color: #fff; font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 6px; margin-left: auto; box-shadow: 0 0 10px rgba(168,85,247,0.5); }
+        
+        .search-nav { padding: 0 15px; margin-top: 10px; }
+        .search-nav input { width: 100%; padding: 10px 15px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 13px; }
+        .search-nav input:focus { outline: none; border-color: var(--primary); }
 
         /* MAIN */
         .main { flex: 1; padding: 25px; width: 100%; transition: margin-left .4s; min-height: 100vh; }
@@ -42,10 +48,6 @@
         .broadcast { font-size: 13px; color: #cbd5e1; font-weight: 500; display: flex; align-items: center; gap: 10px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .broadcast .dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 10px var(--success); animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } }
-        .security-badges { display: flex; gap: 10px; }
-        .sec-badge { font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 8px; display: flex; align-items: center; gap: 6px; border: 1px solid; }
-        .sec-badge.ssl { background: rgba(16,185,129,0.1); color: var(--success); border-color: rgba(16,185,129,0.2); }
-        .sec-badge.waf { background: rgba(99,102,241,0.1); color: var(--primary); border-color: rgba(99,102,241,0.2); }
         
         .view { display: none; animation: fadeIn .4s ease; } .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
@@ -168,7 +170,12 @@
                 <p>{% if is_vip %}Sınırsız Erişim{% else %}Standart Üye{% endif %}</p>
             </div>
         </div>
-        <div class="nav-section">
+        
+        <div class="search-nav">
+            <input type="text" id="toolSearch" placeholder="🔍 Araç Ara..." onkeyup="searchTools()">
+        </div>
+
+        <div class="nav-section" id="navSection">
             <div class="nav-item active" data-view="dashboard" onclick="showView('dashboard', this)"><div class="icon"><i class="fa-solid fa-house"></i></div> Ana Sayfa</div>
             <div class="nav-item" data-view="profile" onclick="showView('profile', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Profilim</div>
             
@@ -179,19 +186,21 @@
             {% endif %}
             
             <div class="nav-title">TEMEL SORGULAR</div>
-            <div class="nav-item" onclick="loadTool('adsoyad', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Mernis 2026</div>
-            <div class="nav-item" onclick="loadTool('aile', this)"><div class="icon"><i class="fa-solid fa-users"></i></div> Aile Çözümleri</div>
-            <div class="nav-item" onclick="loadTool('tcgsm', this)"><div class="icon"><i class="fa-solid fa-phone"></i></div> GSM Çözümleri</div>
-            <div class="nav-item" onclick="loadTool('gsmtc', this)"><div class="icon"><i class="fa-solid fa-phone-flip"></i></div> GSM → TC</div>
-            <div class="nav-item" onclick="loadTool('adres', this)"><div class="icon"><i class="fa-solid fa-location-dot"></i></div> Adres Çözümleri</div>
-            <div class="nav-item" onclick="loadTool('plaka_sorgu', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka Sorgu</div>
+            <div class="nav-item tool-item" onclick="loadTool('adsoyad', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Mernis 2026</div>
+            <div class="nav-item tool-item" onclick="loadTool('aile', this)"><div class="icon"><i class="fa-solid fa-users"></i></div> Aile Çözümleri</div>
+            <div class="nav-item tool-item" onclick="loadTool('tcgsm', this)"><div class="icon"><i class="fa-solid fa-phone"></i></div> GSM Çözümleri</div>
+            <div class="nav-item tool-item" onclick="loadTool('gsmtc', this)"><div class="icon"><i class="fa-solid fa-phone-flip"></i></div> GSM → TC</div>
+            <div class="nav-item tool-item" onclick="loadTool('adres', this)"><div class="icon"><i class="fa-solid fa-location-dot"></i></div> Adres Çözümleri</div>
+            <div class="nav-item tool-item" onclick="loadTool('plaka_sorgu', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka Sorgu</div>
 
             <div class="nav-title" style="color:var(--gold);">OSINT & API (VIP) <i class="fa-solid fa-crown"></i></div>
-            <div class="nav-item" onclick="loadTool('osint_ip', this)"><div class="icon"><i class="fa-solid fa-network-wired"></i></div> IP Sorgu</div>
-            <div class="nav-item" onclick="loadTool('osint_domain', this)"><div class="icon"><i class="fa-solid fa-globe"></i></div> Domain Sorgu</div>
-            <div class="nav-item" onclick="loadTool('api_wayback', this)"><div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div> Wayback Arşivi</div>
-            <div class="nav-item" onclick="loadTool('api_whois', this)"><div class="icon"><i class="fa-solid fa-magnifying-glass-location"></i></div> Domain WHOIS</div>
-            <div class="nav-item" onclick="loadTool('api_bin', this)"><div class="icon"><i class="fa-solid fa-credit-card"></i></div> BIN Sorgu</div>
+            <div class="nav-item tool-item" onclick="loadTool('osint_ip', this)"><div class="icon"><i class="fa-solid fa-network-wired"></i></div> IP Sorgu</div>
+            <div class="nav-item tool-item" onclick="loadTool('osint_domain', this)"><div class="icon"><i class="fa-solid fa-globe"></i></div> Domain Sorgu</div>
+            <div class="nav-item tool-item" onclick="loadTool('api_wayback', this)"><div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div> Wayback Arşivi</div>
+            <div class="nav-item tool-item" onclick="loadTool('api_whois', this)"><div class="icon"><i class="fa-solid fa-magnifying-glass-location"></i></div> Domain WHOIS</div>
+            <div class="nav-item tool-item" onclick="loadTool('api_bin', this)"><div class="icon"><i class="fa-solid fa-credit-card"></i></div> BIN Sorgu</div>
+            <!-- YENİ EKLENEN: HIBP ŞİFRE SIZINTI -->
+            <div class="nav-item tool-item" onclick="loadTool('hibp_password', this)"><div class="icon"><i class="fa-solid fa-shield-halved" style="color:var(--danger);"></i></div> Şifre Sızıntı Kontrolü <span class="badge-new" style="background:var(--danger);">YENİ</span></div>
 
             <div class="nav-title">HESABIM</div>
             <div class="nav-item" data-view="history" onclick="showView('history', this)"><div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div> Geçmişim</div>
@@ -279,7 +288,7 @@
         <div id="view-query" class="view">
             <div class="panel">
                 <div class="panel-header">
-                    <h2><i class="fa-solid fa-terminal"></i> Sorgu Terminali</h2>
+                    <h2><i class="fa-solid fa-terminal"></i> <span id="qTitle">Sorgu Terminali</span></h2>
                     <button class="close-btn" onclick="showView('dashboard', document.querySelector('[data-view=\'dashboard\']'))">Kapat</button>
                 </div>
                 <div class="tool-desc" id="toolDesc" style="display:none;">
@@ -372,6 +381,7 @@
                 let reply = "Bu konuda size yardımcı olamıyorum, lütfen menüyü kullanın.";
                 if(msg.toLowerCase().includes('vip')) reply = "VIP olmak için sol menüdeki VIP Paketleri sekmesine göz atın.";
                 else if(msg.toLowerCase().includes('plaka')) reply = "Sol menüdeki Plaka Sorgu aracını kullanabilirsiniz.";
+                else if(msg.toLowerCase().includes('sızıntı') || msg.toLowerCase().includes('şifre')) reply = "Sol menüdeki Şifre Sızıntı Kontrolü aracı ile şifrenizin çalınıp çalınmadığını test edebilirsiniz.";
                 body.innerHTML += `<div class="msg bot">${reply}</div>`; body.scrollTop = body.scrollHeight;
             }, 600);
         }
@@ -397,7 +407,10 @@
             'osint_domain': { title:'Domain Sorgu', desc: 'Domain IP adresini bulun.', vip: true, fields:[{ id:'domain', label:'Domain Adı' }] },
             'api_wayback': { title: 'Wayback Arşivi', desc: 'Sitenin geçmişini görün.', vip: true, fields: [{ id:'url', label:'Site URL (örn: google.com)' }] },
             'api_whois': { title: 'Domain WHOIS', desc: 'Alan adı sahibini bulun.', vip: true, fields: [{ id:'domain', label:'Domain Adı' }] },
-            'api_bin': { title: 'BIN / Kart Sorgu', desc: 'Kart ilk 6 hane ile banka bulun.', vip: true, fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi', pattern:/^\d{6,8}$/ }] }
+            'api_bin': { title: 'BIN / Kart Sorgu', desc: 'Kart ilk 6 hane ile banka bulun.', vip: true, fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi', pattern:/^\d{6,8}$/ }] },
+            
+            // YENİ EKLENEN ŞİFRE SIZINTI
+            'hibp_password': { title: 'Şifre Sızıntı Kontrolü', desc: 'Şifrenizin daha önce veri sızıntılarında çalınıp çalınmadığını kontrol eder.', vip: true, fields: [{ id:'pass', label:'Kontrol Edilecek Şifre' }] }
         };
         
         let currentType = null, lastResult = null;
@@ -406,6 +419,16 @@
         
         function toggleMenu() { $('sidebar').classList.toggle('open'); $('overlay').classList.toggle('show'); }
         
+        // ARAMA ÇUBUĞU FONKSİYONU
+        function searchTools() {
+            const query = $('toolSearch').value.toLowerCase();
+            const items = document.querySelectorAll('.tool-item');
+            items.forEach(item => {
+                const text = item.innerText.toLowerCase();
+                item.style.display = text.includes(query) ? 'flex' : 'none';
+            });
+        }
+
         function showView(view, el) { 
             if (el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); } 
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); $('view-' + view).classList.add('active'); 
@@ -464,10 +487,49 @@
                 return `<span class="${cls}">${match}</span>`;
             });
             $('qResults').innerHTML = `<span style="color:#10b981;">> BAĞLANTI BAŞARILI. VERİLER ALINIYOR...</span><br><br>${coloredJson}`;
+            
+            // YENİ: PDF İndirme Butonu da Eklendi
             $('resultToolbar').innerHTML = `
+                <button class="btn-mini" onclick="downloadPDF()"><i class="fa-solid fa-file-pdf" style="color:#ef4444;"></i> PDF İndir</button>
                 <button class="btn-mini" onclick="downloadCSV()"><i class="fa-solid fa-file-excel" style="color:#10b981;"></i> Excel İndir</button>
                 <button class="btn-mini" onclick="navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)); toast('Kopyalandı', 'success');"><i class="fa-solid fa-copy" style="color:#60a5fa;"></i> JSON Kopyala</button>
             `;
+        }
+        
+        // YENİ: PDF İNDİRME FONKSİYONU
+        function downloadPDF() {
+            if (!lastResult) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(20);
+            doc.setTextColor(99, 102, 241);
+            doc.text("ShopSphere Sorgu Raporu", 20, 20);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text("Tarih: " + new Date().toLocaleString('tr-TR'), 20, 28);
+            doc.text("Sorgu Tipi: " + TOOLS[currentType].title, 20, 34);
+            
+            doc.setLineWidth(0.5);
+            doc.setDrawColor(200, 200, 200);
+            doc.line(20, 38, 190, 38);
+            
+            doc.setFontSize(11);
+            let yPos = 48;
+            
+            // JSON'u düz metin olarak yazdır
+            const textLines = doc.splitTextToSize(JSON.stringify(lastResult, null, 2), 170);
+            textLines.forEach(line => {
+                if (yPos > 280) { doc.addPage(); yPos = 20; }
+                doc.setTextColor(50, 50, 50);
+                doc.text(line, 20, yPos);
+                yPos += 6;
+            });
+            
+            doc.save(`sorgu_raporu_${Date.now()}.pdf`);
+            toast('PDF raporu indiriliyor.', 'success');
         }
         
         function downloadCSV() {
