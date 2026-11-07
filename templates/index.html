@@ -18,10 +18,8 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
         
-        /* CANVAS ARKA PLAN */
         #cyber-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.4; pointer-events: none; }
 
-        /* SIDEBAR */
         .sidebar { width: 280px; background: rgba(5, 5, 10, 0.85); backdrop-filter: blur(20px); position: fixed; height: 100vh; left: -280px; top: 0; transition: transform .4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
         .sidebar.open { left: 0; box-shadow: 20px 0 50px rgba(0,0,0,0.8); }
         .logo-area { padding: 25px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); }
@@ -29,7 +27,6 @@
         .logo-area h2 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
         .logo-area h2 span { color: var(--purple); }
         
-        /* VIP PROFİL KARTI PARLAMASI */
         .user-profile { padding: 18px; margin: 15px; background: rgba(255,255,255,0.02); border-radius: 16px; display: flex; align-items: center; gap: 15px; border: 1px solid var(--border); position: relative; overflow: hidden; }
         .user-profile.vip-active { border-color: rgba(251,191,36,0.4); box-shadow: 0 0 20px rgba(251,191,36,0.1); }
         .user-profile.vip-active::before { content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:conic-gradient(transparent, rgba(251,191,36,0.2), transparent 30%); animation: rotate 4s linear infinite; }
@@ -40,7 +37,6 @@
         .user-info p { font-size: 11px; color: #94a3b8; margin-top: 4px; }
         .vip-badge { background: linear-gradient(135deg, var(--gold), #f59e0b); color: #000; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 6px; }
         
-        /* MENÜ (AKORDEON) */
         .nav-section { padding: 0 15px 30px; flex: 1; overflow-y: auto; }
         .nav-section::-webkit-scrollbar { width: 3px; }
         .nav-section::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
@@ -63,7 +59,6 @@
         .nav-item .icon { width: 20px; font-size: 14px; margin-right: 12px; text-align: center; }
         .nav-item .badge-new { background: var(--purple); color: #fff; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: auto; }
 
-        /* MAIN */
         .main { flex: 1; padding: 25px; width: 100%; transition: margin-left .4s; min-height: 100vh; position: relative; z-index: 1; }
         .topbar { display: flex; justify-content: space-between; align-items: center; background: rgba(10, 10, 15, 0.8); backdrop-filter: blur(10px); padding: 15px 25px; border-radius: 20px; margin-bottom: 25px; border: 1px solid var(--border); }
         .menu-btn { font-size: 24px; cursor: pointer; color: #fff; background: none; border: none; }
@@ -76,7 +71,6 @@
         .view { display: none; animation: fadeIn .4s ease; } .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
-        /* DASHBOARD */
         .welcome-banner { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.05)); border: 1px solid rgba(168,85,247,0.2); border-radius: 20px; padding: 30px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
         .welcome-text h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; background: linear-gradient(to right, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .welcome-text p { color: #94a3b8; font-size: 14px; }
@@ -96,7 +90,6 @@
 
         @media (min-width: 992px) { .sidebar { left: 0; } .main { margin-left: 280px; width: calc(100% - 280px); } .menu-btn { display: none; } }
 
-        /* SORGU EKRANI */
         .panel { background: var(--card); border-radius: 20px; padding: 30px; border: 1px solid var(--border); max-width: 900px; margin: 0 auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 25px; }
         .panel-header h2 { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 12px; }
@@ -115,7 +108,6 @@
         .btn-submit { background: linear-gradient(135deg, var(--primary), var(--purple)); color: #fff; border: none; padding: 16px 24px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: all .3s; box-shadow: 0 10px 20px rgba(99,102,241,0.2); }
         .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(168,85,247,0.3); }
         
-        /* SONUÇ SEKMELERİ */
         .result-container { display: none; margin-top: 25px; }
         .result-toolbar { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 10px 15px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .result-tabs { display: flex; gap: 5px; }
@@ -127,13 +119,11 @@
         .result-content { display: none; }
         .result-content.active { display: block; }
 
-        /* TABLO GÖRÜNÜMÜ */
         .data-table { width: 100%; border-collapse: collapse; font-size: 14px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: #000; }
         .data-table th, .data-table td { padding: 14px 18px; border-bottom: 1px solid var(--border); text-align: left; }
         .data-table th { background: rgba(255,255,255,0.02); color: #94a3b8; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 40%; }
         .data-table td { color: #f8fafc; font-weight: 500; word-break: break-all; }
 
-        /* TERMINAL GÖRÜNÜMÜ */
         .terminal-window { background: #000; border-radius: 12px; border: 1px solid #333; overflow: hidden; }
         .terminal-header { background: #111; padding: 10px 15px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #333; }
         .term-dot { width: 10px; height: 10px; border-radius: 50%; }
@@ -142,7 +132,6 @@
         .terminal-body { padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #a7f3d0; white-space: pre-wrap; max-height: 400px; overflow-y: auto; line-height: 1.5; }
         .json-key { color: #60a5fa; } .json-string { color: #fbbf24; } .json-number { color: #a855f7; } .json-boolean { color: #ef4444; }
 
-        /* VIP FİYATLANDIRMA */
         .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
         .price-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 30px 20px; text-align: center; position: relative; transition: .3s; }
         .price-card:hover { transform: translateY(-5px); border-color: var(--purple); box-shadow: 0 15px 30px rgba(168,85,247,0.15); }
@@ -155,7 +144,6 @@
         .price-card ul li { font-size: 13px; color: #cbd5e1; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
         .price-card ul li i { color: var(--success); }
 
-        /* YÜZEN BUTONLAR & TOAST */
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 999; display: none; backdrop-filter: blur(5px); }
         .overlay.show { display: block; }
         .toast-wrap { position: fixed; top: 20px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
@@ -228,7 +216,6 @@
             </div>
             {% endif %}
             
-            <!-- AKORDEON MENÜLER -->
             <div class="nav-category">
                 <div class="nav-cat-title open" onclick="toggleCat(this)">TEMEL SORGULAR <i class="fa-solid fa-chevron-down"></i></div>
                 <div class="nav-items open">
@@ -253,15 +240,15 @@
                 </div>
             </div>
 
-            <!-- YENİ: OPENARCHIVE ENTEGRASYONU -->
             <div class="nav-category">
                 <div class="nav-cat-title" onclick="toggleCat(this)">OPENARCHIVE (VIP) <i class="fa-solid fa-chevron-down"></i></div>
                 <div class="nav-items">
+                    <div class="nav-item tool-item" onclick="loadTool('oa_public_status', this)"><div class="icon"><i class="fa-solid fa-server" style="color:var(--success);"></i></div> OA Sistem Durumu</div>
+                    <div class="nav-item tool-item" onclick="loadTool('oa_public_buckets', this)"><div class="icon"><i class="fa-solid fa-database" style="color:var(--primary);"></i></div> OA Veri Kovaları</div>
+                    <div class="nav-item tool-item" onclick="loadTool('oa_public_sources', this)"><div class="icon"><i class="fa-solid fa-list" style="color:var(--gold);"></i></div> OA Kaynakları</div>
+                    <div class="nav-item tool-item" onclick="loadTool('oa_public_forum', this)"><div class="icon"><i class="fa-solid fa-comments" style="color:var(--purple);"></i></div> OA Forum</div>
                     <div class="nav-item tool-item" onclick="loadTool('oa_intelx', this)"><div class="icon"><i class="fa-solid fa-magnifying-glass" style="color:var(--danger);"></i></div> IntelX Sorgu</div>
                     <div class="nav-item tool-item" onclick="loadTool('oa_breach', this)"><div class="icon"><i class="fa-solid fa-triangle-exclamation" style="color:var(--gold);"></i></div> Breach Sorgu</div>
-                    <div class="nav-item tool-item" onclick="loadTool('oa_tiktok', this)"><div class="icon"><i class="fa-brands fa-tiktok"></i></div> TikTok OSINT</div>
-                    <div class="nav-item tool-item" onclick="loadTool('oa_discord', this)"><div class="icon"><i class="fa-brands fa-discord"></i></div> Discord OSINT</div>
-                    <div class="nav-item tool-item" onclick="loadTool('oa_ipinfo', this)"><div class="icon"><i class="fa-solid fa-location-crosshairs"></i></div> OpenArchive IP</div>
                 </div>
             </div>
 
@@ -284,7 +271,6 @@
             <div class="live-clock" id="liveClock">00:00:00</div>
         </header>
         
-        <!-- DASHBOARD -->
         <div id="view-dashboard" class="view active">
             <div class="welcome-banner">
                 <div class="welcome-text">
@@ -328,7 +314,6 @@
             </div>
         </div>
 
-        <!-- VIP -->
         <div id="view-vip" class="view">
             <div class="panel" style="max-width: 1000px;">
                 <div class="panel-header">
@@ -358,7 +343,6 @@
             </div>
         </div>
 
-        <!-- SORGU EKRANI -->
         <div id="view-query" class="view">
             <div class="panel">
                 <div class="panel-header">
@@ -404,7 +388,6 @@
             </div>
         </div>
 
-        <!-- GEÇMİŞ VE DESTEK -->
         <div id="view-history" class="view">
             <div class="panel">
                 <div class="panel-header">
@@ -464,7 +447,6 @@
     <script>
         const IS_VIP = {{ 'true' if is_vip else 'false' }};
         
-        // --- SİBER ARKA PLAN ANİMASYONU ---
         const canvas = document.getElementById('cyber-bg');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -489,7 +471,6 @@
         }
         drawBg();
 
-        // --- CANLI SAAT VE KARŞILAMA ---
         setInterval(() => {
             const now = new Date();
             document.getElementById('liveClock').innerText = now.toLocaleTimeString('tr-TR');
@@ -502,7 +483,6 @@
             if(greetingEl) greetingEl.innerText = greet + ", {{ username }}";
         }, 1000);
 
-        // --- AKORDEON MENÜ ---
         function toggleCat(el) {
             el.classList.toggle('open');
             const items = el.nextElementSibling;
@@ -531,7 +511,6 @@
         
         document.querySelectorAll('.counter').forEach(el => { const target = parseInt(el.dataset.target || '0', 10); if (target === 0) { el.textContent = '0'; return; } let start = 0; const timer = setInterval(() => { start += Math.ceil(target / 40); if (start >= target) { el.textContent = target.toLocaleString('tr-TR'); clearInterval(timer); } else { el.textContent = start.toLocaleString('tr-TR'); } }, 20); });
         
-        // --- TÜM ARAÇLAR (OPENARCHIVE EKLENDİ) ---
         const TOOLS = {
             'adsoyad': { title: 'Mernis 2026', desc: 'Ad ve soyad ile TC bulun.', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
             'aile': { title: 'Aile Çözümleri', desc: 'TC ile aile bilgilerini bulun.', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
@@ -547,12 +526,15 @@
             'api_bin': { title: 'BIN / Kart Sorgu', desc: 'Kart ilk 6 hane ile banka bulun.', vip: true, fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi', pattern:/^\d{6,8}$/ }] },
             'hibp_password': { title: 'Şifre Sızıntı Kontrolü', desc: 'Şifrenizin daha önce veri sızıntılarında çalınıp çalınmadığını kontrol eder.', vip: true, fields: [{ id:'pass', label:'Kontrol Edilecek Şifre' }] },
             
-            // YENİ: OPENARCHIVE X ARAÇLARI
-            'oa_intelx': { title:'IntelX Sorgu', desc: 'Sızıntı ve istihbarat araması yapar.', vip: true, fields:[{ id:'q', label:'Aranacak Kelime / E-posta' }] },
-            'oa_breach': { title:'Breach Sorgu', desc: 'Veri ihlallerinde arama yapar.', vip: true, fields:[{ id:'q', label:'E-posta / Kullanıcı Adı' }] },
-            'oa_tiktok': { title:'TikTok OSINT', desc: 'TikTok kullanıcı istihbaratı.', vip: true, fields:[{ id:'q', label:'Kullanıcı Adı' }] },
-            'oa_discord': { title:'Discord OSINT', desc: 'Discord ID ile arama yapar.', vip: true, fields:[{ id:'q', label:'Discord ID' }] },
-            'oa_ipinfo': { title:'OpenArchive IP', desc: 'OpenArchive IP veritabanı.', vip: true, fields:[{ id:'q', label:'IP Adresi' }] }
+            // OPENARCHIVE X PUBLIC (200) ARAÇLARI
+            'oa_public_status': { title:'OA Sistem Durumu', desc: 'OpenArchiveX sistem sağlığını ve durumunu gösterir.', vip: true, fields: [] },
+            'oa_public_buckets': { title:'OA Veri Kovaları', desc: 'OpenArchiveX üzerindeki IntelX veri kategorilerini listeler.', vip: true, fields: [] },
+            'oa_public_sources': { title:'OA API Kaynakları', desc: 'OpenArchiveX API tarafından kullanılan kaynakları listeler.', vip: true, fields: [] },
+            'oa_public_forum': { title:'OA Forum Verileri', desc: 'OpenArchiveX halka açık forum verilerini gösterir.', vip: true, fields: [] },
+
+            // OPENARCHIVE X VIP (401) ARAÇLARI
+            'oa_intelx': { title:'IntelX Sorgu (VIP)', desc: 'Sızıntı ve istihbarat araması yapar.', vip: true, fields:[{ id:'q', label:'Aranacak Kelime / E-posta' }] },
+            'oa_breach': { title:'Breach Sorgu (VIP)', desc: 'Veri ihlallerinde arama yapar.', vip: true, fields:[{ id:'q', label:'E-posta / Kullanıcı Adı' }] }
         };
         
         let currentType = null, lastResult = null;
@@ -598,12 +580,14 @@
         async function runQuery() { 
             if (!currentType || isQuerying) return; 
             const payload = { type: currentType }; let valid = true; 
-            TOOLS[currentType].fields.forEach(f => { 
-                const inp = $('inp_' + f.id); const val = inp.value.trim(); inp.style.borderColor = '';
-                if (f.req !== false && !val) { inp.style.borderColor = '#ef4444'; valid = false; } 
-                else if (val && f.pattern && !f.pattern.test(val)) { inp.style.borderColor = '#ef4444'; valid = false; } 
-                if (val) payload[f.id] = val; 
-            }); 
+            if(TOOLS[currentType].fields.length > 0) {
+                TOOLS[currentType].fields.forEach(f => { 
+                    const inp = $('inp_' + f.id); const val = inp.value.trim(); inp.style.borderColor = '';
+                    if (f.req !== false && !val) { inp.style.borderColor = '#ef4444'; valid = false; } 
+                    else if (val && f.pattern && !f.pattern.test(val)) { inp.style.borderColor = '#ef4444'; valid = false; } 
+                    if (val) payload[f.id] = val; 
+                }); 
+            }
             if (!valid) return toast('Lütfen alanları doğru doldurun.', 'error'); 
             
             isQuerying = true; const btn = $('submitBtn'); setLoading(btn, true, '<i class="fa-solid fa-circle-notch fa-spin"></i> Bağlantı Kuruluyor...'); 
