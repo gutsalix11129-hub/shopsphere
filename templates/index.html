@@ -107,6 +107,7 @@
 
         .btn-submit { background: linear-gradient(135deg, var(--primary), var(--purple)); color: #fff; border: none; padding: 16px 24px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: all .3s; box-shadow: 0 10px 20px rgba(99,102,241,0.2); }
         .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(168,85,247,0.3); }
+        .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
         
         .result-container { display: none; margin-top: 25px; }
         .result-toolbar { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 10px 15px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
@@ -433,14 +434,60 @@
     </main>
 
     <script>
-        const IS_VIP = {{ 'true' if is_vip else 'false' }};
+        "use strict";
         
-        const canvas = document.getElementById('cyber-bg');
+        // Jinja2'den gelen boolean değerini güvenli bir şekilde JS'e aktarma
+        const IS_VIP = {{ is_vip | tojson }};
+        const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
+        const HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF_TOKEN };
+
+        const $ = id => document.getElementById(id);
+        
+        // --- YARDIMCI FONKSİYONLAR ---
+        function escapeHtml(str) { 
+            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); 
+        }
+        
+        function toast(msg, type = 'info') { 
+            const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' }; 
+            const el = document.createElement('div'); 
+            el.className = `toast ${type}`; 
+            el.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span>${escapeHtml(msg)}</span>`; 
+            $('toastWrap').appendChild(el); 
+            setTimeout(() => el.remove(), 3000); 
+        }
+
+        function setLoading(btn, loading, html) { 
+            btn.disabled = loading; 
+            btn.innerHTML = html; 
+        }
+
+        // API isteklerini tek bir yerden yönetmek için (Kod tekrarını önler)
+        async function apiFetch(url, options = {}) {
+            try {
+                const res = await fetch(url, {
+                    ...options,
+                    headers: { ...HEADERS, ...options.headers }
+                });
+                return await res.json();
+            } catch (error) {
+                console.error("API Hatası:", error);
+                return { success: false, error: "Sunucuya bağlanılamadı." };
+            }
+        }
+
+        // --- ARKA PLAN ANİMASYONU ---
+        const canvas = $('cyber-bg');
         const ctx = canvas.getContext('2d');
         let particles = [];
+        
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize); resize();
-        for(let i=0; i<60; i++) particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3 });
+        
+        for(let i=0; i<60; i++) {
+            particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3 });
+        }
+        
         function drawBg() {
             ctx.clearRect(0,0,canvas.width,canvas.height);
             ctx.fillStyle = 'rgba(99, 102, 241, 0.4)';
@@ -459,74 +506,45 @@
         }
         drawBg();
 
+        // --- SAAT & SELAMLAMA ---
         setInterval(() => {
             const now = new Date();
-            document.getElementById('liveClock').innerText = now.toLocaleTimeString('tr-TR');
+            $('liveClock').innerText = now.toLocaleTimeString('tr-TR');
             const hour = now.getHours();
             let greet = "Hoş Geldin";
             if(hour >= 6 && hour < 12) greet = "Günaydın";
             else if(hour >= 12 && hour < 18) greet = "İyi Günler";
             else if(hour >= 18 && hour < 24) greet = "İyi Akşamlar";
-            const greetingEl = document.getElementById('greeting');
+            const greetingEl = $('greeting');
             if(greetingEl) greetingEl.innerText = greet + ", {{ username }}";
         }, 1000);
 
+        // --- MENÜ İŞLEMLERİ ---
+        function toggleMenu() { 
+            $('sidebar').classList.toggle('open'); 
+            $('overlay').classList.toggle('show'); 
+        }
+        
         function toggleCat(el) {
             el.classList.toggle('open');
-            const items = el.nextElementSibling;
-            items.classList.toggle('open');
+            el.nextElementSibling.classList.toggle('open');
         }
 
-        function toggleAssistant() { document.getElementById('assistantWindow').classList.toggle('show'); }
-        function sendAssistantMsg() {
-            const inp = document.getElementById('assistantInput');
-            const msg = inp.value.trim(); if(!msg) return;
-            const body = document.getElementById('assistantBody');
-            body.innerHTML += `<div class="msg user">${msg}</div>`; inp.value = ''; body.scrollTop = body.scrollHeight;
-            setTimeout(() => {
-                let reply = "Bu konuda size yardımcı olamıyorum, lütfen menüyü kullanın.";
-                if(msg.toLowerCase().includes('vip')) reply = "VIP olmak için sol menüdeki VIP Paketleri sekmesine göz atın.";
-                body.innerHTML += `<div class="msg bot">${reply}</div>`; body.scrollTop = body.scrollHeight;
-            }, 600);
-        }
-
-        function $(id) { return document.getElementById(id); }
-        const CSRF = document.querySelector('meta[name="csrf-token"]').content;
-        const JSON_HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
-        function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-        function toast(msg, type = 'info') { const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' }; const el = document.createElement('div'); el.className = `toast ${type}`; el.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span>${escapeHtml(msg)}</span>`; $('toastWrap').appendChild(el); setTimeout(() => el.remove(), 3000); }
-        function setLoading(btn, loading, html) { btn.disabled = loading; btn.innerHTML = html; }
-        
-        document.querySelectorAll('.counter').forEach(el => { const target = parseInt(el.dataset.target || '0', 10); if (target === 0) { el.textContent = '0'; return; } let start = 0; const timer = setInterval(() => { start += Math.ceil(target / 40); if (start >= target) { el.textContent = target.toLocaleString('tr-TR'); clearInterval(timer); } else { el.textContent = start.toLocaleString('tr-TR'); } }, 20); });
-        
-        const TOOLS = {
-            'adsoyad': { title: 'Mernis 2026', desc: 'Ad ve soyad ile TC bulun.', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
-            'aile': { title: 'Aile Çözümleri', desc: 'TC ile aile bilgilerini bulun.', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'adres': { title: 'Adres Çözümleri', desc: 'TC ile güncel adres bulun.', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'tcgsm': { title: 'GSM Çözümleri', desc: 'TC ile telefon numarası bulun.', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
-            'gsmtc': { title: 'GSM → TC', desc: 'Telefon numarası ile TC bulun.', fields:[{ id:'gsm', label:'GSM Numarası', pattern:/^\d{10,11}$/ }] },
-            'plaka_sorgu': { title: 'Plaka Sorgu', desc: 'Plaka ile araç sahibini bulun.', fields: [{ id:'plaka', label:'Plaka (örn: 41HU096)' }] },
-            
-            'osint_ip': { title:'IP Sorgu', desc: 'IP konumunu bulun.', vip: true, fields:[{ id:'ip', label:'IP Adresi' }] },
-            'osint_domain': { title:'Domain Sorgu', desc: 'Domain IP adresini bulun.', vip: true, fields:[{ id:'domain', label:'Domain Adı' }] },
-            'api_wayback': { title: 'Wayback Arşivi', desc: 'Sitenin geçmişini görün.', vip: true, fields: [{ id:'url', label:'Site URL (örn: google.com)' }] },
-            'api_whois': { title: 'Domain WHOIS', desc: 'Alan adı sahibini bulun.', vip: true, fields: [{ id:'domain', label:'Domain Adı' }] },
-            'api_bin': { title: 'BIN / Kart Sorgu', desc: 'Kart ilk 6 hane ile banka bulun.', vip: true, fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi', pattern:/^\d{6,8}$/ }] },
-            'hibp_password': { title: 'Şifre Sızıntı Kontrolü', desc: 'Şifrenizin daha önce veri sızıntılarında çalınıp çalınmadığını kontrol eder.', vip: true, fields: [{ id:'pass', label:'Kontrol Edilecek Şifre' }] }
-        };
-        
-        let currentType = null, lastResult = null;
-        async function refreshBroadcast() { try { const b = await fetch('/api/get_broadcast').then(r => r.json()); if (b.success && b.broadcast) $('broadcast').innerHTML = '<span class="dot"></span> ' + escapeHtml(b.broadcast); } catch (_) {} }
-        refreshBroadcast(); setInterval(refreshBroadcast, 20000);
-        
-        function toggleMenu() { $('sidebar').classList.toggle('open'); $('overlay').classList.toggle('show'); }
-        
         function searchTools() {
-            const query = $('toolSearch').value.toLowerCase();
+            const query = $('toolSearch').value.toLowerCase().trim();
             const items = document.querySelectorAll('.tool-item');
+            const navs = document.querySelectorAll('.nav-items');
+            const cats = document.querySelectorAll('.nav-cat-title');
+
+            // Arama yapılırken tüm kategorileri aç, boşsa eski haline getir
             if(query.length > 0) {
-                document.querySelectorAll('.nav-items').forEach(nav => nav.classList.add('open'));
+                navs.forEach(n => n.classList.add('open'));
+                cats.forEach(c => c.classList.add('open'));
+            } else {
+                navs.forEach((n, idx) => n.classList.toggle('open', idx === 0)); // Sadece ilk kategori açık kalsın
+                cats.forEach((c, idx) => c.classList.toggle('open', idx === 0));
             }
+
             items.forEach(item => {
                 const text = item.innerText.toLowerCase();
                 item.style.display = text.includes(query) ? 'flex' : 'none';
@@ -534,69 +552,150 @@
         }
 
         function showView(view, el) { 
-            if (el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); } 
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); $('view-' + view).classList.add('active'); 
+            if (el) { 
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); 
+                el.classList.add('active'); 
+            } 
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); 
+            $('view-' + view).classList.add('active'); 
+            
             if (window.innerWidth < 992) toggleMenu(); 
+            
             if (view === 'history') loadMyHistory();
             if (view === 'ticket') loadMyTickets();
         }
+
+        // --- ASİSTAN ---
+        function toggleAssistant() { $('assistantWindow').classList.toggle('show'); }
         
+        function sendAssistantMsg() {
+            const inp = $('assistantInput');
+            const msg = inp.value.trim(); 
+            if(!msg) return;
+            
+            const body = $('assistantBody');
+            // XSS Koruması: escapeHtml kullanıldı
+            body.innerHTML += `<div class="msg user">${escapeHtml(msg)}</div>`; 
+            inp.value = ''; 
+            body.scrollTop = body.scrollHeight;
+            
+            setTimeout(() => {
+                let reply = "Bu konuda size yardımcı olamıyorum, lütfen menüyü kullanın.";
+                if(msg.toLowerCase().includes('vip')) reply = "VIP olmak için sol menüdeki VIP Paketleri sekmesine göz atın.";
+                body.innerHTML += `<div class="msg bot">${escapeHtml(reply)}</div>`; 
+                body.scrollTop = body.scrollHeight;
+            }, 600);
+        }
+
+        // --- SORGULAMA MANTIĞI ---
+        const TOOLS = {
+            'adsoyad': { title: 'Mernis 2026', desc: 'Ad ve soyad ile TC bulun.', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
+            'aile': { title: 'Aile Çözümleri', desc: 'TC ile aile bilgilerini bulun.', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'adres': { title: 'Adres Çözümleri', desc: 'TC ile güncel adres bulun.', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'tcgsm': { title: 'GSM Çözümleri', desc: 'TC ile telefon numarası bulun.', fields:[{ id:'tc', label:'TC Kimlik No', pattern:/^\d{11}$/ }] },
+            'gsmtc': { title: 'GSM → TC', desc: 'Telefon numarası ile TC bulun.', fields:[{ id:'gsm', label:'GSM Numarası', pattern:/^\d{10,11}$/ }] },
+            'plaka_sorgu': { title: 'Plaka Sorgu', desc: 'Plaka ile araç sahibini bulun.', fields: [{ id:'plaka', label:'Plaka (örn: 41HU096)' }] },
+            'osint_ip': { title:'IP Sorgu', desc: 'IP konumunu bulun.', vip: true, fields:[{ id:'ip', label:'IP Adresi' }] },
+            'osint_domain': { title:'Domain Sorgu', desc: 'Domain IP adresini bulun.', vip: true, fields:[{ id:'domain', label:'Domain Adı' }] },
+            'api_wayback': { title: 'Wayback Arşivi', desc: 'Sitenin geçmişini görün.', vip: true, fields: [{ id:'url', label:'Site URL (örn: google.com)' }] },
+            'api_whois': { title: 'Domain WHOIS', desc: 'Alan adı sahibini bulun.', vip: true, fields: [{ id:'domain', label:'Domain Adı' }] },
+            'api_bin': { title: 'BIN / Kart Sorgu', desc: 'Kart ilk 6 hane ile banka bulun.', vip: true, fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi', pattern:/^\d{6,8}$/ }] },
+            'hibp_password': { title: 'Şifre Sızıntı Kontrolü', desc: 'Şifrenizin sızıp sızımadığını kontrol eder.', vip: true, fields: [{ id:'pass', label:'Kontrol Edilecek Şifre' }] }
+        };
+        
+        let currentType = null, lastResult = null, isQuerying = false;
+
+        async function refreshBroadcast() { 
+            const b = await apiFetch('/api/get_broadcast'); 
+            if (b.success && b.broadcast) $('broadcast').innerHTML = '<span class="dot"></span> ' + escapeHtml(b.broadcast); 
+        }
+        refreshBroadcast(); 
+        setInterval(refreshBroadcast, 20000);
+
         function loadTool(type, el) { 
-            const tool = TOOLS[type]; if (!tool) return; 
-            if (tool.vip && !IS_VIP) { showView('vip', document.querySelector('[data-view="vip"]')); toast('Bu sorgu VIP üyelere özeldir.', 'error'); return; }
-            currentType = type; lastResult = null; showView('query', el); 
+            const tool = TOOLS[type]; 
+            if (!tool) return; 
+            if (tool.vip && !IS_VIP) { 
+                showView('vip', document.querySelector('[data-view="vip"]')); 
+                toast('Bu sorgu VIP üyelere özeldir.', 'error'); 
+                return; 
+            }
+            currentType = type; 
+            lastResult = null; 
+            showView('query', el); 
             
             $('qTitle').innerText = tool.title; 
             $('resultContainer').style.display = 'none';
-            if(tool.desc) { $('toolDesc').style.display = 'flex'; $('toolDescText').innerText = tool.desc; } else { $('toolDesc').style.display = 'none'; }
             
-            let html = ''; tool.fields.forEach(f => { html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" placeholder="${f.label} girin..."></div>`; }); 
+            if(tool.desc) { $('toolDesc').style.display = 'flex'; $('toolDescText').innerText = tool.desc; } 
+            else { $('toolDesc').style.display = 'none'; }
+            
+            let html = ''; 
+            tool.fields.forEach(f => { 
+                html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" placeholder="${f.label} girin..."></div>`; 
+            }); 
             $('qInputs').innerHTML = html; 
         }
         
-        let isQuerying = false;
         async function runQuery() { 
             if (!currentType || isQuerying) return; 
-            const payload = { type: currentType }; let valid = true; 
-            if(TOOLS[currentType].fields.length > 0) {
-                TOOLS[currentType].fields.forEach(f => { 
-                    const inp = $('inp_' + f.id); const val = inp.value.trim(); inp.style.borderColor = '';
-                    if (f.req !== false && !val) { inp.style.borderColor = '#ef4444'; valid = false; } 
-                    else if (val && f.pattern && !f.pattern.test(val)) { inp.style.borderColor = '#ef4444'; valid = false; } 
-                    if (val) payload[f.id] = val; 
-                }); 
-            }
+            
+            const payload = { type: currentType }; 
+            let valid = true; 
+            
+            TOOLS[currentType].fields.forEach(f => { 
+                const inp = $('inp_' + f.id); 
+                const val = inp.value.trim(); 
+                inp.style.borderColor = '';
+                
+                if (!val) { 
+                    inp.style.borderColor = '#ef4444'; valid = false; 
+                } else if (f.pattern && !f.pattern.test(val)) { 
+                    inp.style.borderColor = '#ef4444'; valid = false; 
+                } 
+                if (val) payload[f.id] = val; 
+            }); 
+            
             if (!valid) return toast('Lütfen alanları doğru doldurun.', 'error'); 
             
-            isQuerying = true; const btn = $('submitBtn'); setLoading(btn, true, '<i class="fa-solid fa-circle-notch fa-spin"></i> Bağlantı Kuruluyor...'); 
+            isQuerying = true; 
+            const btn = $('submitBtn'); 
+            setLoading(btn, true, '<i class="fa-solid fa-circle-notch fa-spin"></i> Bağlantı Kuruluyor...'); 
             $('resultContainer').style.display = 'block';
+            
+            // Terminal Efekti
+            const term = $('qResultsRaw');
             $('formattedTable').innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px;"><i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color:var(--purple);"></i></td></tr>';
             switchResultTab('formatted', document.querySelectorAll('.res-tab')[0]);
-            
-            const term = $('qResultsRaw');
             term.innerHTML = '';
+            
             const fakeLogs = [ "> SSL Handshake başlatıldı...", "> Node bağlantısı kuruluyor (TR-Node-04)...", "> Güvenlik duvarı (WAF) atlatılıyor...", "> Sorgu parametreleri şifreleniyor...", "> Veritabanı taranıyor..." ];
             let logIndex = 0;
-            const logInterval = setInterval(() => { if(logIndex < fakeLogs.length) { term.innerHTML += `<span style="color:#64748b;">${fakeLogs[logIndex]}</span><br>`; logIndex++; } }, 400);
-
-            try { 
-                const res = await fetch('/api/sorgu', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload) }).then(r => r.json()); 
-                clearInterval(logInterval); 
-                
-                if (!res.success) { 
-                    $('formattedTable').innerHTML = `<tr><td colspan="2" style="color:#ef4444; text-align:center; padding:20px;">${escapeHtml(res.error)}</td></tr>`;
-                    term.innerHTML += `<br><span style="color:#ef4444;">> HATA: ${escapeHtml(res.error)}</span>`;
-                } else { 
-                    lastResult = res.data; 
-                    renderResults(res.data); 
+            const logInterval = setInterval(() => { 
+                if(logIndex < fakeLogs.length) { 
+                    term.innerHTML += `<span style="color:#64748b;">${fakeLogs[logIndex]}</span><br>`; 
+                    logIndex++; 
                 } 
-            } catch (e) { 
-                clearInterval(logInterval);
-                $('formattedTable').innerHTML = `<tr><td colspan="2" style="color:#ef4444; text-align:center; padding:20px;">Sunucu hatası.</td></tr>`;
-                term.innerHTML += `<br><span style="color:#ef4444;">> Bağlantı koptu.</span>`;
-            } finally { 
-                isQuerying = false; setLoading(btn, false, '<i class="fa-solid fa-bolt"></i> Sorguyu Başlat'); 
+            }, 400);
+
+            // API İsteği
+            const res = await apiFetch('/api/sorgu', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+
+            clearInterval(logInterval); 
+            
+            if (!res.success) { 
+                $('formattedTable').innerHTML = `<tr><td colspan="2" style="color:#ef4444; text-align:center; padding:20px;">${escapeHtml(res.error)}</td></tr>`;
+                term.innerHTML += `<br><span style="color:#ef4444;">> HATA: ${escapeHtml(res.error)}</span>`;
+            } else { 
+                lastResult = res.data; 
+                renderResults(res.data); 
             } 
+            
+            isQuerying = false; 
+            setLoading(btn, false, '<i class="fa-solid fa-bolt"></i> Sorguyu Başlat'); 
         }
         
         function switchResultTab(tab, btn) {
@@ -610,6 +709,7 @@
         function renderResults(data) {
             const items = Array.isArray(data) ? data : [data];
             let tableHtml = '';
+            
             items.forEach((item, idx) => {
                 if (items.length > 1) tableHtml += `<tr><td colspan="2" style="background:rgba(99,102,241,0.1); color:var(--primary); font-weight:800;">Sonuç #${idx+1}</td></tr>`;
                 for (let [key, val] of Object.entries(item)) {
@@ -618,6 +718,7 @@
                     tableHtml += `<tr><th>${escapeHtml(key)}</th><td>${escapeHtml(displayVal)}</td></tr>`;
                 }
             });
+            
             if (!tableHtml) tableHtml = '<tr><td colspan="2" style="text-align:center; padding:20px;">Sonuç boş.</td></tr>';
             $('formattedTable').innerHTML = tableHtml;
 
@@ -654,79 +755,152 @@
         function downloadCSV() {
             if (!lastResult) return;
             const items = Array.isArray(lastResult) ? lastResult : [lastResult];
-            let csv = "\uFEFF"; let keys = new Set();
-            const flatten = (obj, prefix = '') => { const out = []; for (const [k, v] of Object.entries(obj)) { const key = prefix ? `${prefix}.${k}` : k; if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flatten(v, key)); else out.push([key, v]); } return out; };
+            let csv = "\uFEFF"; 
+            let keys = new Set();
+            const flatten = (obj, prefix = '') => { 
+                const out = []; 
+                for (const [k, v] of Object.entries(obj)) { 
+                    const key = prefix ? `${prefix}.${k}` : k; 
+                    if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flatten(v, key)); 
+                    else out.push([key, v]); 
+                } 
+                return out; 
+            };
             items.forEach(it => flatten(it).forEach(([k]) => keys.add(k)));
             keys = Array.from(keys); csv += keys.join(";") + "\n";
-            items.forEach(it => { const row = []; keys.forEach(k => { const flat = flatten(it).find(([key]) => key === k); let val = flat ? flat[1] : ""; if (typeof val === 'string') val = val.replace(/;/g, ","); row.push(val); }); csv += row.join(";") + "\n"; });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `sorgu_${Date.now()}.csv`; a.click();
+            items.forEach(it => { 
+                const row = []; 
+                keys.forEach(k => { 
+                    const flat = flatten(it).find(([key]) => key === k); 
+                    let val = flat ? flat[1] : ""; 
+                    if (typeof val === 'string') val = val.replace(/;/g, ","); 
+                    row.push(val); 
+                }); 
+                csv += row.join(";") + "\n"; 
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); 
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = `sorgu_${Date.now()}.csv`; 
+            a.click();
         }
 
-        function copyResult() { if (lastResult) navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(() => toast('Sonuçlar JSON olarak kopyalandı.', 'success')); }
+        function copyResult() { 
+            if (lastResult) navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(() => toast('Sonuçlar JSON olarak kopyalandı.', 'success')); 
+        }
 
+        // --- PROFİL İŞLEMLERİ ---
         $('profileFile').addEventListener('change', function(e) {
-            const file = e.target.files[0]; if (!file) return;
-            const reader = new FileReader(); reader.onload = function(event) {
-                const img = new Image(); img.onload = function() {
-                    const canvas = document.createElement('canvas'); canvas.width = 150; canvas.height = 150;
-                    const ctx = canvas.getContext('2d'); const size = Math.min(img.width, img.height);
+            const file = e.target.files[0]; 
+            if (!file) return;
+            if(file.size > 2 * 1024 * 1024) return toast('Resim 2MB\'dan küçük olmalıdır.', 'error');
+            
+            const reader = new FileReader(); 
+            reader.onload = function(event) {
+                const img = new Image(); 
+                img.onload = async function() {
+                    const canvas = document.createElement('canvas'); 
+                    canvas.width = 150; canvas.height = 150;
+                    const ctx = canvas.getContext('2d'); 
+                    const size = Math.min(img.width, img.height);
                     ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 150, 150);
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                    fetch('/api/upload_avatar', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ image: dataUrl }) }).then(r => r.json()).then(res => {
-                        if (res.success) { $('profileImg').src = dataUrl; $('sidebarAvatar').src = dataUrl; toast('Profil güncellendi.', 'success'); } else { toast(res.error, 'error'); }
-                    }).catch(() => toast('Yükleme hatası.', 'error'));
-                }; img.src = event.target.result;
-            }; reader.readAsDataURL(file);
+                    
+                    const res = await apiFetch('/api/upload_avatar', { method: 'POST', body: JSON.stringify({ image: dataUrl }) });
+                    
+                    if (res.success) { 
+                        $('profileImg').src = dataUrl; 
+                        $('sidebarAvatar').src = dataUrl; 
+                        toast('Profil güncellendi.', 'success'); 
+                    } else { 
+                        toast(res.error, 'error'); 
+                    }
+                }; 
+                img.src = event.target.result;
+            }; 
+            reader.readAsDataURL(file);
         });
 
+        async function changePass() {
+            const oldP = $('old_pass').value, newP = $('new_pass').value;
+            if (!oldP || newP.length < 6) return toast('Yeni şifre en az 6 karakter olmalı.', 'error');
+            
+            const btn = $('changePassBtn'); 
+            setLoading(btn, true, 'Güncelleniyor...');
+            
+            const r = await apiFetch('/api/change_password', { 
+                method: 'POST', 
+                body: JSON.stringify({ old: oldP, new: newP }) 
+            });
+            
+            if (r.success) { 
+                toast('Şifre güncellendi.', 'success'); 
+                $('old_pass').value = ''; $('new_pass').value = ''; 
+            } else { 
+                toast(r.error, 'error'); 
+            }
+            setLoading(btn, false, 'Şifreyi Güncelle'); 
+        }
+
+        // --- GEÇMİŞ & DESTEK ---
         async function loadMyHistory() {
             $('historyContent').innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color:var(--purple);"></i></div>';
-            try {
-                const res = await fetch('/api/my_history').then(r => r.json());
-                if (!res.history.length) { $('historyContent').innerHTML = '<p style="text-align:center; color:#94a3b8;">Henüz sorgu yapmadınız.</p>'; return; }
-                let html = '<table style="width:100%; border-collapse:collapse; font-size:13.5px; color:#fff;"><thead><tr style="border-bottom:1px solid #333; text-align:left; color:#94a3b8;"><th style="padding:12px;">Tarih</th><th style="padding:12px;">İşlem</th><th style="padding:12px;">Parametre</th><th style="padding:12px;">Durum</th></tr></thead><tbody>';
-                res.history.forEach(h => {
-                    html += `<tr style="border-bottom:1px solid #222;"><td style="padding:12px; color:#94a3b8;">${h.time}</td><td style="padding:12px;"><span style="background:rgba(99,102,241,0.2); color:#a5b4fc; padding:3px 8px; border-radius:6px; font-weight:700;">${h.type}</span></td><td style="padding:12px;">${escapeHtml(h.param)}</td><td style="padding:12px;"><span style="color:${h.status === 'basarili' ? '#10b981' : '#ef4444'}; font-weight:700;">${h.status.toUpperCase()}</span></td></tr>`;
-                });
-                $('historyContent').innerHTML = html + '</tbody></table>';
-            } catch (_) { $('historyContent').innerHTML = '<p style="color:red; text-align:center;">Hata.</p>'; }
+            
+            const res = await apiFetch('/api/my_history');
+            
+            if (!res.success || !res.history.length) { 
+                $('historyContent').innerHTML = '<p style="text-align:center; color:#94a3b8;">Henüz sorgu yapmadınız.</p>'; 
+                return; 
+            }
+            
+            let html = '<table style="width:100%; border-collapse:collapse; font-size:13.5px; color:#fff;"><thead><tr style="border-bottom:1px solid #333; text-align:left; color:#94a3b8;"><th style="padding:12px;">Tarih</th><th style="padding:12px;">İşlem</th><th style="padding:12px;">Parametre</th><th style="padding:12px;">Durum</th></tr></thead><tbody>';
+            res.history.forEach(h => {
+                html += `<tr style="border-bottom:1px solid #222;"><td style="padding:12px; color:#94a3b8;">${escapeHtml(h.time)}</td><td style="padding:12px;"><span style="background:rgba(99,102,241,0.2); color:#a5b4fc; padding:3px 8px; border-radius:6px; font-weight:700;">${escapeHtml(h.type)}</span></td><td style="padding:12px;">${escapeHtml(h.param)}</td><td style="padding:12px;"><span style="color:${h.status === 'basarili' ? '#10b981' : '#ef4444'}; font-weight:700;">${escapeHtml(h.status.toUpperCase())}</span></td></tr>`;
+            });
+            $('historyContent').innerHTML = html + '</tbody></table>';
         }
 
         async function loadMyTickets() {
             $('ticketList').innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color:var(--primary);"></i></div>';
-            try {
-                const res = await fetch('/api/my_tickets').then(r => r.json());
-                if (!res.tickets.length) { $('ticketList').innerHTML = '<p style="text-align:center; color:#94a3b8;">Biletiniz yok.</p>'; return; }
-                let html = '';
-                res.tickets.forEach(t => {
-                    let stColor = t.status === 'open' ? '#f59e0b' : '#10b981';
-                    html += `<div style="background:#000; border:1px solid #333; padding:15px; border-radius:10px; margin-bottom:10px;"><div style="display:flex; justify-content:space-between; margin-bottom:8px;"><b style="color:#fff;">${escapeHtml(t.subject)}</b><span style="color:${stColor}; font-size:11px; font-weight:800;">${t.status.toUpperCase()}</span></div><p style="font-size:13px; color:#94a3b8;">${escapeHtml(t.message)}</p>${t.reply ? `<div style="background:rgba(99,102,241,0.1); border-left:3px solid var(--primary); padding:10px; margin-top:10px; font-size:13px; color:#cbd5e1;"><b>Admin:</b> ${escapeHtml(t.reply)}</div>` : ''}</div>`;
-                });
-                $('ticketList').innerHTML = html;
-            } catch (_) { $('ticketList').innerHTML = '<p style="color:red;">Hata.</p>'; }
+            
+            const res = await apiFetch('/api/my_tickets');
+            
+            if (!res.success || !res.tickets.length) { 
+                $('ticketList').innerHTML = '<p style="text-align:center; color:#94a3b8;">Biletiniz yok.</p>'; 
+                return; 
+            }
+            
+            let html = '';
+            res.tickets.forEach(t => {
+                let stColor = t.status === 'open' ? '#f59e0b' : '#10b981';
+                html += `<div style="background:#000; border:1px solid #333; padding:15px; border-radius:10px; margin-bottom:10px;"><div style="display:flex; justify-content:space-between; margin-bottom:8px;"><b style="color:#fff;">${escapeHtml(t.subject)}</b><span style="color:${stColor}; font-size:11px; font-weight:800;">${escapeHtml(t.status.toUpperCase())}</span></div><p style="font-size:13px; color:#94a3b8;">${escapeHtml(t.message)}</p>${t.reply ? `<div style="background:rgba(99,102,241,0.1); border-left:3px solid var(--primary); padding:10px; margin-top:10px; font-size:13px; color:#cbd5e1;"><b>Admin:</b> ${escapeHtml(t.reply)}</div>` : ''}</div>`;
+            });
+            $('ticketList').innerHTML = html;
         }
 
         async function createTicket() {
             const subject = $('ticketSubject').value.trim(), message = $('ticketMessage').value.trim();
             if (!subject || !message) return toast('Tüm alanları doldurun.', 'error');
-            try {
-                const res = await fetch('/api/create_ticket', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ subject, message }) }).then(r => r.json());
-                if (res.success) { toast('Bilet oluşturuldu.', 'success'); $('ticketSubject').value = ''; $('ticketMessage').value = ''; loadMyTickets(); } else { toast(res.error, 'error'); }
-            } catch (_) { toast('Bağlantı hatası.', 'error'); }
-        }
-        
-        async function changePass() {
-            const oldP = $('old_pass').value, newP = $('new_pass').value;
-            if (!oldP || newP.length < 6) return toast('Yeni şifre en az 6 karakter olmalı.', 'error');
-            const btn = $('changePassBtn'); setLoading(btn, true, 'Güncelleniyor...');
-            try {
-                const r = await fetch('/api/change_password', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ old: oldP, new: newP }) }).then(x => x.json());
-                if (r.success) { toast('Şifre güncellendi.', 'success'); $('old_pass').value = ''; $('new_pass').value = ''; } else { toast(r.error, 'error'); }
-            } catch (_) { toast('Bağlantı hatası.', 'error'); }
-            finally { setLoading(btn, false, 'Şifreyi Güncelle'); }
+            
+            const res = await apiFetch('/api/create_ticket', { 
+                method: 'POST', 
+                body: JSON.stringify({ subject, message }) 
+            });
+            
+            if (res.success) { 
+                toast('Bilet oluşturuldu.', 'success'); 
+                $('ticketSubject').value = ''; 
+                $('ticketMessage').value = ''; 
+                loadMyTickets(); 
+            } else { 
+                toast(res.error, 'error'); 
+            }
         }
 
-        async function logout() { try { await fetch('/api/logout', { method: 'POST', headers: JSON_HEADERS }); } catch (_) {} window.location.href = '/login'; }
+        async function logout() { 
+            await apiFetch('/api/logout', { method: 'POST' }); 
+            window.location.href = '/login'; 
+        }
     </script>
 </body>
 </html>
