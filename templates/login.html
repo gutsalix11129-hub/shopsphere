@@ -1,255 +1,518 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Giriş Yap | ShopSphere</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: #050505; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; color: #fff; }
-        
-        /* Canvas Arka Plan */
-        canvas#network { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.6; }
+# -*- coding: utf-8 -*-
+import os
+import re
+import json
+import time
+import hashlib
+import sqlite3
+import secrets
+import ipaddress
+import traceback
+from datetime import datetime, timezone, timedelta
+from threading import Lock
+import requests
+from flask import Flask, request, jsonify, render_template, session, redirect
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 
-        .glass-card { position: relative; z-index: 1; width: 100%; max-width: 440px; background: rgba(20, 20, 25, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1); }
-        
-        .brand { text-align: center; margin-bottom: 30px; }
-        .brand-icon { width: 64px; height: 64px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; color: #fff; margin-bottom: 15px; box-shadow: 0 0 30px rgba(99,102,241,0.4); animation: pulse-glow 3s infinite alternate; }
-        @keyframes pulse-glow { 0% { box-shadow: 0 0 20px rgba(99,102,241,0.3); } 100% { box-shadow: 0 0 40px rgba(168,85,247,0.6); } }
-        .brand h1 { font-size: 28px; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .brand p { color: #94a3b8; font-size: 13.5px; margin-top: 5px; }
+app = Flask(__name__)
 
-        .tabs { display: flex; background: rgba(0,0,0,0.4); padding: 5px; border-radius: 14px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); }
-        .tab { flex: 1; text-align: center; padding: 12px; font-size: 14px; font-weight: 700; color: #64748b; border-radius: 10px; cursor: pointer; transition: .3s; }
-        .tab.active { background: rgba(255,255,255,0.1); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        
-        .form-panel { display: none; animation: fadeIn .4s ease; }
-        .form-panel.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+OPENARCHIVE_KEY = os.environ.get("OPENARCHIVE_KEY", "BURAYA_TOKEN_GIRIN")
 
-        .form-group { margin-bottom: 18px; position: relative; }
-        .form-group label { display: block; font-size: 11.5px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        .form-group input { width: 100%; padding: 15px 40px 15px 15px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; font-size: 14.5px; color: #fff; transition: .3s; }
-        .form-group input:focus { outline: none; border-color: #6366f1; background: rgba(99,102,241,0.05); box-shadow: 0 0 15px rgba(99,102,241,0.2); }
-        .input-icon { position: absolute; right: 15px; top: 40px; color: #64748b; cursor: pointer; background: none; border: none; font-size: 16px; }
+app.secret_key = SECRET_KEY
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "0") == "1",
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=12)
+)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
-        .avatar-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 15px; }
-        .avatar-opt { width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: .2s; background: rgba(255,255,255,0.05); padding: 2px; }
-        .avatar-opt:hover { transform: scale(1.1); }
-        .avatar-opt.selected { border-color: #a855f7; box-shadow: 0 0 10px rgba(168,85,247,0.5); }
-        .upload-btn { display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #94a3b8; font-size: 16px; cursor: pointer; transition: .2s; }
-        
-        .captcha-box { background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.2); padding: 12px 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-        .captcha-box span { font-size: 13px; font-weight: 600; color: #cbd5e1; }
-        .captcha-box input { width: 70px; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; text-align: center; color: #fff; font-weight: 700; outline: none; }
+DB_DIR = "/var/data" if os.path.exists("/var/data") else "/tmp"
+if os.name == 'nt': DB_DIR = "."
+DB_FILE = os.path.join(DB_DIR, "siber_karargah.db")
 
-        .checkbox-group { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 20px; }
-        .checkbox-group input { width: 16px; height: 16px; margin-top: 2px; cursor: pointer; accent-color: #6366f1; }
-        .checkbox-group label { font-size: 11.5px; color: #94a3b8; line-height: 1.5; cursor: pointer; }
-        .checkbox-group label a { color: #a855f7; text-decoration: none; font-weight: 600; }
+def get_db():
+    conn = sqlite3.connect(DB_FILE, timeout=20)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    return conn
 
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #6366f1, #a855f7); cursor: pointer; transition: .3s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(99,102,241,0.2); }
-        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(168,85,247,0.4); }
+def init_db():
+    with get_db() as c:
+        c.executescript("""
+        CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, banned INTEGER DEFAULT 0, vip INTEGER DEFAULT 0, created_at TEXT, avatar TEXT);
+        CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, query_type TEXT, query_param TEXT, ip TEXT, timestamp TEXT, status TEXT);
+        CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+        CREATE TABLE IF NOT EXISTS tickets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, subject TEXT, message TEXT, reply TEXT, status TEXT DEFAULT 'open', created_at TEXT, replied_at TEXT);
+        CREATE TABLE IF NOT EXISTS cache (key TEXT PRIMARY KEY, data TEXT, timestamp REAL);
+        CREATE INDEX IF NOT EXISTS idx_logs_user ON logs(user_id);
+        """)
+        try: c.execute("ALTER TABLE users ADD COLUMN vip INTEGER DEFAULT 0")
+        except: pass
         
-        .alert { display: none; padding: 12px; border-radius: 10px; font-size: 13px; margin-bottom: 15px; align-items: center; gap: 8px; }
-        .alert.show { display: flex; }
-        .alert-error { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
-        .alert-success { background: rgba(16,185,129,0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
-        
-        .links { text-align: center; margin-top: 20px; font-size: 13px; color: #64748b; }
-        .links a { color: #a855f7; font-weight: 600; text-decoration: none; }
-    </style>
-</head>
-<body>
-    <canvas id="network"></canvas>
-    <div class="glass-card">
-        <div class="brand">
-            <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
-            <h1>SHOP<span>SPHERE</span></h1>
-            <p>Geleceğin İstihbarat Ağı</p>
-        </div>
-        
-        <div class="tabs">
-            <div class="tab active" data-tab="login">Giriş Yap</div>
-            <div class="tab" data-tab="register">Kayıt Ol</div>
-        </div>
-        
-        <div class="form-body">
-            <div class="form-panel active" id="panel-login">
-                <div class="alert alert-error" id="loginErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
-                <form id="loginForm" novalidate>
-                    <div class="form-group">
-                        <label>Kullanıcı Adı</label>
-                        <input type="text" id="login-u" placeholder="Ajan adınız..." required>
-                        <i class="fa-solid fa-user input-icon"></i>
-                    </div>
-                    <div class="form-group">
-                        <label>Şifre</label>
-                        <input type="password" id="login-p" placeholder="••••••••" required>
-                        <button type="button" class="input-icon toggle-pw" data-target="login-p"><i class="fa-solid fa-eye"></i></button>
-                    </div>
-                    <button type="submit" class="btn" id="loginBtn"><i class="fa-solid fa-right-to-bracket"></i> Sisteme Bağlan</button>
-                </form>
-                <div class="links">Hesabınız yok mu? <a href="#" data-tab="register">Hemen Kayıt Olun</a></div>
-            </div>
+        c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('maintenance', '0')")
+        c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('broadcast', 'Sistemimize hoş geldiniz!')")
+        c.commit()
 
-            <div class="form-panel" id="panel-register">
-                <div class="alert alert-error" id="regErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
-                <div class="alert alert-success" id="regOk"><i class="fa-solid fa-circle-check"></i><span></span></div>
-                <form id="registerForm" novalidate>
-                    <div class="form-group">
-                        <label>Profil Avatarı Seç</label>
-                        <div class="avatar-grid" id="avatarGrid">
-                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=A" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=A">
-                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=B" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=B">
-                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=C" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=C">
-                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=D" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=D">
-                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=E" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=E">
-                            <div class="avatar-opt upload-btn" id="uploadBtn" onclick="document.getElementById('avatarFile').click()"><i class="fa-solid fa-upload"></i></div>
-                        </div>
-                        <input type="file" id="avatarFile" accept="image/*" style="display:none;">
-                    </div>
-                    <div class="form-group">
-                        <label>Kullanıcı Adı</label>
-                        <input type="text" id="reg-u" placeholder="Ajan adı (min 3)" minlength="3" maxlength="32" required>
-                        <i class="fa-solid fa-user input-icon"></i>
-                    </div>
-                    <div class="form-group">
-                        <label>Şifre</label>
-                        <input type="password" id="reg-p" placeholder="Güçlü bir şifre" minlength="6" required>
-                        <button type="button" class="input-icon toggle-pw" data-target="reg-p"><i class="fa-solid fa-eye"></i></button>
-                    </div>
+init_db()
+
+def csrf_token():
+    if "_csrf" not in session: session["_csrf"] = secrets.token_urlsafe(32)
+    return session["_csrf"]
+app.jinja_env.globals["csrf_token"] = csrf_token
+
+BANNED_IPS = {}
+WAF_PATTERNS = [re.compile(r"(?i)(union\s+select|<script>|javascript:|onerror=|\.\./|\.\.\\)")]
+
+@app.before_request
+def firewall():
+    ip = request.remote_addr or "0.0.0.0"
+    now = time.time()
+    if ip in BANNED_IPS and now < BANNED_IPS[ip]:
+        return jsonify({"success": False, "error": "IP engellendi. Çok fazla istek attınız."}), 403
+    
+    data_str = str(request.args) + str(request.form) + str(request.get_json(silent=True))
+    for pattern in WAF_PATTERNS:
+        if pattern.search(data_str):
+            BANNED_IPS[ip] = now + 900
+            return jsonify({"success": False, "error": "Güvenlik ihlali tespit edildi! IP'niz 15 dk banlandı."}), 403
+
+    if request.method in ("POST", "PUT", "DELETE"):
+        token = request.headers.get("X-CSRF-Token") or request.form.get("_csrf")
+        stored = session.get("_csrf")
+        if not token or not stored or not secrets.compare_digest(str(token).encode('utf-8'), str(stored).encode('utf-8')):
+            if request.path.startswith("/api/"): return jsonify({"success": False, "error": "CSRF Hatası."}), 403
+            return "CSRF doğrulaması başarısız.", 403
+
+RATE_LIMIT = {}
+def check_rate_limit(key, max_req=30):
+    now = time.time()
+    RATE_LIMIT.setdefault(key, [])
+    RATE_LIMIT[key] = [t for t in RATE_LIMIT[key] if now - t < 60]
+    if len(RATE_LIMIT[key]) >= max_req: return False
+    RATE_LIMIT[key].append(now)
+    return True
+
+def get_setting(k):
+    with get_db() as c:
+        r = c.execute("SELECT value FROM settings WHERE key=?", (k,)).fetchone()
+        return r[0] if r else ""
+
+def set_setting(k, v):
+    with get_db() as c:
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?,?)", (k, v)); c.commit()
+
+def log_query(uid, uname, q_type, param, ip, status):
+    try:
+        with get_db() as c:
+            c.execute("INSERT INTO logs (user_id, username, query_type, query_param, ip, timestamp, status) VALUES (?,?,?,?,?,?,?)",
+                      (uid, uname, q_type, param, ip, datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), status)); c.commit()
+    except: pass
+
+USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,32}$")
+
+@app.route("/")
+def home():
+    if 'user_id' not in session: return redirect('/login')
+    with get_db() as c:
+        row = c.execute("SELECT username, created_at, avatar, vip FROM users WHERE id=?", (session['user_id'],)).fetchone()
+        if not row: session.clear(); return redirect('/login')
+        total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
+        user_queries = c.execute("SELECT COUNT(*) FROM logs WHERE user_id=?", (session['user_id'],)).fetchone()[0]
+    
+    avatar = row[2] if row[2] else f"https://api.dicebear.com/7.x/bottts/svg?seed={row[0]}"
+    is_vip = row[3] == 1
+    return render_template('index.html', total_users=total_users, total_queries=total_queries, user_queries=user_queries, username=row[0], created=row[1], avatar=avatar, is_vip=is_vip)
+
+@app.route("/login")
+def login_page():
+    if 'user_id' in session: return redirect('/')
+    return render_template('login.html')
+
+@app.route("/api/check_username")
+def api_check_username():
+    u = (request.args.get("u") or "").strip().lower()
+    if not USERNAME_RE.match(u): return jsonify({"available": False, "reason": "format"})
+    with get_db() as c: exists = c.execute("SELECT 1 FROM users WHERE username=?", (u,)).fetchone()
+    return jsonify({"available": not exists})
+
+@app.route("/api/register", methods=["POST"])
+def api_register():
+    req = request.json or {}
+    u, p, avatar = (req.get("username") or "").strip().lower(), (req.get("password") or "").strip(), (req.get("avatar") or "").strip()
+    if not USERNAME_RE.match(u) or len(p) < 6: return jsonify({"success": False, "error": "Geçersiz veri."})
+    try:
+        with get_db() as c:
+            c.execute("INSERT INTO users (username, password, created_at, avatar) VALUES (?,?,?,?)", (u, generate_password_hash(p), datetime.now(timezone.utc).strftime("%Y-%m-%d"), avatar))
+            c.commit()
+        return jsonify({"success": True})
+    except sqlite3.IntegrityError: return jsonify({"success": False, "error": "Kullanıcı adı alınmış."})
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    req = request.json or {}
+    u, p = (req.get("username") or "").strip().lower(), req.get("password") or ""
+    with get_db() as c: r = c.execute("SELECT id, username, password, banned FROM users WHERE username=?", (u,)).fetchone()
+    if r and check_password_hash(r[2], p):
+        if r[3] == 1: return jsonify({"success": False, "error": "Hesap askıya alınmış."})
+        session.permanent = True; session['user_id'] = r[0]; session['username'] = r[1]
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Kullanıcı adı veya şifre hatalı."})
+
+@app.route("/api/logout", methods=["POST"])
+def api_logout(): session.clear(); return jsonify({"success": True})
+
+@app.route("/api/get_broadcast")
+def api_get_broadcast(): return jsonify({"success": True, "broadcast": get_setting("broadcast")})
+
+@app.route("/api/change_password", methods=["POST"])
+def api_change_password():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    req = request.json or {}
+    old, new = (req.get("old") or "").strip(), (req.get("new") or "").strip()
+    if len(new) < 6: return jsonify({"success": False, "error": "Yeni şifre kısa."})
+    with get_db() as c:
+        r = c.execute("SELECT password FROM users WHERE id=?", (session['user_id'],)).fetchone()
+        if not r or not check_password_hash(r[0], old): return jsonify({"success": False, "error": "Mevcut şifre yanlış."})
+        c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(new), session['user_id'])); c.commit()
+    return jsonify({"success": True})
+
+@app.route("/api/upload_avatar", methods=["POST"])
+def api_upload_avatar():
+    if 'user_id' not in session: return jsonify({"success": False, "error": "Giriş yapın."}), 401
+    req = request.json or {}
+    img_data = req.get("image")
+    if not img_data or not img_data.startswith("data:image"):
+        return jsonify({"success": False, "error": "Geçersiz resim verisi."})
+    if len(img_data) > 2 * 1024 * 1024: 
+        return jsonify({"success": False, "error": "Resim boyutu çok büyük."})
+    with get_db() as c:
+        c.execute("UPDATE users SET avatar=? WHERE id=?", (img_data, session['user_id']))
+        c.commit()
+    return jsonify({"success": True})
+
+@app.route("/api/my_history")
+def api_my_history():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    with get_db() as c:
+        rows = c.execute("SELECT timestamp, query_type, query_param, status FROM logs WHERE user_id=? ORDER BY id DESC LIMIT 100", (session['user_id'],)).fetchall()
+    return jsonify({"success": True, "history": [{"time": r[0], "type": r[1], "param": r[2], "status": r[3]} for r in rows]})
+
+@app.route("/api/create_ticket", methods=["POST"])
+def api_create_ticket():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    req = request.json or {}
+    subject = (req.get("subject") or "").strip()
+    message = (req.get("message") or "").strip()
+    if not subject or not message: return jsonify({"success": False, "error": "Konu ve mesaj zorunludur."})
+    with get_db() as c:
+        c.execute("INSERT INTO tickets (user_id, username, subject, message, status, created_at) VALUES (?,?,?,?, 'open', ?)", 
+                  (session['user_id'], session['username'], subject, message, datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")))
+        c.commit()
+    return jsonify({"success": True})
+
+@app.route("/api/my_tickets")
+def api_my_tickets():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    with get_db() as c:
+        rows = c.execute("SELECT id, subject, message, reply, status, created_at FROM tickets WHERE user_id=? ORDER BY id DESC", (session['user_id'],)).fetchall()
+    return jsonify({"success": True, "tickets": [{"id": r[0], "subject": r[1], "message": r[2], "reply": r[3], "status": r[4], "time": r[5]} for r in rows]})
+
+@app.route("/api/sorgu", methods=["POST"])
+def api_sorgu():
+    if get_setting("maintenance") == "1": return jsonify({"success": False, "error": "Sistem bakımda."})
+    if 'user_id' not in session: return jsonify({"success": False, "error": "Giriş yapın."}), 401
+    
+    ip = request.remote_addr or "?"
+    req = request.json or {}; q_type = req.get("type"); uid, uname = session['user_id'], session['username']
+    
+    VIP_TOOLS = ["osint_ip", "osint_domain", "osint_hash", "api_wayback", "api_whois", "api_currency", "api_bin", "api_crypto", "api_email", "api_weather", "hibp_password", 
+                 "oa_intelx", "oa_breach", "oa_tiktok", "oa_discord", "oa_ipinfo", "oa_public_status", "oa_public_buckets", "oa_public_sources", "oa_public_forum"]
+    
+    if q_type in VIP_TOOLS:
+        with get_db() as c:
+            u_row = c.execute("SELECT vip FROM users WHERE id=?", (uid,)).fetchone()
+        if not u_row or u_row[0] != 1:
+            return jsonify({"success": False, "error": "Bu OSINT/Gelişmiş sorgu VIP üyelere özeldir. Lütfen VIP paket satın alın."})
+
+    cache_key = f"{q_type}_{json.dumps(req, sort_keys=True)}"
+    with get_db() as c:
+        row = c.execute("SELECT data, timestamp FROM cache WHERE key=?", (cache_key,)).fetchone()
+        if row:
+            if time.time() - row[1] < 600:
+                return jsonify({"success": True, "data": json.loads(row[0]), "cached": True})
+            else:
+                c.execute("DELETE FROM cache WHERE key=?", (cache_key,))
+                c.commit()
+
+    try:
+        # --- OPENARCHIVE PUBLIC (200 ÇALIŞAN) API'LERİ ---
+        if q_type.startswith("oa_public_"):
+            OA_PUBLIC_MAP = {
+                "oa_public_status": "https://openarchivex.net/api/v2/status",
+                "oa_public_buckets": "https://openarchivex.net/api/v2/intelx/buckets",
+                "oa_public_sources": "https://openarchivex.net/api/pricing/api-sources",
+                "oa_public_forum": "https://openarchivex.net/api/forum/public/overview"
+            }
+            if q_type in OA_PUBLIC_MAP:
+                url = OA_PUBLIC_MAP[q_type]
+                headers = {"Accept": "application/json", "User-Agent": "Mozilla/5.0"}
+                try:
+                    r = requests.get(url, headers=headers, timeout=15)
+                    if r.status_code == 200:
+                        data = r.json()
+                        log_query(uid, uname, q_type, "Public API", ip, "basarili")
+                        return jsonify({"success": True, "data": data})
+                    else:
+                        return jsonify({"success": False, "error": f"API Hatası: {r.status_code}"})
+                except Exception as e:
+                    return jsonify({"success": False, "error": "Bağlantı hatası."})
+
+        # --- OPENARCHIVE VIP (401) API'LERİ ---
+        if q_type.startswith("oa_"):
+            OA_MAP = {
+                "oa_intelx": {"url": "https://openarchivex.net/api/v2/intelx/advanced", "method": "POST", "param_key": "q"},
+                "oa_breach": {"url": "https://openarchivex.net/api/openarchive-breach", "method": "GET", "param_key": "q"},
+                "oa_tiktok": {"url": "https://openarchivex.net/api/tiktok-osint/", "method": "GET", "param_key": "q"},
+                "oa_discord": {"url": "https://openarchivex.net/api/discord-osint/", "method": "GET", "param_key": "q"},
+                "oa_ipinfo": {"url": "https://openarchivex.net/api/ip-info", "method": "GET", "param_key": "q"}
+            }
+            if q_type in OA_MAP:
+                api = OA_MAP[q_type]
+                val = (req.get(api["param_key"]) or "").strip()
+                headers = {"Authorization": f"Bearer {OPENARCHIVE_KEY}", "Content-Type": "application/json", "Accept": "application/json"}
+                try:
+                    if api["method"] == "POST":
+                        r = requests.post(api["url"], headers=headers, json={api["param_key"]: val}, timeout=15)
+                    else:
+                        r = requests.get(api["url"], headers=headers, params={api["param_key"]: val}, timeout=15)
                     
-                    <div class="captcha-box">
-                        <span id="captchaText">Yükleniyor...</span>
-                        <input type="number" id="captchaInput" placeholder="Sonuç">
-                    </div>
+                    if r.status_code == 401:
+                        return jsonify({"success": False, "error": "OpenArchive API Anahtarı geçersiz veya eksik (401)."})
+                    
+                    data = r.json()
+                    log_query(uid, uname, q_type, val, ip, "basarili")
+                    return jsonify({"success": True, "data": data})
+                except Exception as e:
+                    return jsonify({"success": False, "error": f"Hata: {str(e)}"})
 
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="termsCheck">
-                        <label for="termsCheck"><a href="#">Kullanım Koşulları</a>'nı okudum, kabul ediyorum.</label>
-                    </div>
+        # --- MEVCUT SORGULAR ---
+        if q_type == "plaka_sorgu":
+            plaka = (req.get('plaka') or '').strip().upper()
+            if not plaka: return jsonify({"success": False, "error": "Plaka girin."})
+            r = requests.get(f"https://eokulsorguapi.onrender.com/plaka/api?plaka={plaka}", timeout=15)
+            data = r.json()
+            log_query(uid, uname, q_type, plaka, ip, "basarili")
+            return jsonify({"success": True, "data": data})
 
-                    <button type="submit" class="btn" id="registerBtn"><i class="fa-solid fa-user-plus"></i> Ağa Katıl</button>
-                </form>
-                <div class="links">Zaten üye misiniz? <a href="#" data-tab="login">Giriş Yapın</a></div>
-            </div>
-        </div>
-    </div>
+        if q_type == "osint_ip": return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=8).json()})
+        if q_type == "osint_domain": return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=8).json()})
+        if q_type == "osint_hash":
+            txt = (req.get('text') or '').encode()
+            return jsonify({"success": True, "data": {"MD5": hashlib.md5(txt).hexdigest(), "SHA1": hashlib.sha1(txt).hexdigest(), "SHA256": hashlib.sha256(txt).hexdigest()}})
 
-    <script>
-        // Canvas Arka Plan Efekti
-        const canvas = document.getElementById('network');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
+        if q_type == "api_wayback":
+            url = (req.get('url') or '').strip()
+            data = requests.get(f"http://archive.org/wayback/available?url={url}", timeout=15).json()
+            log_query(uid, uname, q_type, url, ip, "basarili")
+            return jsonify({"success": True, "data": data})
+
+        if q_type == "api_whois":
+            domain = (req.get('domain') or '').strip()
+            r = requests.get(f"https://rdap.org/domain/{domain}", timeout=15)
+            if r.status_code == 200:
+                log_query(uid, uname, q_type, domain, ip, "basarili")
+                return jsonify({"success": True, "data": r.json()})
+            else: return jsonify({"success": False, "error": "Domain bulunamadı."})
+
+        if q_type == "api_bin":
+            bin_no = (req.get('bin') or '').strip()
+            r = requests.get(f"https://lookup.binlist.net/{bin_no}", headers={"Accept-Version": "3"}, timeout=15)
+            if r.status_code == 200:
+                log_query(uid, uname, q_type, bin_no, ip, "basarili")
+                return jsonify({"success": True, "data": r.json()})
+            else: return jsonify({"success": False, "error": "BIN bulunamadı."})
+
+        if q_type == "api_currency":
+            r = requests.get("https://api.frankfurter.app/latest?from=USD&to=TRY,EUR,GBP", timeout=10)
+            log_query(uid, uname, q_type, "USD", ip, "basarili")
+            return jsonify({"success": True, "data": r.json()})
+
+        if q_type == "api_crypto":
+            r = requests.get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,ripple,solana&vs_currencies=usd,try&include_24hr_change=true", timeout=10)
+            log_query(uid, uname, q_type, "Crypto", ip, "basarili")
+            return jsonify({"success": True, "data": r.json()})
+
+        if q_type == "api_email":
+            email = (req.get('email') or '').strip()
+            r = requests.get(f"https://open.kickbox.com/v1/disposable/{email}", timeout=10)
+            if r.status_code == 200:
+                log_query(uid, uname, q_type, email, ip, "basarili")
+                return jsonify({"success": True, "data": r.json()})
+            else: return jsonify({"success": False, "error": "Geçersiz e-posta."})
+
+        if q_type == "api_weather":
+            city = (req.get('city') or '').strip()
+            geo = requests.get(f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=tr&format=json", timeout=10).json()
+            if not geo.get("results"): return jsonify({"success": False, "error": "Şehir bulunamadı."})
+            lat = geo["results"][0]["latitude"]; lon = geo["results"][0]["longitude"]
+            w = requests.get(f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true", timeout=10).json()
+            log_query(uid, uname, q_type, city, ip, "basarili")
+            return jsonify({"success": True, "data": {"sehir": geo["results"][0]["name"], "hava_durumu": w["current_weather"]}})
+
+        API_MAP = {
+            "adsoyad": {"url": "https://violetpanel.cc/furkanapi/adsoyadapi.php", "params": {"ad":"ad","soyad":"soyad"}},
+            "aile": {"url": "https://violetpanel.cc/furkanapi/ailesorguapi.php", "params": {"tc":"tc"}},
+            "adres": {"url": "https://violetpanel.cc/furkanapi/adrespro.php", "params": {"tc":"tc"}},
+            "tcgsm": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"tc":"tc"}},
+            "gsmtc": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"gsm":"gsm"}},
+        }
+        if q_type not in API_MAP: return jsonify({"success": False, "error": "Geçersiz sorgu."})
         
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resize); resize();
-
-        for(let i=0; i<80; i++) particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5 });
-        
-        function draw() {
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = 'rgba(99, 102, 241, 0.5)';
-            ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
+        api_info = API_MAP[q_type]; params = {}; query_str = ""
+        for k, rk in api_info["params"].items():
+            val = (req.get(k) or "").strip()
+            if not val: continue
+            if rk == "tc" and not re.fullmatch(r"\d{11}", val): return jsonify({"success": False, "error": "TC 11 haneli sayı olmalı."})
+            if rk == "gsm" and not re.fullmatch(r"\d{10,11}", val): return jsonify({"success": False, "error": "GSM 10-11 haneli sayı olmalı."})
+            params[rk] = val[:100]; query_str += f"{rk}={val[:100]} "
             
-            particles.forEach((p, i) => {
-                p.x += p.vx; p.y += p.vy;
-                if(p.x<0||p.x>canvas.width) p.vx*=-1;
-                if(p.y<0||p.y>canvas.height) p.vy*=-1;
-                ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill();
-                
-                for(let j=i+1; j<particles.length; j++) {
-                    let p2 = particles[j], dx = p.x-p2.x, dy = p.y-p2.y, dist = Math.sqrt(dx*dx+dy*dy);
-                    if(dist < 120) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); }
-                }
-            });
-            requestAnimationFrame(draw);
-        }
-        draw();
-
-        // Form İşlemleri
-        const $ = id => document.getElementById(id);
-        const CSRF = document.querySelector('meta[name="csrf-token"]').content;
-        const HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
-        let selectedAvatar = "https://api.dicebear.com/7.x/bottts/svg?seed=A";
-        let currentCaptchaAnswer = 0;
+        if not params: return jsonify({"success": False, "error": "Eksik parametre."})
+        time.sleep(0.8) 
         
-        function generateCaptcha() {
-            const num1 = Math.floor(Math.random() * 10) + 1, num2 = Math.floor(Math.random() * 10) + 1;
-            currentCaptchaAnswer = num1 + num2;
-            $('captchaText').innerText = `${num1} + ${num2} = ?`;
-            $('captchaInput').value = '';
-        }
+        r = requests.get(api_info["url"], params=params, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+        try: data = r.json()
+        except ValueError: return jsonify({"success": False, "error": "Dış API limiti aşıldı."})
 
-        function switchTab(name) {
-            ['loginErr', 'regErr', 'regOk'].forEach(id => $(id).classList.remove('show'));
-            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-            document.querySelectorAll('.form-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
-            if (name === 'register') generateCaptcha();
-        }
-        document.querySelectorAll('[data-tab]').forEach(el => el.addEventListener('click', (e) => { e.preventDefault(); switchTab(el.dataset.tab); }));
+        is_ok = data.get("success") in [True, "true"] or data.get("durum") in ["basarili", "başarılı"] or data.get("status") == "success"
+        result = data.get("data") or data.get("veri") or data.get("result")
+        
+        if not is_ok or not result: 
+            log_query(uid, uname, q_type, query_str.strip(), ip, "basarisiz")
+            return jsonify({"success": False, "error": "Bulunamadı veya API hatası."})
+            
+        with get_db() as c:
+            c.execute("INSERT OR REPLACE INTO cache (key, data, timestamp) VALUES (?,?,?)", 
+                      (cache_key, json.dumps(result), time.time()))
+            c.commit()
 
-        document.querySelectorAll('.avatar-opt:not(.upload-btn)').forEach(img => {
-            img.addEventListener('click', () => {
-                document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('selected'));
-                img.classList.add('selected'); selectedAvatar = img.dataset.url;
-            });
-        });
-        document.querySelector('.avatar-opt:not(.upload-btn)').classList.add('selected');
+        log_query(uid, uname, q_type, query_str.strip(), ip, "basarili")
+        return jsonify({"success": True, "data": result})
+    except Exception: 
+        return jsonify({"success": False, "error": "Bağlantı hatası oluştu."})
 
-        $('avatarFile').addEventListener('change', function(e) {
-            const file = e.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas'); canvas.width = 150; canvas.height = 150;
-                    const ctx = canvas.getContext('2d'); const size = Math.min(img.width, img.height);
-                    ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 150, 150);
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                    const uploadBtn = $('uploadBtn');
-                    uploadBtn.innerHTML = `<img src="${dataUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-                    document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('selected'));
-                    uploadBtn.classList.add('selected'); selectedAvatar = dataUrl; 
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
+# --- ADMIN ROTALARI ---
+@app.route("/admin-panel-x9", methods=["GET", "POST"])
+def admin_dashboard():
+    ip = request.remote_addr or "?"
+    if not session.get("admin"):
+        error = None
+        if request.method == "POST":
+            if not check_rate_limit(f"admin_{ip}", max_req=5): error = "Çok fazla deneme."
+            else:
+                girilen_sifre = request.form.get("pass", "")
+                if secrets.compare_digest(str(girilen_sifre).encode('utf-8'), str(ADMIN_PASSWORD).encode('utf-8')):
+                    session["admin"] = True; session["admin_since"] = time.time(); return redirect("/admin-panel-x9")
+                else: error = "Hatalı şifre."
+        return render_template('admin.html', show_login=True, login_error=error, total_users=0, total_queries=0, banned_users=0, users=[], logs=[], maint="0", current_bc="", chart_labels="[]", chart_data="[]", daily_labels="[]", daily_data="[]", temp_passes={}, popular_queries=[], success_count=0, fail_count=0, tickets=[], vip_users=0)
 
-        function showAlert(el, msg) { el.querySelector('span').textContent = msg; el.classList.add('show'); }
+    if time.time() - session.get("admin_since", 0) > 3600:
+        session.pop("admin", None); return redirect("/admin-panel-x9")
 
-        $('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault(); $('loginErr').classList.remove('show');
-            const u = $('login-u').value.trim(), p = $('login-p').value;
-            if (!u || !p) return showAlert($('loginErr'), 'Lütfen tüm alanları doldurun.');
-            const btn = $('loginBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Bağlanıyor...';
-            try {
-                const res = await fetch('/api/login', { method: 'POST', headers: HEADERS, body: JSON.stringify({ username: u, password: p }) }).then(r => r.json());
-                if (res.success) window.location.href = '/';
-                else { showAlert($('loginErr'), res.error); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sisteme Bağlan'; }
-            } catch (_) { showAlert($('loginErr'), 'Bağlantı hatası.'); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sisteme Bağlan'; }
-        });
+    temp_passes = session.pop("_temp_passes", {})
+    with get_db() as c:
+        logs = c.execute("SELECT * FROM logs ORDER BY id DESC LIMIT 500").fetchall()
+        users = c.execute("""
+            SELECT u.id, u.username, u.password, u.banned, u.created_at, COUNT(l.id) as query_count, u.vip
+            FROM users u LEFT JOIN logs l ON u.id = l.user_id
+            GROUP BY u.id ORDER BY u.id DESC
+        """).fetchall()
+        tickets = c.execute("SELECT * FROM tickets ORDER BY status ASC, id DESC").fetchall()
+        total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
+        total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        banned_users = c.execute("SELECT COUNT(*) FROM users WHERE banned=1").fetchone()[0]
+        vip_users = c.execute("SELECT COUNT(*) FROM users WHERE vip=1").fetchone()[0]
+        q_stats = c.execute("SELECT query_type, COUNT(*) FROM logs GROUP BY query_type").fetchall()
+        
+        popular_queries = c.execute("SELECT query_type, query_param, COUNT(*) as count FROM logs WHERE status='basarili' AND query_param != '' GROUP BY query_param ORDER BY count DESC LIMIT 10").fetchall()
+        success_count = c.execute("SELECT COUNT(*) FROM logs WHERE status='basarili'").fetchone()[0]
+        fail_count = c.execute("SELECT COUNT(*) FROM logs WHERE status='basarisiz'").fetchone()[0]
+        
+        chart_labels = json.dumps([q[0] for q in q_stats]); chart_data = json.dumps([q[1] for q in q_stats])
+        dates = [(datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(6, -1, -1)]
+        daily_counts = [c.execute("SELECT COUNT(*) FROM logs WHERE timestamp LIKE ?", (f"{d}%",)).fetchone()[0] for d in dates]
+        daily_labels = json.dumps(dates); daily_data = json.dumps(daily_counts)
 
-        $('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault(); $('regErr').classList.remove('show'); $('regOk').classList.remove('show');
-            const u = $('reg-u').value.trim(), p = $('reg-p').value, captcha = parseInt($('captchaInput').value);
-            if (!u || !p) return showAlert($('regErr'), 'Tüm alanları doldurun.');
-            if (captcha !== currentCaptchaAnswer) return showAlert($('regErr'), 'Güvenlik sorusu yanlış.');
-            if (!$('termsCheck').checked) return showAlert($('regErr'), 'Kullanım koşullarını kabul edin.');
-            const btn = $('registerBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Kayıt Yapılıyor...';
-            try {
-                const res = await fetch('/api/register', { method: 'POST', headers: HEADERS, body: JSON.stringify({ username: u, password: p, avatar: selectedAvatar }) }).then(r => r.json());
-                if (res.success) { 
-                    showAlert($('regOk'), 'Ağa başarıyla katıldınız! Yönlendiriliyorsunuz...'); 
-                    setTimeout(() => { switchTab('login'); $('login-u').value = u; $('login-p').value = p; btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Ağa Katıl'; }, 1500);
-                } else { showAlert($('regErr'), res.error); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Ağa Katıl'; }
-            } catch (_) { showAlert($('regErr'), 'Bağlantı hatası.'); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Ağa Katıl'; }
-        });
-    </script>
-</body>
-</html>
+    return render_template('admin.html', show_login=False, logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users, vip_users=vip_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"), chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, temp_passes=temp_passes, popular_queries=popular_queries, success_count=success_count, fail_count=fail_count, tickets=tickets)
+
+@app.route("/admin-toggle-vip/<int:uid>", methods=["POST"])
+def admin_toggle_vip(uid):
+    if not session.get("admin"): return redirect("/")
+    with get_db() as c: 
+        c.execute("UPDATE users SET vip = CASE WHEN vip=1 THEN 0 ELSE 1 END WHERE id=?", (uid,))
+        c.commit()
+    return redirect("/admin-panel-x9")
+
+@app.route("/admin-reply-ticket/<int:tid>", methods=["POST"])
+def admin_reply_ticket(tid):
+    if not session.get("admin"): return redirect("/")
+    reply = request.form.get("reply", "").strip()
+    if reply:
+        with get_db() as c:
+            c.execute("UPDATE tickets SET reply=?, status='closed', replied_at=? WHERE id=?", (reply, datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), tid))
+            c.commit()
+    return redirect("/admin-panel-x9")
+
+@app.route("/admin-logout-x9", methods=["POST"])
+def admin_logout(): session.pop("admin", None); return redirect("/admin-panel-x9")
+
+@app.route("/admin-history/<int:uid>")
+def admin_history(uid):
+    if not session.get("admin"): return jsonify({"success": False}), 401
+    with get_db() as c:
+        rows = c.execute("SELECT timestamp, query_type, query_param, ip, status FROM logs WHERE user_id=? ORDER BY id DESC LIMIT 200", (uid,)).fetchall()
+    return jsonify({"success": True, "history": [{"time": r[0], "type": r[1], "param": r[2], "ip": r[3], "status": r[4]} for r in rows]})
+
+@app.route("/admin-reset-pass/<int:uid>", methods=["POST"])
+def admin_reset_pass(uid):
+    if not session.get("admin"): return redirect("/")
+    tmp = secrets.token_urlsafe(9)
+    with get_db() as c:
+        c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(tmp), uid)); c.commit()
+    tp = session.get("_temp_passes", {}); tp[str(uid)] = tmp; session["_temp_passes"] = dict(list(tp.items())[-5:])
+    return redirect("/admin-panel-x9")
+
+@app.route("/gizli-bakim-degistir", methods=["POST"])
+def admin_toggle_maint():
+    if not session.get("admin"): return redirect("/")
+    set_setting("maintenance", "0" if get_setting("maintenance") == "1" else "1")
+    return redirect("/admin-panel-x9")
+
+@app.route("/gizli-duyuru-gonder", methods=["POST"])
+def admin_broadcast():
+    if not session.get("admin"): return redirect("/")
+    set_setting("broadcast", (request.form.get("bc_text") or "").strip()[:500])
+    return redirect("/admin-panel-x9")
+
+@app.route("/admin-ban/<int:uid>", methods=["POST"])
+def admin_ban_user(uid):
+    if not session.get("admin"): return redirect("/")
+    with get_db() as c: c.execute("UPDATE users SET banned = CASE WHEN banned=1 THEN 0 ELSE 1 END WHERE id=?", (uid,)); c.commit()
+    return redirect("/admin-panel-x9")
+
+@app.route("/admin-delete/<int:uid>", methods=["POST"])
+def admin_delete_user(uid):
+    if not session.get("admin"): return redirect("/")
+    with get_db() as c:
+        c.execute("DELETE FROM users WHERE id=?", (uid,)); c.execute("DELETE FROM logs WHERE user_id=?", (uid,)); c.commit()
+    return redirect("/admin-panel-x9")
+
+@app.errorhandler(500)
+def server_error(e):
+    return f"<h1 style='color:red;'>500 - Hata Detayı</h1><pre style='background:#f4f4f4; padding:20px;'>{traceback.format_exc()}</pre>", 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
