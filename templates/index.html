@@ -4,255 +4,355 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Sistem Paneli | ShopSphere</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>ShopSphere | İstihbarat Merkezi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --bg: #030305; --card: #0a0a0f; --text: #f8fafc; --border: rgba(255,255,255,0.06); --primary: #6366f1; --purple: #a855f7; --success: #10b981; --danger: #ef4444; --gold: #fbbf24; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
+        :root {
+            --bg: #05050a;
+            --card: rgba(20, 20, 30, 0.6);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #6366f1;
+            --purple: #a855f7;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
         
-        #cyber-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.4; pointer-events: none; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; pointer-events: none; }
+        
+        .app-container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; min-height: 100vh; }
 
-        .sidebar { width: 280px; background: rgba(5, 5, 10, 0.85); backdrop-filter: blur(20px); position: fixed; height: 100vh; left: -280px; top: 0; transition: transform .4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
-        .sidebar.open { left: 0; box-shadow: 20px 0 50px rgba(0,0,0,0.8); }
-        .logo-area { padding: 25px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); }
-        .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--purple)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; box-shadow: 0 0 20px rgba(99,102,241,0.4); }
-        .logo-area h2 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
-        .logo-area h2 span { color: var(--purple); }
+        .topbar { display: flex; justify-content: space-between; align-items: center; background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 20px; padding: 15px 25px; }
+        .brand { display: flex; align-items: center; gap: 15px; }
+        .brand-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--purple)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; box-shadow: 0 0 20px rgba(168,85,247,0.4); }
+        .brand h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+        .brand h1 span { color: var(--purple); }
         
-        .user-profile { padding: 18px; margin: 15px; background: rgba(255,255,255,0.02); border-radius: 16px; display: flex; align-items: center; gap: 15px; border: 1px solid var(--border); }
-        .avatar { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--purple); object-fit: cover; background: #000; }
-        .user-info h3 { font-size: 15px; font-weight: 700; }
-        .user-info p { font-size: 11px; color: #94a3b8; margin-top: 4px; }
-        
-        .nav-section { padding: 0 15px 30px; flex: 1; overflow-y: auto; }
-        .nav-section::-webkit-scrollbar { width: 3px; }
-        .nav-section::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-        .nav-item { display: flex; align-items: center; padding: 12px 15px; border-radius: 10px; color: #94a3b8; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: .2s; margin-bottom: 2px; border: 1px solid transparent; }
-        .nav-item:hover, .nav-item.active { background: rgba(99,102,241,0.1); color: #fff; border-color: rgba(99,102,241,0.2); transform: translateX(3px); }
-        .nav-item .icon { width: 20px; font-size: 14px; margin-right: 12px; text-align: center; }
-        .nav-cat-title { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 15px 0 10px 10px; }
+        .user-area { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--purple); object-fit: cover; background: #000; }
+        .user-info { text-align: right; }
+        .user-info h3 { font-size: 14px; font-weight: 700; }
+        .user-info p { font-size: 11px; color: var(--text-muted); }
+        .logout-btn { background: rgba(239,68,68,0.1); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); padding: 10px 15px; border-radius: 10px; cursor: pointer; transition: 0.3s; }
+        .logout-btn:hover { background: rgba(239,68,68,0.2); }
 
-        .main { flex: 1; padding: 25px; width: 100%; transition: margin-left .4s; min-height: 100vh; position: relative; z-index: 1; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; background: rgba(10, 10, 15, 0.8); backdrop-filter: blur(10px); padding: 15px 25px; border-radius: 20px; margin-bottom: 25px; border: 1px solid var(--border); }
-        .menu-btn { font-size: 24px; cursor: pointer; color: #fff; background: none; border: none; }
-        .broadcast { font-size: 13px; color: #cbd5e1; font-weight: 500; display: flex; align-items: center; gap: 10px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .broadcast .dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 10px var(--success); animation: pulse 2s infinite; }
-        .live-clock { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--primary); background: rgba(99,102,241,0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(99,102,241,0.2); }
-        
-        .view { display: none; animation: fadeIn .4s ease; } .view.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        .search-area { position: relative; margin-bottom: 10px; }
+        .search-area input { width: 100%; padding: 18px 25px 18px 55px; background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 16px; color: #fff; font-size: 15px; transition: 0.3s; }
+        .search-area input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 20px rgba(99,102,241,0.2); }
+        .search-area i { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 18px; }
 
-        .welcome-banner { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.05)); border: 1px solid rgba(168,85,247,0.2); border-radius: 20px; padding: 30px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
-        .welcome-text h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; background: linear-gradient(to right, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .welcome-text p { color: #94a3b8; font-size: 14px; }
-        .welcome-icon { font-size: 60px; color: rgba(255,255,255,0.05); }
+        .tool-category { margin-bottom: 20px; }
+        .cat-title { font-size: 13px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .cat-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
         
-        .quick-access { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .qa-btn { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: .3s; }
-        .qa-btn:hover { transform: translateY(-3px); border-color: var(--primary); box-shadow: 0 10px 20px rgba(99,102,241,0.1); }
-        .qa-btn i { font-size: 24px; color: var(--purple); margin-bottom: 10px; display: block; }
-        .qa-btn span { font-size: 13px; font-weight: 700; color: #cbd5e1; }
+        .grid-tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+        .tool-card { background: var(--card); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 16px; padding: 20px; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .tool-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--primary), transparent); opacity: 0; transition: 0.3s; }
+        .tool-card:hover { transform: translateY(-5px); border-color: rgba(99,102,241,0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .tool-card:hover::before { opacity: 1; }
+        .tool-icon { font-size: 24px; color: var(--purple); margin-bottom: 15px; }
+        .tool-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 5px; }
+        .tool-card p { font-size: 12px; color: var(--text-muted); }
 
-        @media (min-width: 992px) { .sidebar { left: 0; } .main { margin-left: 280px; width: calc(100% - 280px); } .menu-btn { display: none; } }
+        .query-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: 0.3s; }
+        .query-overlay.active { display: flex; opacity: 1; }
+        .query-modal { background: #0f0f15; border: 1px solid var(--border); border-radius: 24px; width: 100%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); transition: 0.3s; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        .query-overlay.active .query-modal { transform: scale(1); }
         
-        .terminal-window { background: #000; border-radius: 12px; border: 1px solid #333; margin-top: 25px; display: none; }
-        .terminal-header { background: #111; padding: 10px 15px; border-bottom: 1px solid #333; color: #555; font-size: 11px; font-family: monospace; border-radius: 12px 12px 0 0; }
-        .terminal-body { padding: 20px; font-family: monospace; font-size: 13px; color: #a7f3d0; white-space: pre-wrap; max-height: 500px; overflow-y: auto; border-radius: 0 0 12px 12px; }
+        .modal-header { padding: 20px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
+        .modal-header h2 { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .modal-header h2 i { color: var(--primary); }
+        .close-btn { background: rgba(255,255,255,0.05); border: none; color: #fff; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; transition: 0.3s; }
+        .close-btn:hover { background: var(--danger); }
+        
+        .modal-body { padding: 25px; overflow-y: auto; flex: 1; }
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
-        .form-group input { width: 100%; padding: 15px; background: #000; border: 1px solid #333; border-radius: 10px; color: #fff; }
-        .btn-submit { background: linear-gradient(135deg, var(--primary), var(--purple)); color: #fff; border: none; padding: 16px; border-radius: 12px; font-weight: 800; width: 100%; cursor: pointer; transition: .3s; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; }
+        .form-group input { width: 100%; padding: 16px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 12px; color: #fff; font-size: 15px; }
+        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 15px rgba(99,102,241,0.1); }
+        
+        .btn-submit { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--purple)); border: none; border-radius: 12px; color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(168,85,247,0.3); }
+        .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .result-area { margin-top: 25px; display: none; }
+        .result-tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .res-tab { background: none; border: none; color: var(--text-muted); font-weight: 700; font-size: 14px; cursor: pointer; padding: 8px 15px; border-radius: 8px; transition: 0.3s; }
+        .res-tab.active { background: rgba(255,255,255,0.05); color: #fff; }
+        
+        .res-content { display: none; }
+        .res-content.active { display: block; }
+        
+        .terminal-window { background: #000; border-radius: 12px; border: 1px solid #222; overflow: hidden; }
+        .terminal-header { background: #111; padding: 10px 15px; display: flex; gap: 8px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .terminal-body { padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #a7f3d0; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+        
+        .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .data-table th, .data-table td { padding: 12px 15px; border-bottom: 1px solid var(--border); text-align: left; }
+        .data-table th { color: var(--text-muted); font-size: 12px; text-transform: uppercase; background: rgba(0,0,0,0.3); }
+        .data-table td { color: #fff; word-break: break-all; }
+
+        .loader { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <canvas id="cyber-bg"></canvas>
+    <canvas id="bg-canvas"></canvas>
 
-    <aside class="sidebar" id="sidebar">
-        <div class="logo-area"><div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div><h2>SHOP<span>SPHERE</span></h2></div>
-        <div class="user-profile">
-            <img src="{{ avatar }}" class="avatar" alt="Profil">
-            <div class="user-info"><h3>{{ username }}</h3><p>Sistem Aktif</p></div>
-        </div>
-        <div class="nav-section">
-            <div class="nav-item active" onclick="loadTool('welcome', this)"><div class="icon"><i class="fa-solid fa-house"></i></div> Ana Sayfa</div>
-            
-            <div class="nav-cat-title">E-OKUL & SORGU API</div>
-            <div class="nav-item" onclick="loadTool('papara_adsoyad', this)"><div class="icon"><i class="fa-solid fa-wallet"></i></div> Papara (Ad Soyad)</div>
-            <div class="nav-item" onclick="loadTool('papara_id', this)"><div class="icon"><i class="fa-solid fa-wallet"></i></div> Papara (ID)</div>
-            <div class="nav-item" onclick="loadTool('turknet_tel', this)"><div class="icon"><i class="fa-solid fa-wifi"></i></div> Türknet Sorgu</div>
-            <div class="nav-item" onclick="loadTool('cc_luhn', this)"><div class="icon"><i class="fa-solid fa-credit-card"></i></div> CC Luhn Kontrol</div>
-            <div class="nav-item" onclick="loadTool('plaka_adsoyad', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka (Ad Soyad)</div>
-            <div class="nav-item" onclick="loadTool('plaka_kod', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka (Kod)</div>
-            <div class="nav-item" onclick="loadTool('secmen_soyad', this)"><div class="icon"><i class="fa-solid fa-check-to-slot"></i></div> Seçmen (Soyad)</div>
-            <div class="nav-item" onclick="loadTool('secmen_tc', this)"><div class="icon"><i class="fa-solid fa-check-to-slot"></i></div> Seçmen (TC)</div>
-            <div class="nav-item" onclick="loadTool('eokul_tc', this)"><div class="icon"><i class="fa-solid fa-school"></i></div> E-Okul (TC)</div>
-            <div class="nav-item" onclick="loadTool('eokul_adsoyad', this)"><div class="icon"><i class="fa-solid fa-school"></i></div> E-Okul (Ad Soyad)</div>
-
-            <div class="nav-cat-title">VIOLETPANEL API</div>
-            <div class="nav-item" onclick="loadTool('adsoyadprox', this)"><div class="icon"><i class="fa-solid fa-user-shield"></i></div> Proxy Mernis</div>
-            <div class="nav-item" onclick="loadTool('adsoyad', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Mernis Sorgu</div>
-            <div class="nav-item" onclick="loadTool('aile', this)"><div class="icon"><i class="fa-solid fa-users"></i></div> Aile Sorgu</div>
-            <div class="nav-item" onclick="loadTool('adres', this)"><div class="icon"><i class="fa-solid fa-location-dot"></i></div> Adres Sorgu</div>
-            <div class="nav-item" onclick="loadTool('gsm_tc', this)"><div class="icon"><i class="fa-solid fa-phone"></i></div> GSM (TC)</div>
-            <div class="nav-item" onclick="loadTool('gsm_gsm', this)"><div class="icon"><i class="fa-solid fa-phone-flip"></i></div> GSM → TC</div>
-
-            <div class="nav-cat-title">OPENARCHIVEX (AÇIK API)</div>
-            <div class="nav-item" onclick="loadTool('oax_status_v2', this)"><div class="icon"><i class="fa-solid fa-server"></i></div> Sistem Durumu</div>
-            <div class="nav-item" onclick="loadTool('oax_providers', this)"><div class="icon"><i class="fa-solid fa-database"></i></div> Sağlayıcılar</div>
-            <div class="nav-item" onclick="loadTool('oax_sources_v2', this)"><div class="icon"><i class="fa-solid fa-layer-group"></i></div> Kaynaklar</div>
-            <div class="nav-item" onclick="loadTool('oax_forum_overview', this)"><div class="icon"><i class="fa-solid fa-comments"></i></div> Forum Özeti</div>
-            
-            <div class="nav-cat-title">DİĞER</div>
-            <div class="nav-item" onclick="loadTool('api_whois', this)"><div class="icon"><i class="fa-solid fa-globe"></i></div> WHOIS Sorgu</div>
-            <div class="nav-item" onclick="loadTool('api_bin', this)"><div class="icon"><i class="fa-solid fa-credit-card"></i></div> BIN Sorgu</div>
-            
-            <a href="/admin-panel-x9" class="nav-item" style="color:#fbbf24; margin-top:20px;"><div class="icon"><i class="fa-solid fa-shield-halved"></i></div> Admin Paneli</a>
-            <div class="nav-item" onclick="logout()" style="color:var(--danger);"><div class="icon"><i class="fa-solid fa-right-from-bracket"></i></div> Çıkış Yap</div>
-        </div>
-    </aside>
-
-    <main class="main">
+    <div class="app-container">
         <header class="topbar">
-            <button class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
-            <div class="broadcast" id="broadcast"><span class="dot"></span> Sistem çevrimiçi...</div>
-            <div class="live-clock" id="liveClock">00:00:00</div>
-        </header>
-        
-        <div id="view-dashboard" class="view active">
-            <div class="welcome-banner">
-                <div class="welcome-text">
-                    <h2 id="greeting">Hoş Geldin, {{ username }}</h2>
-                    <p>Siber istihbarat ağına bağlandınız. Sistem durumu: <b style="color:var(--success);">Aktif</b>.</p>
+            <div class="brand">
+                <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <h1>SHOP<span>SPHERE</span></h1>
+            </div>
+            <div class="user-area">
+                <div class="user-info">
+                    <h3>{{ username }}</h3>
+                    <p>Sistem Aktif</p>
                 </div>
-                <i class="fa-solid fa-shield-virus welcome-icon"></i>
+                <img src="{{ avatar }}" class="avatar" alt="Profil">
+                <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
             </div>
-            
-            <div class="quick-access">
-                <div class="qa-btn" onclick="loadTool('adsoyad', null)"><i class="fa-solid fa-user"></i><span>Mernis</span></div>
-                <div class="qa-btn" onclick="loadTool('plaka_kod', null)"><i class="fa-solid fa-car"></i><span>Plaka</span></div>
-                <div class="qa-btn" onclick="loadTool('gsm_gsm', null)"><i class="fa-solid fa-phone-flip"></i><span>GSM → TC</span></div>
-                <div class="qa-btn" onclick="loadTool('eokul_tc', null)"><i class="fa-solid fa-school"></i><span>E-Okul</span></div>
-            </div>
+        </header>
+
+        <div class="search-area">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Hangi aracı arıyorsun? (Örn: Mernis, Papara, E-Okul...)" onkeyup="filterTools()">
         </div>
 
-        <div id="view-query" class="view">
-            <div class="panel" style="background:var(--card); padding:30px; border-radius:20px; border:1px solid var(--border); max-width:900px; margin:0 auto;">
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:20px; margin-bottom:25px;">
-                    <h2 id="qTitle" style="font-size:22px; font-weight:800;"><i class="fa-solid fa-terminal" style="color:var(--purple);"></i> Sorgu Terminali</h2>
-                    <button onclick="loadTool('welcome', null)" style="background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid rgba(239,68,68,0.2); padding:8px 15px; border-radius:10px; cursor:pointer; font-weight:bold;">Kapat</button>
+        <main id="toolCatalog">
+            <div class="tool-category" data-cat="eokul">
+                <div class="cat-title"><i class="fa-solid fa-school"></i> E-OKUL & DİĞER</div>
+                <div class="grid-tools">
+                    <div class="tool-card" onclick="openQuery('papara_adsoyad')"><div class="tool-icon"><i class="fa-solid fa-wallet"></i></div><h4>Papara (Ad Soyad)</h4><p>İsimle Papara hesabı sorgula.</p></div>
+                    <div class="tool-card" onclick="openQuery('papara_id')"><div class="tool-icon"><i class="fa-solid fa-wallet"></i></div><h4>Papara (ID)</h4><p>Papara ID ile hesap sorgula.</p></div>
+                    <div class="tool-card" onclick="openQuery('turknet_tel')"><div class="tool-icon"><i class="fa-solid fa-wifi"></i></div><h4>Türknet Sorgu</h4><p>Telefon ile abone sorgula.</p></div>
+                    <div class="tool-card" onclick="openQuery('cc_luhn')"><div class="tool-icon"><i class="fa-solid fa-credit-card"></i></div><h4>CC Luhn</h4><p>Kredi kartı doğrulama testi.</p></div>
+                    <div class="tool-card" onclick="openQuery('plaka_adsoyad')"><div class="tool-icon"><i class="fa-solid fa-car"></i></div><h4>Plaka (İsim)</h4><p>Ad soyad ile plaka bul.</p></div>
+                    <div class="tool-card" onclick="openQuery('plaka_kod')"><div class="tool-icon"><i class="fa-solid fa-car"></i></div><h4>Plaka (Kod)</h4><p>Plaka ile araç sahibini bul.</p></div>
+                    <div class="tool-card" onclick="openQuery('secmen_soyad')"><div class="tool-icon"><i class="fa-solid fa-check-to-slot"></i></div><h4>Seçmen (Soyad)</h4><p>Soyad ile seçmen bul.</p></div>
+                    <div class="tool-card" onclick="openQuery('secmen_tc')"><div class="tool-icon"><i class="fa-solid fa-check-to-slot"></i></div><h4>Seçmen (TC)</h4><p>TC ile seçmen bul.</p></div>
+                    <div class="tool-card" onclick="openQuery('eokul_tc')"><div class="tool-icon"><i class="fa-solid fa-school"></i></div><h4>E-Okul (TC)</h4><p>TC ile E-Okul sorgula.</p></div>
+                    <div class="tool-card" onclick="openQuery('eokul_adsoyad')"><div class="tool-icon"><i class="fa-solid fa-school"></i></div><h4>E-Okul (İsim)</h4><p>Ad soyad ile E-Okul sorgula.</p></div>
                 </div>
-                <p id="qDesc" style="color:#94a3b8; font-size:13px; margin-bottom:20px;"></p>
-                <form id="queryForm" onsubmit="event.preventDefault(); runQuery();">
-                    <div id="qInputs"></div>
-                    <button type="submit" class="btn-submit" id="submitBtn">Sorguyu Başlat</button>
-                </form>
-                
-                <div class="terminal-window" id="termWindow">
-                    <div class="terminal-header">root@shopsphere:~/output</div>
-                    <div class="terminal-body" id="qResultsRaw"></div>
+            </div>
+
+            <div class="tool-category" data-cat="violet">
+                <div class="cat-title"><i class="fa-solid fa-user-secret"></i> İSTİHBARAT & SORGULAR</div>
+                <div class="grid-tools">
+                    <div class="tool-card" onclick="openQuery('adsoyadprox')"><div class="tool-icon"><i class="fa-solid fa-user-shield"></i></div><h4>Proxy Mernis</h4><p>Gelişmiş Mernis sorgusu.</p></div>
+                    <div class="tool-card" onclick="openQuery('adsoyad')"><div class="tool-icon"><i class="fa-solid fa-user"></i></div><h4>Mernis</h4><p>Ad soyad ile TC bul.</p></div>
+                    <div class="tool-card" onclick="openQuery('aile')"><div class="tool-icon"><i class="fa-solid fa-users"></i></div><h4>Aile Sorgu</h4><p>TC ile aile bilgileri.</p></div>
+                    <div class="tool-card" onclick="openQuery('adres')"><div class="tool-icon"><i class="fa-solid fa-location-dot"></i></div><h4>Adres Sorgu</h4><p>TC ile adres bul.</p></div>
+                    <div class="tool-card" onclick="openQuery('gsm_tc')"><div class="tool-icon"><i class="fa-solid fa-phone"></i></div><h4>GSM (TC)</h4><p>TC ile telefon bul.</p></div>
+                    <div class="tool-card" onclick="openQuery('gsm_gsm')"><div class="tool-icon"><i class="fa-solid fa-phone-flip"></i></div><h4>GSM → TC</h4><p>Telefon ile TC bul.</p></div>
+                </div>
+            </div>
+
+            <div class="tool-category" data-cat="oax">
+                <div class="cat-title"><i class="fa-solid fa-database"></i> OPENARCHIVEX (AÇIK API)</div>
+                <div class="grid-tools">
+                    <div class="tool-card" onclick="openQuery('oax_status_v2')"><div class="tool-icon"><i class="fa-solid fa-server"></i></div><h4>Sistem Durumu</h4><p>API durumunu kontrol et.</p></div>
+                    <div class="tool-card" onclick="openQuery('oax_providers')"><div class="tool-icon"><i class="fa-solid fa-network-wired"></i></div><h4>Sağlayıcılar</h4><p>Veri sağlayıcıları listesi.</p></div>
+                    <div class="tool-card" onclick="openQuery('oax_sources_v2')"><div class="tool-icon"><i class="fa-solid fa-layer-group"></i></div><h4>Kaynaklar</h4><p>Tüm sızıntı kaynakları.</p></div>
+                    <div class="tool-card" onclick="openQuery('oax_forum_overview')"><div class="tool-icon"><i class="fa-solid fa-comments"></i></div><h4>Forum Özeti</h4><p>Public forum gönderileri.</p></div>
+                </div>
+            </div>
+
+            <div class="tool-category" data-cat="other">
+                <div class="cat-title"><i class="fa-solid fa-globe"></i> DİĞER ARAÇLAR</div>
+                <div class="grid-tools">
+                    <div class="tool-card" onclick="openQuery('api_whois')"><div class="tool-icon"><i class="fa-solid fa-magnifying-glass-location"></i></div><h4>WHOIS</h4><p>Domain sahibi sorgula.</p></div>
+                    <div class="tool-card" onclick="openQuery('api_bin')"><div class="tool-icon"><i class="fa-solid fa-credit-card"></i></div><h4>BIN Sorgu</h4><p>Kart BIN ile banka bul.</p></div>
+                </div>
+            </div>
+        </main>
+
+        <div class="query-overlay" id="queryOverlay">
+            <div class="query-modal">
+                <div class="modal-header">
+                    <h2 id="qTitle"><i class="fa-solid fa-terminal"></i> Sorgu</h2>
+                    <button class="close-btn" onclick="closeQuery()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form id="queryForm" onsubmit="event.preventDefault(); runQuery();">
+                        <div id="qInputs"></div>
+                        <button type="submit" class="btn-submit" id="submitBtn">Sorguyu Başlat</button>
+                    </form>
+                    
+                    <div class="result-area" id="resultArea">
+                        <div class="result-tabs">
+                            <button class="res-tab active" onclick="switchTab('formatted', this)"><i class="fa-solid fa-table"></i> Tablo</button>
+                            <button class="res-tab" onclick="switchTab('json', this)"><i class="fa-solid fa-code"></i> JSON</button>
+                        </div>
+                        
+                        <div id="tab-formatted" class="res-content active">
+                            <div style="background:rgba(0,0,0,0.2); border-radius:12px; border:1px solid #222; overflow:hidden;">
+                                <table class="data-table" id="resultTable"></table>
+                            </div>
+                        </div>
+                        
+                        <div id="tab-json" class="res-content">
+                            <div class="terminal-window">
+                                <div class="terminal-header">
+                                    <div class="dot" style="background:#ff5f56"></div>
+                                    <div class="dot" style="background:#ffbd2e"></div>
+                                    <div class="dot" style="background:#27c93f"></div>
+                                </div>
+                                <div class="terminal-body" id="resultJson"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
     <script>
         const $ = id => document.getElementById(id);
         const H = { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content };
 
-        const c = $('cyber-bg'), ctx = c.getContext('2d'); let p = [];
-        function resize() { c.width = innerWidth; c.height = innerHeight; } resize(); addEventListener('resize', resize);
-        for(let i=0; i<40; i++) p.push({x:Math.random()*c.width, y:Math.random()*c.height, vx:(Math.random()-0.5)*0.5, vy:(Math.random()-0.5)*0.5});
-        function draw() { ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle='rgba(99,102,241,0.5)'; p.forEach((pt, i) => { pt.x+=pt.vx; pt.y+=pt.vy; if(pt.x<0||pt.x>c.width) pt.vx*=-1; if(pt.y<0||pt.y>c.height) pt.vy*=-1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 2, 0, 7); ctx.fill(); }); requestAnimationFrame(draw); } draw();
-        setInterval(() => { $('liveClock').innerText = new Date().toLocaleTimeString('tr-TR'); }, 1000);
+        const canvas = $('bg-canvas'), ctx = canvas.getContext('2d'); let particles = [];
+        function resize() { canvas.width = innerWidth; canvas.height = innerHeight; } resize(); addEventListener('resize', resize);
+        for(let i=0; i<60; i++) particles.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, vx:(Math.random()-0.5)*0.3, vy:(Math.random()-0.5)*0.3});
+        function draw() {
+            ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle = 'rgba(168, 85, 247, 0.4)'; ctx.strokeStyle = 'rgba(99, 102, 241, 0.1)';
+            particles.forEach((p, i) => {
+                p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>canvas.width) p.vx*=-1; if(p.y<0||p.y>canvas.height) p.vy*=-1;
+                ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, 7); ctx.fill();
+                for(let j=i+1; j<particles.length; j++) {
+                    let dx=p.x-particles[j].x, dy=p.y-particles[j].y, d=Math.sqrt(dx*dx+dy*dy);
+                    if(d<150) { ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(particles[j].x,particles[j].y); ctx.stroke(); }
+                }
+            });
+            requestAnimationFrame(draw);
+        } draw();
 
-        function toggleMenu() { $('sidebar').classList.toggle('open'); }
-        
+        function filterTools() {
+            const query = $('searchInput').value.toLowerCase();
+            document.querySelectorAll('.tool-card').forEach(card => {
+                const title = card.querySelector('h4').innerText.toLowerCase();
+                const desc = card.querySelector('p').innerText.toLowerCase();
+                card.style.display = (title.includes(query) || desc.includes(query)) ? 'block' : 'none';
+            });
+            document.querySelectorAll('.tool-category').forEach(cat => {
+                const visibleCards = Array.from(cat.querySelectorAll('.tool-card')).some(c => c.style.display !== 'none');
+                cat.style.display = visibleCards ? 'block' : 'none';
+            });
+        }
+
         const TOOLS = {
-            // E-Okul API
-            'papara_adsoyad': { title: 'Papara Sorgu (Ad Soyad)', desc: 'Papara hesabı sorgular.', fields: [{ id:'ad_soyad', label:'Ad Soyad' }] },
-            'papara_id': { title: 'Papara Sorgu (ID)', desc: 'Papara ID ile hesap sorgular.', fields: [{ id:'papara_id', label:'Papara ID' }] },
-            'turknet_tel': { title: 'Türknet Sorgu', desc: 'Telefon numarası ile Türknet abonesi sorgular.', fields: [{ id:'telefon', label:'Telefon (örn: 05xx...)' }] },
-            'cc_luhn': { title: 'CC Luhn Doğrulama', desc: 'Kredi kartı numarasının geçerli olup olmadığını kontrol eder.', fields: [{ id:'kart', label:'Kredi Kartı Numarası' }] },
-            'plaka_adsoyad': { title: 'Plaka Sorgu (Ad Soyad)', desc: 'Ad soyad ile plaka bulur.', fields: [{ id:'ad_soyad', label:'Ad Soyad' }] },
-            'plaka_kod': { title: 'Plaka Sorgu (Plaka)', desc: 'Plaka ile araç sahibini bulur.', fields: [{ id:'plaka', label:'Plaka Kodu' }] },
-            'secmen_soyad': { title: 'Seçmen Sorgu (Soyad)', desc: 'Soyad ile seçmen bilgilerini bulur.', fields: [{ id:'soyad', label:'Soyad' }] },
-            'secmen_tc': { title: 'Seçmen Sorgu (TC)', desc: 'TC ile seçmen bilgilerini bulur.', fields: [{ id:'tc', label:'TC Kimlik No' }] },
-            'eokul_tc': { title: 'E-Okul Sorgu (TC)', desc: 'TC ile E-Okul bilgilerini bulur.', fields: [{ id:'tc', label:'TC Kimlik No' }] },
-            'eokul_adsoyad': { title: 'E-Okul Sorgu (Ad Soyad)', desc: 'Ad soyad ile E-Okul bilgilerini bulur.', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
-            
-            // Violetpanel API
-            'adsoyadprox': { title: 'Proxy Mernis', desc: 'Proxy üzerinden Mernis sorgusu (İl opsiyonel).', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }, { id:'il', label:'İl (Opsiyonel)', required: false }] },
-            'adsoyad': { title: 'Mernis Sorgu', desc: 'Ad ve soyad ile TC bulun.', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
-            'aile': { title: 'Aile Çözümleri', desc: 'TC ile aile bilgilerini bulun.', fields:[{ id:'tc', label:'TC Kimlik No' }] },
-            'adres': { title: 'Adres Çözümleri', desc: 'TC ile güncel adres bulun.', fields:[{ id:'tc', label:'TC Kimlik No' }] },
-            'gsm_tc': { title: 'GSM Çözümleri (TC)', desc: 'TC ile telefon numarası bulun.', fields:[{ id:'tc', label:'TC Kimlik No' }] },
-            'gsm_gsm': { title: 'GSM → TC', desc: 'Telefon numarası ile TC bulun.', fields:[{ id:'gsm', label:'GSM Numarası' }] },
-            
-            // OpenArchiveX
-            'oax_status_v2': { title: 'Sistem Durumu (v2)', desc: 'OpenArchiveX v2 API durumu.', fields: [] },
-            'oax_providers': { title: 'Sağlayıcılar', desc: 'Veri sağlayıcıları listesi.', fields: [] },
-            'oax_sources_v2': { title: 'Tüm Kaynaklar', desc: 'Açık kaynakların listesi.', fields: [] },
-            'oax_forum_overview': { title: 'Forum Özeti', desc: 'Herkese açık forum gönderileri.', fields: [] },
-
-            // Diğer
-            'api_whois': { title: 'Domain WHOIS', desc: 'Alan adı sahibini bulun.', fields: [{ id:'domain', label:'Domain Adı' }] },
-            'api_bin': { title: 'BIN Sorgu', desc: 'Kart ilk 6 hane ile banka bulun.', fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi' }] }
+            'papara_adsoyad': { title: 'Papara Sorgu (Ad Soyad)', fields: [{ id:'ad_soyad', label:'Ad Soyad' }] },
+            'papara_id': { title: 'Papara Sorgu (ID)', fields: [{ id:'papara_id', label:'Papara ID' }] },
+            'turknet_tel': { title: 'Türknet Sorgu', fields: [{ id:'telefon', label:'Telefon' }] },
+            'cc_luhn': { title: 'CC Luhn Doğrulama', fields: [{ id:'kart', label:'Kredi Kartı No' }] },
+            'plaka_adsoyad': { title: 'Plaka Sorgu (İsim)', fields: [{ id:'ad_soyad', label:'Ad Soyad' }] },
+            'plaka_kod': { title: 'Plaka Sorgu (Plaka)', fields: [{ id:'plaka', label:'Plaka Kodu' }] },
+            'secmen_soyad': { title: 'Seçmen Sorgu (Soyad)', fields: [{ id:'soyad', label:'Soyad' }] },
+            'secmen_tc': { title: 'Seçmen Sorgu (TC)', fields: [{ id:'tc', label:'TC Kimlik No' }] },
+            'eokul_tc': { title: 'E-Okul Sorgu (TC)', fields: [{ id:'tc', label:'TC Kimlik No' }] },
+            'eokul_adsoyad': { title: 'E-Okul Sorgu (İsim)', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
+            'adsoyadprox': { title: 'Proxy Mernis', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }, { id:'il', label:'İl (Opsiyonel)', req: false }] },
+            'adsoyad': { title: 'Mernis Sorgu', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
+            'aile': { title: 'Aile Sorgu', fields: [{ id:'tc', label:'TC Kimlik No' }] },
+            'adres': { title: 'Adres Sorgu', fields: [{ id:'tc', label:'TC Kimlik No' }] },
+            'gsm_tc': { title: 'GSM Sorgu (TC)', fields: [{ id:'tc', label:'TC Kimlik No' }] },
+            'gsm_gsm': { title: 'GSM → TC', fields: [{ id:'gsm', label:'Telefon Numarası' }] },
+            'oax_status_v2': { title: 'OpenArchiveX Durum', fields: [] },
+            'oax_providers': { title: 'OpenArchiveX Sağlayıcılar', fields: [] },
+            'oax_sources_v2': { title: 'OpenArchiveX Kaynaklar', fields: [] },
+            'oax_forum_overview': { title: 'OpenArchiveX Forum', fields: [] },
+            'api_whois': { title: 'WHOIS Sorgu', fields: [{ id:'domain', label:'Domain' }] },
+            'api_bin': { title: 'BIN Sorgu', fields: [{ id:'bin', label:'Kart İlk 6 Hane' }] }
         };
 
-        function loadTool(type, el) { 
-            if(type === 'welcome') { 
-                document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); 
-                $('view-dashboard').classList.add('active'); 
-                if (el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
-                return; 
-            }
-            if (el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); 
-            $('view-query').classList.add('active'); 
-            
-            const tool = TOOLS[type]; if(!tool) return;
-            $('qTitle').innerText = tool.title;
-            $('qDesc').innerText = tool.desc;
-            $('termWindow').style.display = 'none';
-            
-            let html = ''; 
-            tool.fields.forEach(f => { 
-                const req = f.required === false ? '' : 'required';
-                html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" ${req}></div>`; 
-            }); 
-            $('qInputs').innerHTML = html; 
-            window.currentType = type;
-        }
-        
-        async function runQuery() { 
-            const payload = { type: window.currentType };
-            const inputs = document.querySelectorAll('#qInputs input');
-            inputs.forEach(input => {
-                const key = input.id.replace('inp_', '');
-                payload[key] = input.value.trim();
-            });
+        let currentType = null;
 
-            const btn = $('submitBtn'), term = $('qResultsRaw');
-            btn.disabled = true; btn.innerText = 'Bağlanıyor...';
-            $('termWindow').style.display = 'block';
-            term.innerHTML = '<span style="color:#fbbf24;">> Sunucuya istek gönderiliyor...</span>';
+        function openQuery(type) {
+            const tool = TOOLS[type]; if(!tool) return;
+            currentType = type;
+            
+            $('qTitle').innerHTML = `<i class="fa-solid fa-terminal"></i> ${tool.title}`;
+            $('resultArea').style.display = 'none';
+            
+            let html = '';
+            tool.fields.forEach(f => {
+                const req = f.req === false ? '' : 'required';
+                html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" ${req} autocomplete="off"></div>`;
+            });
+            $('qInputs').innerHTML = html;
+            
+            $('queryOverlay').classList.add('active');
+        }
+
+        function closeQuery() { $('queryOverlay').classList.remove('active'); }
+
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.res-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.res-content').forEach(c => c.classList.remove('active'));
+            if(tab === 'formatted') $('tab-formatted').classList.add('active');
+            else $('tab-json').classList.add('active');
+        }
+
+        async function runQuery() {
+            const payload = { type: currentType };
+            document.querySelectorAll('#qInputs input').forEach(input => { payload[input.id.replace('inp_', '')] = input.value.trim(); });
+
+            const btn = $('submitBtn');
+            btn.disabled = true; btn.innerHTML = '<span class="loader"></span> Sorgulanıyor...';
+            
+            $('resultArea').style.display = 'block';
+            $('resultTable').innerHTML = '<tr><td style="text-align:center; padding:30px; color:#94a3b8;">Sunucuya bağlanılıyor...</td></tr>';
+            $('resultJson').innerHTML = '<span style="color:#94a3b8;">> İstek gönderildi, bekleniyor...</span>';
 
             try {
-                const res = await fetch('/api/sorgu', { method: 'POST', headers: H, body: JSON.stringify(payload) }).then(r => r.json());
-                if(res.success) {
-                    term.innerHTML = `<span style="color:#10b981;">> BAŞARILI</span>\n\n` + JSON.stringify(res.data, null, 2);
+                const res = await fetch('/api/sorgu', { method:'POST', headers:H, body:JSON.stringify(payload) }).then(r => r.json());
+                
+                if(!res.success) {
+                    $('resultTable').innerHTML = `<tr><td style="color:#ef4444; text-align:center; padding:30px;"><i class="fa-solid fa-triangle-exclamation"></i> Hata: ${res.error}</td></tr>`;
+                    $('resultJson').innerHTML = `<span style="color:#ef4444;">> HATA: ${res.error}</span>`;
                 } else {
-                    term.innerHTML = `<span style="color:#ef4444;">> HATA: ${res.error}</span>`;
+                    // Tablo Render
+                    let tableHtml = '<thead><tr><th>Anahtar</th><th>Değer</th></tr></thead><tbody>';
+                    const obj = Array.isArray(res.data) ? res.data[0] : res.data;
+                    
+                    if(typeof obj === 'object' && obj !== null) {
+                        for(let [k, v] of Object.entries(obj)) {
+                            if(typeof v === 'object') v = JSON.stringify(v);
+                            tableHtml += `<tr><td style="color:#a5b4fc; font-weight:bold; width:30%;">${k}</td><td>${v}</td></tr>`;
+                        }
+                    } else {
+                        tableHtml += `<tr><td colspan="2" style="text-align:center;">${res.data}</td></tr>`;
+                    }
+                    tableHtml += '</tbody>';
+                    $('resultTable').innerHTML = tableHtml;
+
+                    // JSON Render
+                    const jsonStr = JSON.stringify(res.data, null, 2);
+                    const coloredJson = jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                        let cls = '#a855f7';
+                        if (/^"/.test(match)) { cls = /:$/.test(match) ? '#60a5fa' : '#fbbf24'; }
+                        else if (/true|false/.test(match)) { cls = '#ef4444'; }
+                        return `<span style="color:${cls}">${match}</span>`;
+                    });
+                    $('resultJson').innerHTML = `<span style="color:#10b981;">> BAŞARILI</span>\n\n${coloredJson}`;
                 }
             } catch(e) {
-                term.innerHTML = `<span style="color:#ef4444;">> Bağlantı hatası oluştu.</span>`;
+                $('resultTable').innerHTML = '<tr><td style="color:#ef4444; text-align:center; padding:30px;">Bağlantı hatası.</td></tr>';
+                $('resultJson').innerHTML = '<span style="color:#ef4444;">> Bağlantı hatası.</span>';
             }
+            
             btn.disabled = false; btn.innerText = 'Sorguyu Başlat';
         }
 
         async function logout() { await fetch('/api/logout', {method:'POST', headers:H}); location.href='/login'; }
+        document.addEventListener('keydown', e => { if(e.key === 'Escape') closeQuery(); });
     </script>
 </body>
 </html>
