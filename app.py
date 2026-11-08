@@ -109,7 +109,6 @@ def api_sorgu():
     if 'user_id' not in session and not session.get('admin'): return jsonify({"success": False, "error": "Giriş yapın."}), 401
     req = request.json or {}
     q_type = req.get("type")
-    api_key = req.get("api_key", "").strip()
     uid = session.get('user_id', 0); uname = session.get('username', 'admin')
     ip = request.remote_addr or "?"
     
@@ -118,35 +117,41 @@ def api_sorgu():
     try:
         result = None
         
-        if q_type.startswith("oax_") or q_type == "oa_public_status":
-            if api_key: headers["Authorization"] = f"Bearer {api_key}"
-            oax_map = {
-                "oax_status": {"url": "https://openarchivex.net/api/v2/status", "method": "GET"},
-                "oa_public_status": {"url": "https://openarchivex.net/api/v2/status", "method": "GET"},
-                "oax_providers": {"url": "https://openarchivex.net/api/v2/providers", "method": "GET"},
-                "oax_pricing": {"url": "https://openarchivex.net/api/pricing/api-plans", "method": "GET"},
-                "oax_sources": {"url": "https://openarchivex.net/api/v2/sources", "method": "GET"},
-                "oax_forum": {"url": "https://openarchivex.net/api/forum/public/overview", "method": "GET"},
-                "oax_intelx_search": {"url": "https://openarchivex.net/api/v2/search", "method": "POST"},
-                "oax_discord": {"url": "https://openarchivex.net/api/discord-osint/", "method": "POST"},
-                "oax_tiktok": {"url": "https://openarchivex.net/api/tiktok-osint/", "method": "POST"},
-            }
-            if q_type in oax_map:
-                target = oax_map[q_type]
-                query_param = req.get("query", "") or req.get("username", "") or req.get("param", "")
-                if target["method"] == "POST" and not api_key: return jsonify({"success": False, "error": "Bu araç için OpenArchiveX API Key gereklidir."})
-                
-                if target["method"] == "GET":
-                    r = requests.get(target["url"], headers=headers, timeout=20)
-                else:
-                    r = requests.post(target["url"], headers=headers, json={"query": query_param}, timeout=20)
-                
-                if r.status_code == 401: return jsonify({"success": False, "error": "Yetkisiz (401). Geçerli bir API Key girin."})
-                elif r.status_code != 200: return jsonify({"success": False, "error": f"OpenArchiveX Hatası: HTTP {r.status_code}"})
-                result = r.json()
+        # --- E-OKUL SORGU API ---
+        if q_type == "papara_adsoyad":
+            r = requests.get("https://eokulsorguapi.onrender.com/papara/api", params={"ad_soyad": req.get('ad_soyad')}, headers=headers, timeout=15)
+            result = r.json()
+        elif q_type == "papara_id":
+            r = requests.get("https://eokulsorguapi.onrender.com/papara/api", params={"papara_id": req.get('papara_id')}, headers=headers, timeout=15)
+            result = r.json()
+        elif q_type == "turknet_tel":
+            r = requests.get("https://eokulsorguapi.onrender.com/turknet/api", params={"telefon": req.get('telefon')}, headers=headers, timeout=15)
+            result = r.json()
+        elif q_type == "cc_luhn":
+            r = requests.get("https://eokulsorguapi.onrender.com/cc/luhn", params={"kart": req.get('kart')}, headers=headers, timeout=15)
+            result = r.json()
+        elif q_type == "plaka_adsoyad":
+            r = requests.get("https://eokulsorguapi.onrender.com/plaka/api", params={"ad_soyad": req.get('ad_soyad')}, headers=headers, timeout=15)
+            result = r.json()
+        elif q_type == "plaka_kod":
+            r = requests.get("https://eokulsorguapi.onrender.com/plaka/api", params={"plaka": req.get('plaka')}, headers=headers, timeout=15)
+            result = r.json()
+        elif q_type == "secmen_soyad":
+            r = requests.get("https://eokulsorguapi.onrender.com/secmen/api", params={"soyad": req.get('soyad')}, headers=headers, timeout=15)
+            result = r.json()
+        elif q_type == "secmen_tc":
+            r = requests.get("https://eokulsorguapi.onrender.com/secmen/api", params={"tc": req.get('tc')}, headers=headers, timeout=15)
+            result = r.json()
+        elif q_type == "eokul_tc":
+            r = requests.get("https://eokulsorguapi.onrender.com/eokul/api", params={"tc": req.get('tc')}, headers=headers, timeout=15)
+            result = r.json()
+        elif q_type == "eokul_adsoyad":
+            r = requests.get("https://eokulsorguapi.onrender.com/eokul/api", params={"ad": req.get('ad'), "soyad": req.get('soyad')}, headers=headers, timeout=15)
+            result = r.json()
 
-        elif q_type == "plaka_sorgu":
-            r = requests.get(f"https://eokulsorguapi.onrender.com/plaka/api?plaka={req.get('plaka')}", headers=headers, timeout=15)
+        # --- VIOLETPANEL API ---
+        elif q_type == "adsoyadprox":
+            r = requests.get("https://violetpanel.cc/furkanapi/adsoyadproxapi.php", params={"ad": req.get('ad'), "soyad": req.get('soyad'), "il": req.get('il', '')}, headers=headers, timeout=15)
             result = r.json()
         elif q_type == "adsoyad":
             r = requests.get("https://violetpanel.cc/furkanapi/adsoyadapi.php", params={"ad": req.get('ad'), "soyad": req.get('soyad')}, headers=headers, timeout=15)
@@ -154,6 +159,35 @@ def api_sorgu():
         elif q_type == "aile":
             r = requests.get("https://violetpanel.cc/furkanapi/ailesorguapi.php", params={"tc": req.get('tc')}, headers=headers, timeout=15)
             result = r.json()
+        elif q_type == "adres":
+            r = requests.get("https://violetpanel.cc/furkanapi/adrespro.php", params={"tc": req.get('tc')}, headers=headers, timeout=15)
+            result = r.json()
+        elif q_type == "gsm_tc":
+            r = requests.get("https://violetpanel.cc/furkanapi/gsmpro.php", params={"tc": req.get('tc')}, headers=headers, timeout=15)
+            result = r.json()
+        elif q_type == "gsm_gsm":
+            r = requests.get("https://violetpanel.cc/furkanapi/gsmpro.php", params={"gsm": req.get('gsm')}, headers=headers, timeout=15)
+            result = r.json()
+
+        # --- OPENARCHIVEX API (Önceki Eklenenler) ---
+        elif q_type.startswith("oax_"):
+            oax_map = {
+                "oax_status_v2": "https://openarchivex.net/api/v2/status",
+                "oax_status_api": "https://openarchivex.net/api/status",
+                "oax_providers": "https://openarchivex.net/api/v2/providers",
+                "oax_forum_overview": "https://openarchivex.net/api/forum/public/overview",
+                "oax_pricing": "https://openarchivex.net/api/pricing/api-plans",
+                "oax_sources_v2": "https://openarchivex.net/api/v2/sources",
+                "oax_intelx_buckets": "https://openarchivex.net/api/v2/intelx/buckets",
+            }
+            if q_type in oax_map:
+                r = requests.get(oax_map[q_type], headers=headers, timeout=15)
+                if r.status_code == 200: result = r.json()
+                else: return jsonify({"success": False, "error": f"HTTP {r.status_code}"})
+            else:
+                return jsonify({"success": False, "error": "Geçersiz OpenArchiveX aracı."})
+
+        # --- DİĞER API'LER ---
         elif q_type == "api_whois":
             r = requests.get(f"https://rdap.org/domain/{req.get('domain')}", headers=headers, timeout=15)
             result = r.json() if r.status_code == 200 else {"error": "Bulunamadı"}
@@ -166,17 +200,17 @@ def api_sorgu():
             return jsonify({"success": True, "data": result})
         else:
             log_query(uid, uname, q_type, str(req)[:100], ip, "basarisiz")
-            return jsonify({"success": False, "error": "Dış API'den geçerli bir yanıt alınamadı."})
+            return jsonify({"success": False, "error": "Geçersiz sorgu veya sonuç alınamadı."})
 
     except requests.exceptions.Timeout:
-        return jsonify({"success": False, "error": "Dış API sunucusu zaman aşımına uğradı (Çökmüş olabilir)."})
+        return jsonify({"success": False, "error": "Dış API zaman aşımına uğradı."})
     except requests.exceptions.RequestException:
-         return jsonify({"success": False, "error": "Dış API sunucusuna ulaşılamıyor (Bağlantı reddedildi)."})
+         return jsonify({"success": False, "error": "Dış API'ye ulaşılamıyor."})
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"success": False, "error": "Beklenmeyen bir sunucu hatası oluştu."})
+        return jsonify({"success": False, "error": "Sunucu hatası."})
 
-# --- ADMIN PANELİ ---
+# --- ADMIN PANELİ (Değişmedi) ---
 @app.route("/admin-panel-x9", methods=["GET", "POST"])
 def admin_dashboard():
     if not session.get("admin"):
@@ -191,67 +225,48 @@ def admin_dashboard():
         users = c.execute("SELECT id, username, password, banned, created_at, (SELECT COUNT(*) FROM logs WHERE logs.user_id = users.id), vip FROM users ORDER BY id DESC").fetchall()
         logs = c.execute("SELECT * FROM logs ORDER BY id DESC LIMIT 500").fetchall()
         tickets = c.execute("SELECT * FROM tickets ORDER BY status ASC, id DESC").fetchall()
-        
         total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
         vip_users = c.execute("SELECT COUNT(*) FROM users WHERE vip=1").fetchone()[0]
         banned_users = c.execute("SELECT COUNT(*) FROM users WHERE banned=1").fetchone()[0]
-        
         success_count = c.execute("SELECT COUNT(*) FROM logs WHERE status='basarili'").fetchone()[0]
         fail_count = c.execute("SELECT COUNT(*) FROM logs WHERE status='basarisiz'").fetchone()[0]
-        
         popular_queries = c.execute("SELECT query_type, query_param, COUNT(*) FROM logs WHERE status='basarili' AND query_param != '' GROUP BY query_param ORDER BY 3 DESC LIMIT 10").fetchall()
-        
         q_stats = c.execute("SELECT query_type, COUNT(*) FROM logs GROUP BY query_type").fetchall()
         chart_labels = json.dumps([q[0] for q in q_stats]); chart_data = json.dumps([q[1] for q in q_stats])
         daily_labels = json.dumps([]); daily_data = json.dumps([]) 
 
-    return render_template('admin.html', 
-        show_login=False, users=users, logs=logs, tickets=tickets, 
-        total_users=total_users, total_queries=total_queries, vip_users=vip_users, banned_users=banned_users,
-        success_count=success_count, fail_count=fail_count, popular_queries=popular_queries,
-        chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data,
-        maint=get_setting("maintenance"), current_bc=get_setting("broadcast"))
+    return render_template('admin.html', show_login=False, users=users, logs=logs, tickets=tickets, total_users=total_users, total_queries=total_queries, vip_users=vip_users, banned_users=banned_users, success_count=success_count, fail_count=fail_count, popular_queries=popular_queries, chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"))
 
 @app.route("/admin-toggle-vip/<int:uid>", methods=["POST"])
 def admin_toggle_vip(uid):
     if not session.get("admin"): return redirect("/")
-    with get_db() as c:
-        c.execute("UPDATE users SET vip = CASE WHEN vip=1 THEN 0 ELSE 1 END WHERE id=?", (uid,))
-        c.commit()
+    with get_db() as c: c.execute("UPDATE users SET vip = CASE WHEN vip=1 THEN 0 ELSE 1 END WHERE id=?", (uid,)); c.commit()
     return redirect("/admin-panel-x9")
 
 @app.route("/admin-ban/<int:uid>", methods=["POST"])
 def admin_ban_user(uid):
     if not session.get("admin"): return redirect("/")
-    with get_db() as c:
-        c.execute("UPDATE users SET banned = CASE WHEN banned=1 THEN 0 ELSE 1 END WHERE id=?", (uid,))
-        c.commit()
+    with get_db() as c: c.execute("UPDATE users SET banned = CASE WHEN banned=1 THEN 0 ELSE 1 END WHERE id=?", (uid,)); c.commit()
     return redirect("/admin-panel-x9")
 
 @app.route("/admin-delete/<int:uid>", methods=["POST"])
 def admin_delete_user(uid):
     if not session.get("admin"): return redirect("/")
-    with get_db() as c:
-        c.execute("DELETE FROM users WHERE id=?", (uid,))
-        c.execute("DELETE FROM logs WHERE user_id=?", (uid,))
-        c.commit()
+    with get_db() as c: c.execute("DELETE FROM users WHERE id=?", (uid,)); c.execute("DELETE FROM logs WHERE user_id=?", (uid,)); c.commit()
     return redirect("/admin-panel-x9")
 
 @app.route("/admin-reset-pass/<int:uid>", methods=["POST"])
 def admin_reset_pass(uid):
     if not session.get("admin"): return redirect("/")
     tmp = secrets.token_urlsafe(6)
-    with get_db() as c:
-        c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(tmp), uid))
-        c.commit()
+    with get_db() as c: c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(tmp), uid)); c.commit()
     return redirect("/admin-panel-x9")
 
 @app.route("/admin-history/<int:uid>")
 def admin_history(uid):
     if not session.get("admin"): return jsonify({"success": False}), 401
-    with get_db() as c:
-        logs = c.execute("SELECT timestamp, query_type, query_param, ip, status FROM logs WHERE user_id=? ORDER BY id DESC LIMIT 100", (uid,)).fetchall()
+    with get_db() as c: logs = c.execute("SELECT timestamp, query_type, query_param, ip, status FROM logs WHERE user_id=? ORDER BY id DESC LIMIT 100", (uid,)).fetchall()
     return jsonify({"success": True, "history": [{"time": l[0], "type": l[1], "param": l[2], "ip": l[3], "status": l[4]} for l in logs]})
 
 @app.route("/gizli-bakim-degistir", methods=["POST"])
@@ -272,9 +287,7 @@ def admin_add_user():
     u, p = request.form.get("username", "").strip().lower(), request.form.get("password", "")
     if len(u) >= 3 and len(p) >= 6:
         try:
-            with get_db() as c:
-                c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)", (u, generate_password_hash(p), datetime.now().strftime("%Y-%m-%d")))
-                c.commit()
+            with get_db() as c: c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)", (u, generate_password_hash(p), datetime.now().strftime("%Y-%m-%d"))); c.commit()
         except: pass
     return redirect("/admin-panel-x9")
 
