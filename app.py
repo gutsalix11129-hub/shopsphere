@@ -5,6 +5,7 @@ import time
 import secrets
 import requests
 import traceback
+import urllib.parse
 from datetime import datetime, timezone
 from contextlib import contextmanager
 from flask import Flask, request, jsonify, render_template, session, redirect
@@ -113,83 +114,53 @@ def api_sorgu():
     uid = session.get('user_id', 0); uname = session.get('username', 'admin')
     ip = request.remote_addr or "?"
     
-    # GERÇEK TARAYICI GİBİ GÖRÜNMEK İÇİN HEADER'LAR (Render IP engellemelerini aşmak için)
+    # TARAYICI TAKLİDİ (Engellenmemek için)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Connection": "keep-alive"
+        "Referer": "https://violetpanel.cc/"
     }
 
     try:
         result = None
-        session_req = requests.Session()
-        session_req.headers.update(headers)
-
-        # --- E-OKUL SORGU API ---
+        
+        # --- E-OKUL SORGU API (Tam URL Birleştirme) ---
         if q_type == "papara_adsoyad":
-            r = session_req.get("https://eokulsorguapi.onrender.com/papara/api", params={"ad_soyad": req.get('ad_soyad')}, timeout=20)
-            result = r.json()
+            url = f"https://eokulsorguapi.onrender.com/papara/api?ad_soyad={urllib.parse.quote(req.get('ad_soyad', ''))}"
         elif q_type == "papara_id":
-            r = session_req.get("https://eokulsorguapi.onrender.com/papara/api", params={"papara_id": req.get('papara_id')}, timeout=20)
-            result = r.json()
+            url = f"https://eokulsorguapi.onrender.com/papara/api?papara_id={urllib.parse.quote(req.get('papara_id', ''))}"
         elif q_type == "turknet_tel":
-            r = session_req.get("https://eokulsorguapi.onrender.com/turknet/api", params={"telefon": req.get('telefon')}, timeout=20)
-            result = r.json()
+            url = f"https://eokulsorguapi.onrender.com/turknet/api?telefon={urllib.parse.quote(req.get('telefon', ''))}"
         elif q_type == "cc_luhn":
-            r = session_req.get("https://eokulsorguapi.onrender.com/cc/luhn", params={"kart": req.get('kart')}, timeout=20)
-            result = r.json()
+            url = f"https://eokulsorguapi.onrender.com/cc/luhn?kart={urllib.parse.quote(req.get('kart', ''))}"
         elif q_type == "plaka_adsoyad":
-            r = session_req.get("https://eokulsorguapi.onrender.com/plaka/api", params={"ad_soyad": req.get('ad_soyad')}, timeout=20)
-            result = r.json()
+            url = f"https://eokulsorguapi.onrender.com/plaka/api?ad_soyad={urllib.parse.quote(req.get('ad_soyad', ''))}"
         elif q_type == "plaka_kod":
-            r = session_req.get("https://eokulsorguapi.onrender.com/plaka/api", params={"plaka": req.get('plaka')}, timeout=20)
-            result = r.json()
+            url = f"https://eokulsorguapi.onrender.com/plaka/api?plaka={urllib.parse.quote(req.get('plaka', ''))}"
         elif q_type == "secmen_soyad":
-            r = session_req.get("https://eokulsorguapi.onrender.com/secmen/api", params={"soyad": req.get('soyad')}, timeout=20)
-            result = r.json()
+            url = f"https://eokulsorguapi.onrender.com/secmen/api?soyad={urllib.parse.quote(req.get('soyad', ''))}"
         elif q_type == "secmen_tc":
-            r = session_req.get("https://eokulsorguapi.onrender.com/secmen/api", params={"tc": req.get('tc')}, timeout=20)
-            result = r.json()
+            url = f"https://eokulsorguapi.onrender.com/secmen/api?tc={urllib.parse.quote(req.get('tc', ''))}"
         elif q_type == "eokul_tc":
-            r = session_req.get("https://eokulsorguapi.onrender.com/eokul/api", params={"tc": req.get('tc')}, timeout=20)
-            result = r.json()
+            url = f"https://eokulsorguapi.onrender.com/eokul/api?tc={urllib.parse.quote(req.get('tc', ''))}"
         elif q_type == "eokul_adsoyad":
-            r = session_req.get("https://eokulsorguapi.onrender.com/eokul/api", params={"ad": req.get('ad'), "soyad": req.get('soyad')}, timeout=20)
-            result = r.json()
+            url = f"https://eokulsorguapi.onrender.com/eokul/api?ad={urllib.parse.quote(req.get('ad', ''))}&soyad={urllib.parse.quote(req.get('soyad', ''))}"
 
-        # --- VIOLETPANEL API ---
+        # --- VIOLETPANEL API (Tam URL Birleştirme) ---
         elif q_type == "adsoyadprox":
-            params = {"ad": req.get('ad'), "soyad": req.get('soyad')}
-            if req.get('il'): params['il'] = req.get('il')
-            r = session_req.get("https://violetpanel.cc/furkanapi/adsoyadproxapi.php", params=params, timeout=20)
-            try: result = r.json()
-            except: result = {"ham_veri": r.text} # JSON değilse ham veriyi göster
-            
+            url = f"https://violetpanel.cc/furkanapi/adsoyadproxapi.php?ad={urllib.parse.quote(req.get('ad', ''))}&soyad={urllib.parse.quote(req.get('soyad', ''))}"
+            if req.get('il'): url += f"&il={urllib.parse.quote(req.get('il'))}"
         elif q_type == "adsoyad":
-            r = session_req.get("https://violetpanel.cc/furkanapi/adsoyadapi.php", params={"ad": req.get('ad'), "soyad": req.get('soyad')}, timeout=20)
-            try: result = r.json()
-            except: result = {"ham_veri": r.text}
-            
+            url = f"https://violetpanel.cc/furkanapi/adsoyadapi.php?ad={urllib.parse.quote(req.get('ad', ''))}&soyad={urllib.parse.quote(req.get('soyad', ''))}"
         elif q_type == "aile":
-            r = session_req.get("https://violetpanel.cc/furkanapi/ailesorguapi.php", params={"tc": req.get('tc')}, timeout=20)
-            try: result = r.json()
-            except: result = {"ham_veri": r.text}
-            
+            url = f"https://violetpanel.cc/furkanapi/ailesorguapi.php?tc={urllib.parse.quote(req.get('tc', ''))}"
         elif q_type == "adres":
-            r = session_req.get("https://violetpanel.cc/furkanapi/adrespro.php", params={"tc": req.get('tc')}, timeout=20)
-            try: result = r.json()
-            except: result = {"ham_veri": r.text}
-            
+            url = f"https://violetpanel.cc/furkanapi/adrespro.php?tc={urllib.parse.quote(req.get('tc', ''))}"
         elif q_type == "gsm_tc":
-            r = session_req.get("https://violetpanel.cc/furkanapi/gsmpro.php", params={"tc": req.get('tc')}, timeout=20)
-            try: result = r.json()
-            except: result = {"ham_veri": r.text}
-            
+            url = f"https://violetpanel.cc/furkanapi/gsmpro.php?tc={urllib.parse.quote(req.get('tc', ''))}"
         elif q_type == "gsm_gsm":
-            r = session_req.get("https://violetpanel.cc/furkanapi/gsmpro.php", params={"gsm": req.get('gsm')}, timeout=20)
-            try: result = r.json()
-            except: result = {"ham_veri": r.text}
+            url = f"https://violetpanel.cc/furkanapi/gsmpro.php?gsm={urllib.parse.quote(req.get('gsm', ''))}"
 
         # --- OPENARCHIVEX API ---
         elif q_type.startswith("oax_"):
@@ -199,33 +170,41 @@ def api_sorgu():
                 "oax_sources_v2": "https://openarchivex.net/api/v2/sources",
                 "oax_forum_overview": "https://openarchivex.net/api/forum/public/overview",
             }
-            if q_type in oax_map:
-                r = session_req.get(oax_map[q_type], timeout=20)
-                if r.status_code == 200: result = r.json()
-                else: return jsonify({"success": False, "error": f"API Hatası: HTTP {r.status_code}"})
+            if q_type in oax_map: url = oax_map[q_type]
+            else: return jsonify({"success": False, "error": "Geçersiz OpenArchiveX aracı."})
 
         # --- DİĞER API'LER ---
         elif q_type == "api_whois":
-            r = session_req.get(f"https://rdap.org/domain/{req.get('domain')}", timeout=20)
-            result = r.json() if r.status_code == 200 else {"error": "Bulunamadı"}
+            url = f"https://rdap.org/domain/{urllib.parse.quote(req.get('domain', ''))}"
         elif q_type == "api_bin":
-            r = session_req.get(f"https://lookup.binlist.net/{req.get('bin')}", headers={"Accept-Version": "3"}, timeout=20)
-            result = r.json() if r.status_code == 200 else {"error": "Bulunamadı"}
+            url = f"https://lookup.binlist.net/{urllib.parse.quote(req.get('bin', ''))}"
+            headers["Accept-Version"] = "3"
+        else:
+            return jsonify({"success": False, "error": "Bilinmeyen sorgu tipi."})
+
+        # İSTEĞİ AT (Timeout süresi 60 saniye - Render uyanması için)
+        r = requests.get(url, headers=headers, timeout=60)
+        
+        if r.status_code == 200:
+            try: result = r.json()
+            except: result = {"ham_veri": r.text} # JSON gelmezse ham veriyi göster
+        else:
+            return jsonify({"success": False, "error": f"Dış API Hatası: HTTP {r.status_code}"})
 
         if result:
             log_query(uid, uname, q_type, str(req)[:100], ip, "basarili")
             return jsonify({"success": True, "data": result})
         else:
             log_query(uid, uname, q_type, str(req)[:100], ip, "basarisiz")
-            return jsonify({"success": False, "error": "Dış API geçersiz yanıt döndürdü."})
+            return jsonify({"success": False, "error": "Dış API boş yanıt döndürdü."})
 
     except requests.exceptions.Timeout:
-        return jsonify({"success": False, "error": "Dış API sunucusu yanıt vermedi (Zaman Aşımı)."})
+        return jsonify({"success": False, "error": "Dış API sunucusu çok yavaş yanıt veriyor (Zaman Aşımı). Sunucu uyuyor olabilir."})
     except requests.exceptions.RequestException:
-         return jsonify({"success": False, "error": "Dış API'ye bağlanılamadı (Ağ Hatası)."})
+         return jsonify({"success": False, "error": "Dış API'ye bağlanılamadı. Lütfen tekrar deneyin."})
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"success": False, "error": f"Sunucu Hatası: {str(e)}"})
+        return jsonify({"success": False, "error": "Sunucu hatası."})
 
 # --- ADMIN PANELİ (Değişmedi) ---
 @app.route("/admin-panel-x9", methods=["GET", "POST"])
