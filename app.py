@@ -1,30 +1,42 @@
+# -*- coding: utf-8 -*-
 import os
-import sqlite3
+import re
 import json
 import time
+import hashlib
+import sqlite3
 import secrets
-import requests
 import traceback
-from datetime import datetime, timezone
-from contextlib import contextmanager
+from datetime import datetime, timezone, timedelta
+from threading import Lock
+import requests
 from flask import Flask, request, jsonify, render_template, session, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
-DB_DIR = "/var/data" if os.path.exists("/var/data") else "."
+SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+OPENARCHIVE_KEY = os.environ.get("OPENARCHIVE_KEY", "BURAYA_TOKEN_GIRIN")
+
+app.secret_key = SECRET_KEY
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "0") == "1",
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=12)
+)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
+
+DB_DIR = "/var/data" if os.path.exists("/var/data") else "/tmp"
+if os.name == 'nt': DB_DIR = "."
 DB_FILE = os.path.join(DB_DIR, "siber_karargah.db")
 
-@contextmanager
 def get_db():
     conn = sqlite3.connect(DB_FILE, timeout=20)
-    conn.row_factory = sqlite3.Row
-    try:
-        yield conn
-    finally:
-        conn.close()
+    conn.execute("PRAGMA journal_mode=WAL;")
+    return conn
 
 def init_db():
     with get_db() as c:
@@ -33,231 +45,374 @@ def init_db():
         CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, query_type TEXT, query_param TEXT, ip TEXT, timestamp TEXT, status TEXT);
         CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
         CREATE TABLE IF NOT EXISTS tickets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, subject TEXT, message TEXT, reply TEXT, status TEXT DEFAULT 'open', created_at TEXT, replied_at TEXT);
+        CREATE TABLE IF NOT EXISTS favorites (user_id INTEGER, tool_id TEXT, PRIMARY KEY(user_id, tool_id));
+        CREATE INDEX IF NOT EXISTS idx_logs_user ON logs(user_id);
         """)
+        try: c.execute("ALTER TABLE users ADD COLUMN vip INTEGER DEFAULT 0")
+        except: pass
+        
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('maintenance', '0')")
         c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('broadcast', 'Sistemimize hoş geldiniz!')")
         c.commit()
 
 init_db()
 
-def get_setting(k):
-    with get_db() as c:
-        r = c.execute("SELECT value FROM settings WHERE key=?", (k,)).fetchone()
-        return r['value'] if r else ""
-
-def set_setting(k, v):
-    with get_db() as c:
-        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?,?)", (k, v))
-        c.commit()
-
-def log_query(uid, uname, q_type, param, ip, status):
-    try:
-        with get_db() as c:
-            c.execute("INSERT INTO logs (user_id, username, query_type, query_param, ip, timestamp, status) VALUES (?,?,?,?,?,?,?)",
-                      (uid, uname, q_type, param, ip, datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), status))
-            c.commit()
-    except: pass
-
 def csrf_token():
     if "_csrf" not in session: session["_csrf"] = secrets.token_urlsafe(32)
     return session["_csrf"]
 app.jinja_env.globals["csrf_token"] = csrf_token
 
-# --- KULLANICI ROTALARI ---
+BANNED_IPS = {}
+WAF_PATTERNS = [re.compile(r"(?i)(union\s+select|<script>|javascript:|onerror=|\.\./|\.\.\\)")]
+
+@app.before_request
+def firewall():
+    ip = request.remote_addr or "0.0.0.0"
+    now = time.time()
+    if ip in BANNED_IPS and now < BANNED_IPS[ip]:
+        return jsonify({"success": False, "error": "IP engellendi."}), 403
+    
+    data_str = str(request.args) + str(request.form) + str(request.get_json(silent=True))
+    for pattern in WAF_PATTERNS:
+        if pattern.search(data_str):
+            BANNED_IPS[ip] = now + 900
+            return jsonify({"success": False, "error": "Güvenlik ihlali!"}), 403
+
+    if request.method in ("POST", "PUT", "DELETE"):
+        token = request.headers.get("X-CSRF-Token") or request.form.get("_csrf")
+        stored = session.get("_csrf")
+        if not token or not stored or not secrets.compare_digest(str(token).encode('utf-8'), str(stored).encode('utf-8')):
+            if request.path.startswith("/api/"): return jsonify({"success": False, "error": "CSRF Hatası."}), 403
+            return "CSRF doğrulaması başarısız.", 403
+
+RATE_LIMIT = {}
+def check_rate_limit(key, max_req=30):
+    now = time.time()
+    RATE_LIMIT.setdefault(key, [])
+    RATE_LIMIT[key] = [t for t in RATE_LIMIT[key] if now - t < 60]
+    if len(RATE_LIMIT[key]) >= max_req: return False
+    RATE_LIMIT[key].append(now)
+    return True
+
+def get_setting(k):
+    with get_db() as c:
+        r = c.execute("SELECT value FROM settings WHERE key=?", (k,)).fetchone()
+        return r[0] if r else ""
+
+def set_setting(k, v):
+    with get_db() as c:
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?,?)", (k, v)); c.commit()
+
+def log_query(uid, uname, q_type, param, ip, status):
+    try:
+        with get_db() as c:
+            c.execute("INSERT INTO logs (user_id, username, query_type, query_param, ip, timestamp, status) VALUES (?,?,?,?,?,?,?)",
+                      (uid, uname, q_type, param, ip, datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), status)); c.commit()
+    except: pass
+
+USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,32}$")
+
 @app.route("/")
 def home():
     if 'user_id' not in session: return redirect('/login')
-    return render_template('index.html', username=session.get('username'))
+    with get_db() as c:
+        row = c.execute("SELECT username, created_at, avatar, vip FROM users WHERE id=?", (session['user_id'],)).fetchone()
+        if not row: session.clear(); return redirect('/login')
+        total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
+        user_queries = c.execute("SELECT COUNT(*) FROM logs WHERE user_id=?", (session['user_id'],)).fetchone()[0]
+        favs = [r[0] for r in c.execute("SELECT tool_id FROM favorites WHERE user_id=?", (session['user_id'],)).fetchall()]
+    
+    avatar = row[2] if row[2] else f"https://api.dicebear.com/7.x/bottts/svg?seed={row[0]}"
+    is_vip = row[3] == 1
+    return render_template('index.html', total_users=total_users, total_queries=total_queries, user_queries=user_queries, username=row[0], created=row[1], avatar=avatar, is_vip=is_vip, favorites=favs)
 
 @app.route("/login")
 def login_page():
     if 'user_id' in session: return redirect('/')
     return render_template('login.html')
 
-@app.route("/api/login", methods=["POST"])
-def api_login():
-    req = request.json or {}
-    u, p = req.get("username", "").strip().lower(), req.get("password", "")
-    with get_db() as c:
-        user = c.execute("SELECT * FROM users WHERE username=?", (u,)).fetchone()
-    if user and check_password_hash(user['password'], p):
-        if user['banned'] == 1: return jsonify({"success": False, "error": "Hesap askıya alınmış."})
-        session['user_id'] = user['id']; session['username'] = user['username']
-        return jsonify({"success": True})
-    return jsonify({"success": False, "error": "Hatalı giriş."})
+@app.route("/api/check_username")
+def api_check_username():
+    u = (request.args.get("u") or "").strip().lower()
+    if not USERNAME_RE.match(u): return jsonify({"available": False, "reason": "format"})
+    with get_db() as c: exists = c.execute("SELECT 1 FROM users WHERE username=?", (u,)).fetchone()
+    return jsonify({"available": not exists})
 
 @app.route("/api/register", methods=["POST"])
 def api_register():
     req = request.json or {}
-    u, p = req.get("username", "").strip().lower(), req.get("password", "").strip()
-    if len(u) < 3 or len(p) < 6: return jsonify({"success": False, "error": "Geçersiz veri."})
+    u, p, avatar = (req.get("username") or "").strip().lower(), (req.get("password") or "").strip(), (req.get("avatar") or "").strip()
+    if not USERNAME_RE.match(u) or len(p) < 6: return jsonify({"success": False, "error": "Geçersiz veri."})
     try:
         with get_db() as c:
-            c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)", (u, generate_password_hash(p), datetime.now().strftime("%Y-%m-%d")))
+            c.execute("INSERT INTO users (username, password, created_at, avatar) VALUES (?,?,?,?)", (u, generate_password_hash(p), datetime.now(timezone.utc).strftime("%Y-%m-%d"), avatar))
             c.commit()
         return jsonify({"success": True})
-    except sqlite3.IntegrityError:
-        return jsonify({"success": False, "error": "Kullanıcı adı alınmış."})
+    except sqlite3.IntegrityError: return jsonify({"success": False, "error": "Kullanıcı adı alınmış."})
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    req = request.json or {}
+    u, p = (req.get("username") or "").strip().lower(), req.get("password") or ""
+    with get_db() as c: r = c.execute("SELECT id, username, password, banned FROM users WHERE username=?", (u,)).fetchone()
+    if r and check_password_hash(r[2], p):
+        if r[3] == 1: return jsonify({"success": False, "error": "Hesap askıya alınmış."})
+        session.permanent = True; session['user_id'] = r[0]; session['username'] = r[1]
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Kullanıcı adı veya şifre hatalı."})
 
 @app.route("/api/logout", methods=["POST"])
 def api_logout(): session.clear(); return jsonify({"success": True})
 
-# --- API SORGU MOTORU ---
+@app.route("/api/get_broadcast")
+def api_get_broadcast(): return jsonify({"success": True, "broadcast": get_setting("broadcast")})
+
+@app.route("/api/toggle_favorite", methods=["POST"])
+def api_toggle_favorite():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    tool_id = (request.json or {}).get("tool_id")
+    with get_db() as c:
+        existing = c.execute("SELECT 1 FROM favorites WHERE user_id=? AND tool_id=?", (session['user_id'], tool_id)).fetchone()
+        if existing:
+            c.execute("DELETE FROM favorites WHERE user_id=? AND tool_id=?", (session['user_id'], tool_id))
+        else:
+            c.execute("INSERT INTO favorites (user_id, tool_id) VALUES (?,?)", (session['user_id'], tool_id))
+        c.commit()
+    return jsonify({"success": True})
+
+@app.route("/api/user_stats")
+def api_user_stats():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    with get_db() as c:
+        rows = c.execute("SELECT timestamp, query_type FROM logs WHERE user_id=? AND status='basarili'", (session['user_id'],)).fetchall()
+    
+    dates = {}
+    types = {}
+    for r in rows:
+        d = r[0][:10]
+        dates[d] = dates.get(d, 0) + 1
+        types[r[1]] = types.get(r[1], 0) + 1
+        
+    return jsonify({"success": True, "daily": dates, "types": types})
+
+@app.route("/api/change_password", methods=["POST"])
+def api_change_password():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    req = request.json or {}
+    old, new = (req.get("old") or "").strip(), (req.get("new") or "").strip()
+    if len(new) < 6: return jsonify({"success": False, "error": "Yeni şifre kısa."})
+    with get_db() as c:
+        r = c.execute("SELECT password FROM users WHERE id=?", (session['user_id'],)).fetchone()
+        if not r or not check_password_hash(r[0], old): return jsonify({"success": False, "error": "Mevcut şifre yanlış."})
+        c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(new), session['user_id'])); c.commit()
+    return jsonify({"success": True})
+
+@app.route("/api/upload_avatar", methods=["POST"])
+def api_upload_avatar():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    img_data = (request.json or {}).get("image", "")
+    if not img_data.startswith("data:image"): return jsonify({"success": False})
+    with get_db() as c:
+        c.execute("UPDATE users SET avatar=? WHERE id=?", (img_data, session['user_id'])); c.commit()
+    return jsonify({"success": True})
+
+@app.route("/api/my_history")
+def api_my_history():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    with get_db() as c:
+        rows = c.execute("SELECT timestamp, query_type, query_param, status FROM logs WHERE user_id=? ORDER BY id DESC LIMIT 100", (session['user_id'],)).fetchall()
+    return jsonify({"success": True, "history": [{"time": r[0], "type": r[1], "param": r[2], "status": r[3]} for r in rows]})
+
+@app.route("/api/create_ticket", methods=["POST"])
+def api_create_ticket():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    req = request.json or {}
+    subject, message = (req.get("subject") or "").strip(), (req.get("message") or "").strip()
+    if not subject or not message: return jsonify({"success": False, "error": "Eksik."})
+    with get_db() as c:
+        c.execute("INSERT INTO tickets (user_id, username, subject, message, status, created_at) VALUES (?,?,?,?, 'open', ?)", 
+                  (session['user_id'], session['username'], subject, message, datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")))
+        c.commit()
+    return jsonify({"success": True})
+
+@app.route("/api/my_tickets")
+def api_my_tickets():
+    if 'user_id' not in session: return jsonify({"success": False}), 401
+    with get_db() as c:
+        rows = c.execute("SELECT id, subject, message, reply, status, created_at FROM tickets WHERE user_id=? ORDER BY id DESC", (session['user_id'],)).fetchall()
+    return jsonify({"success": True, "tickets": [{"id": r[0], "subject": r[1], "message": r[2], "reply": r[3], "status": r[4], "time": r[5]} for r in rows]})
+
 @app.route("/api/sorgu", methods=["POST"])
 def api_sorgu():
-    if 'user_id' not in session and not session.get('admin'): return jsonify({"success": False, "error": "Giriş yapın."}), 401
-    req = request.json or {}
-    q_type = req.get("type")
-    api_key = req.get("api_key", "").strip()
-    uid = session.get('user_id', 0); uname = session.get('username', 'admin')
+    if get_setting("maintenance") == "1": return jsonify({"success": False, "error": "Sistem bakımda."})
+    if 'user_id' not in session: return jsonify({"success": False, "error": "Giriş yapın."}), 401
+    
     ip = request.remote_addr or "?"
+    req = request.json or {}; q_type = req.get("type"); uid, uname = session['user_id'], session['username']
+    
+    VIP_TOOLS = ["osint_ip", "osint_domain", "api_wayback", "api_whois", "api_bin", "hibp_password", "oa_intelx", "oa_breach"]
+    if q_type in VIP_TOOLS:
+        with get_db() as c: u_row = c.execute("SELECT vip FROM users WHERE id=?", (uid,)).fetchone()
+        if not u_row or u_row[0] != 1: return jsonify({"success": False, "error": "Bu sorgu VIP üyelere özeldir."})
 
     try:
-        result = None
-        
-        # 1. OPENARCHIVEX API'LERİ
-        if q_type.startswith("oax_"):
-            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
-            oax_map = {
-                "oax_status": {"url": "https://openarchivex.net/api/v2/status", "method": "GET"},
-                "oax_providers": {"url": "https://openarchivex.net/api/v2/providers", "method": "GET"},
-                "oax_pricing": {"url": "https://openarchivex.net/api/pricing/api-plans", "method": "GET"},
-                "oax_sources": {"url": "https://openarchivex.net/api/v2/sources", "method": "GET"},
-                "oax_forum": {"url": "https://openarchivex.net/api/forum/public/overview", "method": "GET"},
-                "oax_intelx_search": {"url": "https://openarchivex.net/api/v2/search", "method": "POST"},
-                "oax_discord": {"url": "https://openarchivex.net/api/discord-osint/", "method": "POST"},
-                "oax_tiktok": {"url": "https://openarchivex.net/api/tiktok-osint/", "method": "POST"},
-            }
-            if q_type in oax_map:
-                target = oax_map[q_type]
-                query_param = req.get("query", "") or req.get("username", "") or req.get("param", "")
-                if target["method"] == "POST" and not api_key: return jsonify({"success": False, "error": "Bu araç için OpenArchiveX API Key gereklidir."})
-                
-                if target["method"] == "GET":
-                    r = requests.get(target["url"], headers=headers, timeout=20)
-                else:
-                    r = requests.post(target["url"], headers=headers, json={"query": query_param}, timeout=20)
-                
-                if r.status_code == 401: return jsonify({"success": False, "error": "Yetkisiz (401). Geçerli bir API Key girin."})
-                elif r.status_code != 200: return jsonify({"success": False, "error": f"OpenArchiveX Hatası: HTTP {r.status_code}"})
-                result = r.json()
-
-        # 2. DİĞER API'LER
-        elif q_type == "plaka_sorgu":
-            plaka = req.get('plaka', '').strip().upper()
-            if not plaka: return jsonify({"success": False, "error": "Plaka gerekli."})
+        if q_type == "plaka_sorgu":
+            plaka = (req.get('plaka') or '').strip().upper()
             r = requests.get(f"https://eokulsorguapi.onrender.com/plaka/api?plaka={plaka}", timeout=15)
-            result = r.json()
+            log_query(uid, uname, q_type, plaka, ip, "basarili")
+            return jsonify({"success": True, "data": r.json()})
+
+        if q_type == "osint_ip": return jsonify({"success": True, "data": requests.get(f"http://ip-api.com/json/{req.get('ip')}", timeout=8).json()})
+        if q_type == "osint_domain": return jsonify({"success": True, "data": requests.get(f"https://dns.google/resolve?name={req.get('domain')}&type=A", timeout=8).json()})
+        if q_type == "api_wayback": return jsonify({"success": True, "data": requests.get(f"http://archive.org/wayback/available?url={req.get('url')}", timeout=15).json()})
+        if q_type == "api_whois":
+            r = requests.get(f"https://rdap.org/domain/{req.get('domain')}", timeout=15)
+            if r.status_code == 200: return jsonify({"success": True, "data": r.json()})
+            else: return jsonify({"success": False, "error": "Domain bulunamadı."})
+        if q_type == "api_bin":
+            r = requests.get(f"https://lookup.binlist.net/{req.get('bin')}", headers={"Accept-Version": "3"}, timeout=15)
+            if r.status_code == 200: return jsonify({"success": True, "data": r.json()})
+            else: return jsonify({"success": False, "error": "BIN bulunamadı."})
+        if q_type == "hibp_password":
+            password = (req.get('pass') or '').strip()
+            sha1_pw = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
+            prefix, suffix = sha1_pw[:5], sha1_pw[5:]
+            r = requests.get(f"https://api.pwnedpasswords.com/range/{prefix}", timeout=10)
+            hashes = (line.split(':') for line in r.text.splitlines())
+            count = next((int(c) for h, c in hashes if h == suffix), 0)
+            if count > 0: return jsonify({"success": True, "data": {"sizinti": True, "kac_kez": count, "mesaj": f"Bu şifre {count} kez sızmış!"}})
+            else: return jsonify({"success": True, "data": {"sizinti": False, "mesaj": "Bu şifre güvenli."}})
+
+        if q_type == "oa_public_status":
+            r = requests.get("https://openarchivex.net/api/v2/status", headers={"Accept": "application/json"}, timeout=15)
+            return jsonify({"success": True, "data": r.json()})
+        if q_type == "oa_public_buckets":
+            r = requests.get("https://openarchivex.net/api/v2/intelx/buckets", headers={"Accept": "application/json"}, timeout=15)
+            return jsonify({"success": True, "data": r.json()})
+        if q_type == "oa_intelx":
+            r = requests.post("https://openarchivex.net/api/v2/intelx/advanced", headers={"Authorization": f"Bearer {OPENARCHIVE_KEY}", "Content-Type": "application/json"}, json={"q": req.get('q')}, timeout=15)
+            if r.status_code == 401: return jsonify({"success": False, "error": "OpenArchive API Anahtarı geçersiz."})
+            return jsonify({"success": True, "data": r.json()})
+
+        API_MAP = {
+            "adsoyad": {"url": "https://violetpanel.cc/furkanapi/adsoyadapi.php", "params": {"ad":"ad","soyad":"soyad"}},
+            "aile": {"url": "https://violetpanel.cc/furkanapi/ailesorguapi.php", "params": {"tc":"tc"}},
+            "adres": {"url": "https://violetpanel.cc/furkanapi/adrespro.php", "params": {"tc":"tc"}},
+            "tcgsm": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"tc":"tc"}},
+            "gsmtc": {"url": "https://violetpanel.cc/furkanapi/gsmpro.php", "params": {"gsm":"gsm"}},
+        }
+        if q_type not in API_MAP: return jsonify({"success": False, "error": "Geçersiz sorgu."})
+        
+        api_info = API_MAP[q_type]; params = {}; query_str = ""
+        for k, rk in api_info["params"].items():
+            val = (req.get(k) or "").strip()
+            if not val: continue
+            if rk == "tc" and not re.fullmatch(r"\d{11}", val): return jsonify({"success": False, "error": "TC 11 hane olmalı."})
+            if rk == "gsm" and not re.fullmatch(r"\d{10,11}", val): return jsonify({"success": False, "error": "GSM 10-11 hane olmalı."})
+            params[rk] = val[:100]; query_str += f"{rk}={val[:100]} "
             
-        elif q_type == "adsoyad":
-            ad, soyad = req.get('ad', '').strip(), req.get('soyad', '').strip()
-            r = requests.get("https://violetpanel.cc/furkanapi/adsoyadapi.php", params={"ad": ad, "soyad": soyad}, timeout=15)
-            result = r.json()
+        if not params: return jsonify({"success": False, "error": "Eksik parametre."})
+        time.sleep(0.8) 
+        
+        r = requests.get(api_info["url"], params=params, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+        try: data = r.json()
+        except ValueError: return jsonify({"success": False, "error": "Dış API limiti aşıldı."})
 
-        elif q_type == "aile":
-            tc = req.get('tc', '').strip()
-            r = requests.get("https://violetpanel.cc/furkanapi/ailesorguapi.php", params={"tc": tc}, timeout=15)
-            result = r.json()
+        is_ok = data.get("success") in [True, "true"] or data.get("durum") in ["basarili", "başarılı"] or data.get("status") == "success"
+        result = data.get("data") or data.get("veri") or data.get("result")
+        
+        if not is_ok or not result: 
+            log_query(uid, uname, q_type, query_str.strip(), ip, "basarisiz")
+            return jsonify({"success": False, "error": "Bulunamadı veya API hatası."})
+            
+        log_query(uid, uname, q_type, query_str.strip(), ip, "basarili")
+        return jsonify({"success": True, "data": result})
+    except Exception: 
+        return jsonify({"success": False, "error": "Bağlantı hatası oluştu."})
 
-        elif q_type == "api_whois":
-            domain = req.get('domain', '').strip()
-            r = requests.get(f"https://rdap.org/domain/{domain}", timeout=15)
-            result = r.json() if r.status_code == 200 else {"error": "Bulunamadı"}
-
-        elif q_type == "api_bin":
-            bin_num = req.get('bin', '').strip()
-            r = requests.get(f"https://lookup.binlist.net/{bin_num}", headers={"Accept-Version": "3"}, timeout=15)
-            result = r.json() if r.status_code == 200 else {"error": "Bulunamadı"}
-
-        if result:
-            log_query(uid, uname, q_type, str(req)[:100], ip, "basarili")
-            return jsonify({"success": True, "data": result})
-        else:
-            log_query(uid, uname, q_type, str(req)[:100], ip, "basarisiz")
-            return jsonify({"success": False, "error": "Sonuç alınamadı veya geçersiz sorgu."})
-
-    except Exception as e:
-        print(traceback.format_exc())
-        return jsonify({"success": False, "error": "Sunucu veya API bağlantı hatası."})
-
-# --- ADMIN PANELİ (Senin Tasarımına Birebir Uyumlu) ---
 @app.route("/admin-panel-x9", methods=["GET", "POST"])
 def admin_dashboard():
+    ip = request.remote_addr or "?"
     if not session.get("admin"):
         error = None
         if request.method == "POST":
-            if request.form.get("pass") == ADMIN_PASSWORD:
-                session["admin"] = True; return redirect("/admin-panel-x9")
-            error = "Hatalı şifre."
-        return render_template('admin.html', show_login=True, login_error=error)
+            if check_rate_limit(f"admin_{ip}", max_req=5) and secrets.compare_digest(str(request.form.get("pass", "")).encode('utf-8'), str(ADMIN_PASSWORD).encode('utf-8')):
+                session["admin"] = True; session["admin_since"] = time.time(); return redirect("/admin-panel-x9")
+            error = "Hatalı şifre veya çok fazla deneme."
+        return render_template('admin.html', show_login=True, login_error=error, total_users=0, total_queries=0, banned_users=0, users=[], logs=[], maint="0", current_bc="", chart_labels="[]", chart_data="[]", daily_labels="[]", daily_data="[]", temp_passes={}, popular_queries=[], success_count=0, fail_count=0, tickets=[], vip_users=0)
 
+    if time.time() - session.get("admin_since", 0) > 3600:
+        session.pop("admin", None); return redirect("/admin-panel-x9")
+
+    temp_passes = session.pop("_temp_passes", {})
     with get_db() as c:
-        # admin.html'in beklediği sıralama: id, username, pass, banned, created, q_count, vip
-        users = c.execute("SELECT id, username, password, banned, created_at, (SELECT COUNT(*) FROM logs WHERE logs.user_id = users.id), vip FROM users ORDER BY id DESC").fetchall()
         logs = c.execute("SELECT * FROM logs ORDER BY id DESC LIMIT 500").fetchall()
+        users = c.execute("SELECT u.id, u.username, u.password, u.banned, u.created_at, COUNT(l.id), u.vip FROM users u LEFT JOIN logs l ON u.id = l.user_id GROUP BY u.id ORDER BY u.id DESC").fetchall()
         tickets = c.execute("SELECT * FROM tickets ORDER BY status ASC, id DESC").fetchall()
-        
-        total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         total_queries = c.execute("SELECT COUNT(*) FROM logs").fetchone()[0]
-        vip_users = c.execute("SELECT COUNT(*) FROM users WHERE vip=1").fetchone()[0]
+        total_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         banned_users = c.execute("SELECT COUNT(*) FROM users WHERE banned=1").fetchone()[0]
-        
+        vip_users = c.execute("SELECT COUNT(*) FROM users WHERE vip=1").fetchone()[0]
+        q_stats = c.execute("SELECT query_type, COUNT(*) FROM logs GROUP BY query_type").fetchall()
+        popular_queries = c.execute("SELECT query_type, query_param, COUNT(*) FROM logs WHERE status='basarili' AND query_param != '' GROUP BY query_param ORDER BY 3 DESC LIMIT 10").fetchall()
         success_count = c.execute("SELECT COUNT(*) FROM logs WHERE status='basarili'").fetchone()[0]
         fail_count = c.execute("SELECT COUNT(*) FROM logs WHERE status='basarisiz'").fetchone()[0]
-        
-        popular_queries = c.execute("SELECT query_type, query_param, COUNT(*) FROM logs WHERE status='basarili' AND query_param != '' GROUP BY query_param ORDER BY 3 DESC LIMIT 10").fetchall()
-        
-        q_stats = c.execute("SELECT query_type, COUNT(*) FROM logs GROUP BY query_type").fetchall()
         chart_labels = json.dumps([q[0] for q in q_stats]); chart_data = json.dumps([q[1] for q in q_stats])
-        daily_labels = json.dumps([]); daily_data = json.dumps([]) 
+        dates = [(datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(6, -1, -1)]
+        daily_counts = [c.execute("SELECT COUNT(*) FROM logs WHERE timestamp LIKE ?", (f"{d}%",)).fetchone()[0] for d in dates]
+        daily_labels = json.dumps(dates); daily_data = json.dumps(daily_counts)
 
-    return render_template('admin.html', 
-        show_login=False, users=users, logs=logs, tickets=tickets, 
-        total_users=total_users, total_queries=total_queries, vip_users=vip_users, banned_users=banned_users,
-        success_count=success_count, fail_count=fail_count, popular_queries=popular_queries,
-        chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data,
-        maint=get_setting("maintenance"), current_bc=get_setting("broadcast"))
+    return render_template('admin.html', show_login=False, logs=logs, users=users, total_queries=total_queries, total_users=total_users, banned_users=banned_users, vip_users=vip_users, maint=get_setting("maintenance"), current_bc=get_setting("broadcast"), chart_labels=chart_labels, chart_data=chart_data, daily_labels=daily_labels, daily_data=daily_data, temp_passes=temp_passes, popular_queries=popular_queries, success_count=success_count, fail_count=fail_count, tickets=tickets)
+
+@app.route("/admin-export-logs")
+def admin_export_logs():
+    if not session.get("admin"): return redirect("/")
+    with get_db() as c:
+        logs = c.execute("SELECT * FROM logs ORDER BY id DESC").fetchall()
+    
+    csv = "\uFEFF" + "ID,Kullanici,Tip,Parametre,IP,Tarih,Durum\n"
+    for r in logs:
+        csv += f"{r[0]},{r[2]},{r[3]},\"{r[4]}\",{r[5]},{r[6]},{r[7]}\n"
+        
+    return app.response_class(
+        csv.encode('utf-8'),
+        mimetype='text/csv',
+        headers={"Content-Disposition": "attachment;filename=sorgu_loglari.csv"}
+    )
 
 @app.route("/admin-toggle-vip/<int:uid>", methods=["POST"])
 def admin_toggle_vip(uid):
     if not session.get("admin"): return redirect("/")
-    with get_db() as c:
-        c.execute("UPDATE users SET vip = CASE WHEN vip=1 THEN 0 ELSE 1 END WHERE id=?", (uid,))
-        c.commit()
+    with get_db() as c: c.execute("UPDATE users SET vip = CASE WHEN vip=1 THEN 0 ELSE 1 END WHERE id=?", (uid,)); c.commit()
     return redirect("/admin-panel-x9")
 
-@app.route("/admin-ban/<int:uid>", methods=["POST"])
-def admin_ban_user(uid):
+@app.route("/admin-reply-ticket/<int:tid>", methods=["POST"])
+def admin_reply_ticket(tid):
     if not session.get("admin"): return redirect("/")
-    with get_db() as c:
-        c.execute("UPDATE users SET banned = CASE WHEN banned=1 THEN 0 ELSE 1 END WHERE id=?", (uid,))
-        c.commit()
+    reply = request.form.get("reply", "").strip()
+    if reply:
+        with get_db() as c:
+            c.execute("UPDATE tickets SET reply=?, status='closed', replied_at=? WHERE id=?", (reply, datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), tid)); c.commit()
     return redirect("/admin-panel-x9")
 
-@app.route("/admin-delete/<int:uid>", methods=["POST"])
-def admin_delete_user(uid):
-    if not session.get("admin"): return redirect("/")
-    with get_db() as c:
-        c.execute("DELETE FROM users WHERE id=?", (uid,))
-        c.execute("DELETE FROM logs WHERE user_id=?", (uid,))
-        c.commit()
-    return redirect("/admin-panel-x9")
-
-@app.route("/admin-reset-pass/<int:uid>", methods=["POST"])
-def admin_reset_pass(uid):
-    if not session.get("admin"): return redirect("/")
-    tmp = secrets.token_urlsafe(6)
-    with get_db() as c:
-        c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(tmp), uid))
-        c.commit()
-    return redirect("/admin-panel-x9")
+@app.route("/admin-logout-x9", methods=["POST"])
+def admin_logout(): session.pop("admin", None); return redirect("/admin-panel-x9")
 
 @app.route("/admin-history/<int:uid>")
 def admin_history(uid):
     if not session.get("admin"): return jsonify({"success": False}), 401
     with get_db() as c:
-        logs = c.execute("SELECT timestamp, query_type, query_param, ip, status FROM logs WHERE user_id=? ORDER BY id DESC LIMIT 100", (uid,)).fetchall()
-    return jsonify({"success": True, "history": [{"time": l[0], "type": l[1], "param": l[2], "ip": l[3], "status": l[4]} for l in logs]})
+        rows = c.execute("SELECT timestamp, query_type, query_param, ip, status FROM logs WHERE user_id=? ORDER BY id DESC LIMIT 200", (uid,)).fetchall()
+    return jsonify({"success": True, "history": [{"time": r[0], "type": r[1], "param": r[2], "ip": r[3], "status": r[4]} for r in rows]})
+
+@app.route("/admin-reset-pass/<int:uid>", methods=["POST"])
+def admin_reset_pass(uid):
+    if not session.get("admin"): return redirect("/")
+    tmp = secrets.token_urlsafe(9)
+    with get_db() as c: c.execute("UPDATE users SET password=? WHERE id=?", (generate_password_hash(tmp), uid)); c.commit()
+    tp = session.get("_temp_passes", {}); tp[str(uid)] = tmp; session["_temp_passes"] = dict(list(tp.items())[-5:])
+    return redirect("/admin-panel-x9")
 
 @app.route("/gizli-bakim-degistir", methods=["POST"])
 def admin_toggle_maint():
@@ -271,20 +426,22 @@ def admin_broadcast():
     set_setting("broadcast", (request.form.get("bc_text") or "").strip()[:500])
     return redirect("/admin-panel-x9")
 
-@app.route("/admin-add-user", methods=["POST"])
-def admin_add_user():
+@app.route("/admin-ban/<int:uid>", methods=["POST"])
+def admin_ban_user(uid):
     if not session.get("admin"): return redirect("/")
-    u, p = request.form.get("username", "").strip().lower(), request.form.get("password", "")
-    if len(u) >= 3 and len(p) >= 6:
-        try:
-            with get_db() as c:
-                c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)", (u, generate_password_hash(p), datetime.now().strftime("%Y-%m-%d")))
-                c.commit()
-        except: pass
+    with get_db() as c: c.execute("UPDATE users SET banned = CASE WHEN banned=1 THEN 0 ELSE 1 END WHERE id=?", (uid,)); c.commit()
     return redirect("/admin-panel-x9")
 
-@app.route("/admin-logout-x9", methods=["POST"])
-def admin_logout(): session.pop("admin", None); return redirect("/admin-panel-x9")
+@app.route("/admin-delete/<int:uid>", methods=["POST"])
+def admin_delete_user(uid):
+    if not session.get("admin"): return redirect("/")
+    with get_db() as c:
+        c.execute("DELETE FROM users WHERE id=?", (uid,)); c.execute("DELETE FROM logs WHERE user_id=?", (uid,)); c.commit()
+    return redirect("/admin-panel-x9")
+
+@app.errorhandler(500)
+def server_error(e):
+    return f"<h1 style='color:red;'>500 - Hata</h1><pre>{traceback.format_exc()}</pre>", 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
