@@ -9,100 +9,367 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: #000; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; color: #fff; }
-        canvas#bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.8; }
-        .glass-card { position: relative; z-index: 10; width: 100%; max-width: 420px; background: rgba(10, 10, 15, 0.6); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 40px; box-shadow: 0 0 50px rgba(99,102,241,0.2); }
+        body { background: #030305; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; color: #fff; }
+        
+        /* Canvas Arka Plan */
+        #network-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+
+        .glass-card { position: relative; z-index: 1; width: 100%; max-width: 440px; background: rgba(15, 15, 20, 0.75); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1); }
+        
         .brand { text-align: center; margin-bottom: 30px; }
-        .brand-icon { width: 60px; height: 60px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 15px; box-shadow: 0 0 30px rgba(168,85,247,0.5); }
-        .brand h1 { font-size: 26px; font-weight: 800; background: linear-gradient(to right, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .tabs { display: flex; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 14px; margin-bottom: 25px; }
+        .brand-icon { width: 64px; height: 64px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; color: #fff; margin-bottom: 15px; box-shadow: 0 0 30px rgba(99,102,241,0.4); animation: pulse-glow 3s infinite alternate; }
+        @keyframes pulse-glow { 0% { box-shadow: 0 0 20px rgba(99,102,241,0.3); } 100% { box-shadow: 0 0 40px rgba(168,85,247,0.6); } }
+        .brand h1 { font-size: 28px; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .brand p { color: #94a3b8; font-size: 13.5px; margin-top: 5px; }
+        
+        .tabs { display: flex; background: rgba(0,0,0,0.4); padding: 5px; border-radius: 14px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); }
         .tab { flex: 1; text-align: center; padding: 12px; font-size: 14px; font-weight: 700; color: #64748b; border-radius: 10px; cursor: pointer; transition: .3s; }
-        .tab.active { background: rgba(255,255,255,0.1); color: #fff; }
-        .form-panel { display: none; } .form-panel.active { display: block; }
-        .form-group { margin-bottom: 20px; position: relative; }
-        .form-group label { display: block; font-size: 11px; font-weight: 800; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        .form-group input { width: 100%; padding: 16px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 14px; transition: .3s; }
-        .form-group input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 15px rgba(99,102,241,0.3); }
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; background: linear-gradient(135deg, #6366f1, #a855f7); color: #fff; font-weight: 800; font-size: 15px; cursor: pointer; transition: .3s; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(168,85,247,0.4); }
-        .alert { display: none; padding: 12px; border-radius: 10px; font-size: 13px; margin-bottom: 15px; }
-        .alert.show { display: block; }
+        .tab.active { background: rgba(255,255,255,0.1); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        
+        .form-panel { display: none; animation: fadeIn .4s ease; } .form-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        
+        .form-group { margin-bottom: 18px; position: relative; }
+        .form-group label { display: block; font-size: 11.5px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .form-group input { width: 100%; padding: 15px 45px 15px 15px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; font-size: 14.5px; color: #fff; transition: .3s; }
+        .form-group input:focus { outline: none; border-color: #6366f1; background: rgba(99,102,241,0.05); box-shadow: 0 0 15px rgba(99,102,241,0.2); }
+        
+        .input-icon { position: absolute; right: 15px; top: 40px; color: #64748b; cursor: pointer; background: none; border: none; font-size: 16px; transition: .2s; }
+        .input-icon:hover { color: #a855f7; }
+        
+        .avatar-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 15px; }
+        .avatar-opt { width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: .2s; background: rgba(255,255,255,0.05); padding: 2px; }
+        .avatar-opt:hover { transform: scale(1.1); } .avatar-opt.selected { border-color: #a855f7; box-shadow: 0 0 10px rgba(168,85,247,0.5); }
+        .upload-btn { display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #94a3b8; font-size: 16px; cursor: pointer; transition: .2s; }
+        
+        .captcha-box { background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.2); padding: 12px 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+        .captcha-box span { font-size: 13px; font-weight: 600; color: #cbd5e1; }
+        .captcha-box input { width: 70px; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; text-align: center; color: #fff; font-weight: 700; outline: none; }
+
+        .strength-meter { display: flex; gap: 5px; margin-top: 8px; }
+        .strength-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; transition: background .3s; }
+        .strength-bar.weak { background: #ef4444; } .strength-bar.medium { background: #f59e0b; } .strength-bar.strong { background: #10b981; }
+        .strength-text { font-size: 11px; color: #64748b; margin-top: 4px; display: flex; justify-content: space-between; }
+
+        .checkbox-group { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 20px; }
+        .checkbox-group input { width: 16px; height: 16px; margin-top: 2px; cursor: pointer; accent-color: #6366f1; }
+        .checkbox-group label { font-size: 11.5px; color: #94a3b8; line-height: 1.5; cursor: pointer; }
+        .checkbox-group label a { color: #a855f7; text-decoration: none; font-weight: 600; }
+        
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #6366f1, #a855f7); cursor: pointer; transition: .3s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(99,102,241,0.2); }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(168,85,247,0.4); }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        
+        .alert { display: none; padding: 12px; border-radius: 10px; font-size: 13px; margin-bottom: 15px; align-items: center; gap: 8px; }
+        .alert.show { display: flex; }
         .alert-error { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
         .alert-success { background: rgba(16,185,129,0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
+        
+        .links { text-align: center; margin-top: 20px; font-size: 13px; color: #64748b; }
+        .links a { color: #a855f7; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .links a:hover { text-decoration: underline; }
+        
+        .footer { position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 11px; color: #475569; z-index: 1; }
     </style>
 </head>
 <body>
-    <canvas id="bg"></canvas>
+    <canvas id="network-bg"></canvas>
+    
     <div class="glass-card">
         <div class="brand">
             <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
-            <h1>SHOP<span style="color:#a855f7;">SPHERE</span></h1>
-        </div>
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('login')">Giriş Yap</div>
-            <div class="tab" onclick="switchTab('register')">Kayıt Ol</div>
+            <h1>SHOP<span>SPHERE</span></h1>
+            <p>Siber İstihbarat Ağı</p>
         </div>
         
-        <div class="form-panel active" id="panel-login">
-            <div class="alert alert-error" id="loginErr"></div>
-            <form id="loginForm">
-                <div class="form-group"><label>Kullanıcı Adı</label><input type="text" id="login-u" required></div>
-                <div class="form-group"><label>Şifre</label><input type="password" id="login-p" required></div>
-                <button type="submit" class="btn">Sisteme Bağlan</button>
-            </form>
+        <div class="tabs">
+            <div class="tab active" data-tab="login">Giriş Yap</div>
+            <div class="tab" data-tab="register">Kayıt Ol</div>
         </div>
-
-        <div class="form-panel" id="panel-register">
-            <div class="alert alert-error" id="regErr"></div>
-            <div class="alert alert-success" id="regOk"></div>
-            <form id="registerForm">
-                <div class="form-group"><label>Kullanıcı Adı</label><input type="text" id="reg-u" required></div>
-                <div class="form-group"><label>Şifre</label><input type="password" id="reg-p" required></div>
-                <button type="submit" class="btn">Ağa Katıl</button>
-            </form>
+        
+        <div class="form-body">
+            <!-- GİRİŞ FORMU -->
+            <div class="form-panel active" id="panel-login">
+                <div class="alert alert-error" id="loginErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
+                <form id="loginForm" novalidate>
+                    <div class="form-group">
+                        <label>Kullanıcı Adı</label>
+                        <input type="text" id="login-u" placeholder="Ajan adınız" required>
+                        <i class="fa-solid fa-user input-icon"></i>
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre</label>
+                        <input type="password" id="login-p" placeholder="••••••••" required>
+                        <button type="button" class="input-icon toggle-pw" data-target="login-p"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                    <button type="submit" class="btn" id="loginBtn"><i class="fa-solid fa-right-to-bracket"></i> Sisteme Bağlan</button>
+                </form>
+                <div class="links">Hesabınız yok mu? <a data-tab="register">Hemen Kayıt Olun</a></div>
+            </div>
+            
+            <!-- KAYIT FORMU -->
+            <div class="form-panel" id="panel-register">
+                <div class="alert alert-error" id="regErr"><i class="fa-solid fa-circle-exclamation"></i><span></span></div>
+                <div class="alert alert-success" id="regOk"><i class="fa-solid fa-circle-check"></i><span></span></div>
+                <form id="registerForm" novalidate>
+                    <div class="form-group">
+                        <label>Profil Avatarı Seç</label>
+                        <div class="avatar-grid" id="avatarGrid">
+                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=A" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=A">
+                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=B" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=B">
+                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=C" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=C">
+                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=D" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=D">
+                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=E" class="avatar-opt" data-url="https://api.dicebear.com/7.x/bottts/svg?seed=E">
+                            <div class="avatar-opt upload-btn" id="uploadBtn" onclick="document.getElementById('avatarFile').click()"><i class="fa-solid fa-upload"></i></div>
+                        </div>
+                        <input type="file" id="avatarFile" accept="image/*" style="display:none;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Kullanıcı Adı</label>
+                        <input type="text" id="reg-u" placeholder="En az 3 karakter" minlength="3" maxlength="32" required>
+                        <i class="input-status fa-solid" id="reg-u-status"></i>
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre</label>
+                        <input type="password" id="reg-p" placeholder="Güçlü bir şifre belirleyin" minlength="6" required>
+                        <button type="button" class="input-icon toggle-pw" data-target="reg-p"><i class="fa-solid fa-eye"></i></button>
+                        <div class="strength-meter" id="strengthMeter" style="display:none;">
+                            <div class="strength-bar"></div><div class="strength-bar"></div><div class="strength-bar"></div><div class="strength-bar"></div>
+                        </div>
+                        <div class="strength-text" id="strengthText" style="display:none;"><span>Şifre gücü</span><span id="strengthLabel">—</span></div>
+                    </div>
+                    
+                    <div class="captcha-box">
+                        <span id="captchaText">Yükleniyor...</span>
+                        <input type="number" id="captchaInput" placeholder="Sonuç">
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="termsCheck">
+                        <label for="termsCheck"><a href="#">Kullanım Koşulları</a> ve <a href="#">Gizlilik Politikası</a>'nı okudum, kabul ediyorum.</label>
+                    </div>
+                    
+                    <button type="submit" class="btn" id="registerBtn"><i class="fa-solid fa-user-plus"></i> Ağa Katıl</button>
+                </form>
+                <div class="links">Zaten üye misiniz? <a data-tab="login">Giriş Yapın</a></div>
+            </div>
         </div>
     </div>
+    
+    <div class="footer">© 2026 ShopSphere - Tüm hakları saklıdır.</div>
 
     <script>
-        const $ = id => document.getElementById(id);
-        const CSRF = document.querySelector('meta[name="csrf-token"]').content;
-        const HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
-
-        // Arka plan animasyonu
-        const c = $('bg'), ctx = c.getContext('2d'); let p = [];
-        function resize() { c.width = innerWidth; c.height = innerHeight; } resize();
-        addEventListener('resize', resize);
-        for(let i=0; i<50; i++) p.push({x:Math.random()*c.width, y:Math.random()*c.height, vx:(Math.random()-0.5)*0.5, vy:(Math.random()-0.5)*0.5});
-        function draw() {
-            ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle='rgba(99,102,241,0.5)'; ctx.strokeStyle='rgba(99,102,241,0.1)';
-            p.forEach((pt, i) => {
-                pt.x+=pt.vx; pt.y+=pt.vy; if(pt.x<0||pt.x>c.width) pt.vx*=-1; if(pt.y<0||pt.y>c.height) pt.vy*=-1;
-                ctx.beginPath(); ctx.arc(pt.x, pt.y, 2, 0, 7); ctx.fill();
-                for(let j=i+1; j<p.length; j++) {
-                    let dx = pt.x-p[j].x, dy = pt.y-p[j].y, d = Math.sqrt(dx*dx+dy*dy);
-                    if(d<150) { ctx.beginPath(); ctx.moveTo(pt.x, pt.y); ctx.lineTo(p[j].x, p[j].y); ctx.stroke(); }
-                }
-            }); requestAnimationFrame(draw);
-        } draw();
-
-        function switchTab(t) {
-            document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', (t==='login'&&i===0)||(t==='register'&&i===1)));
-            document.querySelectorAll('.form-panel').forEach(el => el.classList.remove('active'));
-            $('panel-'+t).classList.add('active');
+        // --- CANVAS ARKA PLAN ANİMASYONU ---
+        const canvas = document.getElementById('network-bg'); const ctx = canvas.getContext('2d'); let particles = [];
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+        for(let i=0; i<80; i++) particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4 });
+        function draw() { 
+            ctx.clearRect(0,0,canvas.width,canvas.height); 
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.5)'; 
+            ctx.strokeStyle = 'rgba(99, 102, 241, 0.12)';
+            particles.forEach((p, i) => { 
+                p.x += p.vx; p.y += p.vy; 
+                if(p.x<0||p.x>canvas.width) p.vx*=-1; 
+                if(p.y<0||p.y>canvas.height) p.vy*=-1; 
+                ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2); ctx.fill();
+                for(let j=i+1; j<particles.length; j++) { 
+                    let p2 = particles[j], dx = p.x-p2.x, dy = p.y-p2.y, dist = Math.sqrt(dx*dx+dy*dy); 
+                    if(dist < 130) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); } 
+                } 
+            }); 
+            requestAnimationFrame(draw); 
         }
-
-        $('loginForm').onsubmit = async (e) => {
-            e.preventDefault(); $('loginErr').classList.remove('show');
-            const res = await fetch('/api/login', { method:'POST', headers:HEADERS, body:JSON.stringify({username:$('login-u').value, password:$('login-p').value}) }).then(r=>r.json());
-            if(res.success) location.href='/'; else { $('loginErr').innerText = res.error; $('loginErr').classList.add('show'); }
-        };
-
-        $('registerForm').onsubmit = async (e) => {
-            e.preventDefault(); $('regErr').classList.remove('show');
-            const res = await fetch('/api/register', { method:'POST', headers:HEADERS, body:JSON.stringify({username:$('reg-u').value, password:$('reg-p').value}) }).then(r=>r.json());
-            if(res.success) { $('regOk').innerText = 'Kayıt başarılı, giriş yapabilirsiniz.'; $('regOk').classList.add('show'); setTimeout(()=>switchTab('login'), 1500); } 
-            else { $('regErr').innerText = res.error; $('regErr').classList.add('show'); }
-        };
+        draw();
+        
+        // --- FORM İŞLEMLERİ ---
+        const $ = id => document.getElementById(id);
+        const CSRF = document.querySelector('meta[name="csrf-token"]').content; 
+        const HEADERS = { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF };
+        
+        let selectedAvatar = "https://api.dicebear.com/7.x/bottts/svg?seed=A"; 
+        let currentCaptchaAnswer = 0;
+        let usernameCheckTimer = null;
+        
+        function generateCaptcha() { 
+            const num1 = Math.floor(Math.random() * 10) + 1, num2 = Math.floor(Math.random() * 10) + 1; 
+            currentCaptchaAnswer = num1 + num2; 
+            $('captchaText').innerText = `İnsan Doğrulaması: ${num1} + ${num2} = ?`; 
+            $('captchaInput').value = ''; 
+        }
+        
+        function switchTab(name) { 
+            ['loginErr', 'regErr', 'regOk'].forEach(id => $(id).classList.remove('show')); 
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name)); 
+            document.querySelectorAll('.form-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name)); 
+            if (name === 'register') generateCaptcha(); 
+        }
+        
+        document.querySelectorAll('[data-tab]').forEach(el => el.addEventListener('click', (e) => { e.preventDefault(); switchTab(el.dataset.tab); }));
+        
+        // Avatar Seçimi
+        document.querySelectorAll('.avatar-opt:not(.upload-btn)').forEach(img => { 
+            img.addEventListener('click', () => { 
+                document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('selected')); 
+                img.classList.add('selected'); 
+                selectedAvatar = img.dataset.url; 
+            }); 
+        });
+        document.querySelector('.avatar-opt:not(.upload-btn)').classList.add('selected');
+        
+        // Avatar Yükleme
+        $('avatarFile').addEventListener('change', function(e) { 
+            const file = e.target.files[0]; if (!file) return; 
+            const reader = new FileReader(); 
+            reader.onload = function(event) { 
+                const img = new Image(); 
+                img.onload = function() { 
+                    const canvas = document.createElement('canvas'); canvas.width = 150; canvas.height = 150; 
+                    const ctx = canvas.getContext('2d'); const size = Math.min(img.width, img.height); 
+                    ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 150, 150); 
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85); 
+                    const uploadBtn = $('uploadBtn'); 
+                    uploadBtn.innerHTML = `<img src="${dataUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`; 
+                    document.querySelectorAll('.avatar-opt').forEach(i => i.classList.remove('selected')); 
+                    uploadBtn.classList.add('selected'); 
+                    selectedAvatar = dataUrl; 
+                }; 
+                img.src = event.target.result; 
+            }; 
+            reader.readAsDataURL(file); 
+        });
+        
+        // Şifre Göster/Gizle
+        document.querySelectorAll('.toggle-pw').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const inp = $(btn.dataset.target);
+                const show = inp.type === 'password';
+                inp.type = show ? 'text' : 'password';
+                btn.innerHTML = show ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
+            });
+        });
+        
+        // Canlı Kullanıcı Adı Kontrolü (Kayıt)
+        $('reg-u').addEventListener('input', () => {
+            const v = $('reg-u').value.trim();
+            const status = $('reg-u-status');
+            const inp = $('reg-u');
+            inp.classList.remove('invalid', 'valid');
+            status.className = 'input-status fa-solid';
+            
+            if (!v) return;
+            if (!/^[a-zA-Z0-9_]{3,32}$/.test(v)) {
+                inp.classList.add('invalid');
+                status.className = 'input-status fa-solid fa-circle-xmark show err';
+                return;
+            }
+            clearTimeout(usernameCheckTimer);
+            status.className = 'input-status fa-solid fa-spinner fa-spin show';
+            
+            usernameCheckTimer = setTimeout(async () => {
+                try {
+                    const r = await fetch('/api/check_username?u=' + encodeURIComponent(v)).then(x => x.json());
+                    if (v !== $('reg-u').value.trim()) return;
+                    if (r.available === true) {
+                        inp.classList.add('valid');
+                        status.className = 'input-status fa-solid fa-circle-check show ok';
+                    } else {
+                        inp.classList.add('invalid');
+                        status.className = 'input-status fa-solid fa-circle-xmark show err';
+                    }
+                } catch (_) {}
+            }, 500);
+        });
+        
+        // Şifre Gücü
+        $('reg-p').addEventListener('input', () => {
+            const pw = $('reg-p').value;
+            const meter = $('strengthMeter'), text = $('strengthText'), label = $('strengthLabel');
+            const bars = meter.querySelectorAll('.strength-bar');
+            if (!pw) { meter.style.display = 'none'; text.style.display = 'none'; return; }
+            meter.style.display = 'flex'; text.style.display = 'flex';
+            
+            let s = 0;
+            if (pw.length >= 6) s++;
+            if (pw.length >= 10) s++;
+            if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) s++;
+            if (/\d/.test(pw)) s++;
+            if (/[^A-Za-z0-9]/.test(pw)) s++;
+            s = Math.min(s, 4);
+            
+            const labels = ['Çok Zayıf', 'Zayıf', 'Orta', 'İyi', 'Güçlü'];
+            const colors = ['weak', 'weak', 'medium', 'strong', 'strong'];
+            bars.forEach((bar, i) => { bar.className = 'strength-bar' + (i < s ? ' ' + colors[s] : ''); });
+            label.textContent = labels[s];
+        });
+        
+        function showAlert(el, msg) { 
+            el.querySelector('span').textContent = msg; 
+            el.classList.add('show'); 
+        }
+        
+        // GİRİŞ
+        $('loginForm').addEventListener('submit', async (e) => { 
+            e.preventDefault(); 
+            $('loginErr').classList.remove('show'); 
+            const u = $('login-u').value.trim(), p = $('login-p').value; 
+            if (!u || !p) return showAlert($('loginErr'), 'Lütfen tüm alanları doldurun.'); 
+            
+            const btn = $('loginBtn'); 
+            btn.disabled = true; 
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Bağlanıyor...'; 
+            
+            try { 
+                const res = await fetch('/api/login', { method: 'POST', headers: HEADERS, body: JSON.stringify({ username: u, password: p }) }).then(r => r.json()); 
+                if (res.success) window.location.href = '/'; 
+                else { showAlert($('loginErr'), res.error); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sisteme Bağlan'; } 
+            } catch (_) { 
+                showAlert($('loginErr'), 'Bağlantı hatası.'); 
+                btn.disabled = false; 
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sisteme Bağlan'; 
+            } 
+        });
+        
+        // KAYIT
+        $('registerForm').addEventListener('submit', async (e) => { 
+            e.preventDefault(); 
+            $('regErr').classList.remove('show'); 
+            $('regOk').classList.remove('show'); 
+            const u = $('reg-u').value.trim(), p = $('reg-p').value, captcha = parseInt($('captchaInput').value); 
+            
+            if (!u || !p) return showAlert($('regErr'), 'Tüm alanları doldurun.'); 
+            if (!/^[a-zA-Z0-9_]{3,32}$/.test(u)) return showAlert($('regErr'), 'Kullanıcı adı sadece harf, rakam ve _ içerebilir (3-32 karakter).');
+            if (p.length < 6) return showAlert($('regErr'), 'Şifre en az 6 karakter olmalı.');
+            if (captcha !== currentCaptchaAnswer) return showAlert($('regErr'), 'Güvenlik sorusu yanlış.'); 
+            if (!$('termsCheck').checked) return showAlert($('regErr'), 'Kullanım koşullarını kabul edin.'); 
+            
+            const btn = $('registerBtn'); 
+            btn.disabled = true; 
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Kayıt Yapılıyor...'; 
+            
+            try { 
+                const res = await fetch('/api/register', { method: 'POST', headers: HEADERS, body: JSON.stringify({ username: u, password: p, avatar: selectedAvatar }) }).then(r => r.json()); 
+                if (res.success) { 
+                    showAlert($('regOk'), 'Hesap oluşturuldu! Giriş sekmesine yönlendiriliyorsunuz...'); 
+                    setTimeout(() => { 
+                        switchTab('login'); 
+                        $('login-u').value = u; 
+                        $('login-p').value = p; 
+                        btn.disabled = false; 
+                        btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Ağa Katıl'; 
+                    }, 1500); 
+                } else { 
+                    showAlert($('regErr'), res.error); 
+                    btn.disabled = false; 
+                    btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Ağa Katıl'; 
+                } 
+            } catch (_) { 
+                showAlert($('regErr'), 'Bağlantı hatası.'); 
+                btn.disabled = false; 
+                btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Ağa Katıl'; 
+            } 
+        });
     </script>
 </body>
 </html>
