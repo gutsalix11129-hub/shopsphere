@@ -7,9 +7,8 @@
     <title>Sistem Paneli | ShopSphere</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --bg: #030305; --card: #0a0a0f; --text: #f8fafc; --border: rgba(255,255,255,0.06); --primary: #6366f1; --purple: #a855f7; --success: #10b981; --danger: #ef4444; --gold: #fbbf24; --telegram: #229ED9; }
+        :root { --bg: #030305; --card: #0a0a0f; --text: #f8fafc; --border: rgba(255,255,255,0.06); --primary: #6366f1; --purple: #a855f7; --success: #10b981; --danger: #ef4444; --gold: #fbbf24; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
         
@@ -28,9 +27,12 @@
         .user-info p { font-size: 11px; color: #94a3b8; margin-top: 4px; }
         
         .nav-section { padding: 0 15px 30px; flex: 1; overflow-y: auto; }
+        .nav-section::-webkit-scrollbar { width: 3px; }
+        .nav-section::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
         .nav-item { display: flex; align-items: center; padding: 12px 15px; border-radius: 10px; color: #94a3b8; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: .2s; margin-bottom: 2px; border: 1px solid transparent; }
         .nav-item:hover, .nav-item.active { background: rgba(99,102,241,0.1); color: #fff; border-color: rgba(99,102,241,0.2); transform: translateX(3px); }
         .nav-item .icon { width: 20px; font-size: 14px; margin-right: 12px; text-align: center; }
+        .nav-cat-title { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 15px 0 10px 10px; }
 
         .main { flex: 1; padding: 25px; width: 100%; transition: margin-left .4s; min-height: 100vh; position: relative; z-index: 1; }
         .topbar { display: flex; justify-content: space-between; align-items: center; background: rgba(10, 10, 15, 0.8); backdrop-filter: blur(10px); padding: 15px 25px; border-radius: 20px; margin-bottom: 25px; border: 1px solid var(--border); }
@@ -54,6 +56,14 @@
         .qa-btn span { font-size: 13px; font-weight: 700; color: #cbd5e1; }
 
         @media (min-width: 992px) { .sidebar { left: 0; } .main { margin-left: 280px; width: calc(100% - 280px); } .menu-btn { display: none; } }
+        
+        .terminal-window { background: #000; border-radius: 12px; border: 1px solid #333; margin-top: 25px; display: none; }
+        .terminal-header { background: #111; padding: 10px 15px; border-bottom: 1px solid #333; color: #555; font-size: 11px; font-family: monospace; border-radius: 12px 12px 0 0; }
+        .terminal-body { padding: 20px; font-family: monospace; font-size: 13px; color: #a7f3d0; white-space: pre-wrap; max-height: 500px; overflow-y: auto; border-radius: 0 0 12px 12px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
+        .form-group input { width: 100%; padding: 15px; background: #000; border: 1px solid #333; border-radius: 10px; color: #fff; }
+        .btn-submit { background: linear-gradient(135deg, var(--primary), var(--purple)); color: #fff; border: none; padding: 16px; border-radius: 12px; font-weight: 800; width: 100%; cursor: pointer; transition: .3s; }
     </style>
 </head>
 <body>
@@ -63,18 +73,38 @@
         <div class="logo-area"><div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div><h2>SHOP<span>SPHERE</span></h2></div>
         <div class="user-profile">
             <img src="{{ avatar }}" class="avatar" alt="Profil">
-            <div class="user-info">
-                <h3>{{ username }}</h3>
-                <p>Sistem Aktif</p>
-            </div>
+            <div class="user-info"><h3>{{ username }}</h3><p>Sistem Aktif</p></div>
         </div>
         <div class="nav-section">
             <div class="nav-item active" onclick="loadTool('welcome', this)"><div class="icon"><i class="fa-solid fa-house"></i></div> Ana Sayfa</div>
             
-            <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 15px 0 10px 10px;">SORGULAR</div>
+            <div class="nav-cat-title">E-OKUL & SORGU API</div>
+            <div class="nav-item" onclick="loadTool('papara_adsoyad', this)"><div class="icon"><i class="fa-solid fa-wallet"></i></div> Papara (Ad Soyad)</div>
+            <div class="nav-item" onclick="loadTool('papara_id', this)"><div class="icon"><i class="fa-solid fa-wallet"></i></div> Papara (ID)</div>
+            <div class="nav-item" onclick="loadTool('turknet_tel', this)"><div class="icon"><i class="fa-solid fa-wifi"></i></div> Türknet Sorgu</div>
+            <div class="nav-item" onclick="loadTool('cc_luhn', this)"><div class="icon"><i class="fa-solid fa-credit-card"></i></div> CC Luhn Kontrol</div>
+            <div class="nav-item" onclick="loadTool('plaka_adsoyad', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka (Ad Soyad)</div>
+            <div class="nav-item" onclick="loadTool('plaka_kod', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka (Kod)</div>
+            <div class="nav-item" onclick="loadTool('secmen_soyad', this)"><div class="icon"><i class="fa-solid fa-check-to-slot"></i></div> Seçmen (Soyad)</div>
+            <div class="nav-item" onclick="loadTool('secmen_tc', this)"><div class="icon"><i class="fa-solid fa-check-to-slot"></i></div> Seçmen (TC)</div>
+            <div class="nav-item" onclick="loadTool('eokul_tc', this)"><div class="icon"><i class="fa-solid fa-school"></i></div> E-Okul (TC)</div>
+            <div class="nav-item" onclick="loadTool('eokul_adsoyad', this)"><div class="icon"><i class="fa-solid fa-school"></i></div> E-Okul (Ad Soyad)</div>
+
+            <div class="nav-cat-title">VIOLETPANEL API</div>
+            <div class="nav-item" onclick="loadTool('adsoyadprox', this)"><div class="icon"><i class="fa-solid fa-user-shield"></i></div> Proxy Mernis</div>
             <div class="nav-item" onclick="loadTool('adsoyad', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Mernis Sorgu</div>
             <div class="nav-item" onclick="loadTool('aile', this)"><div class="icon"><i class="fa-solid fa-users"></i></div> Aile Sorgu</div>
-            <div class="nav-item" onclick="loadTool('plaka_sorgu', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka Sorgu</div>
+            <div class="nav-item" onclick="loadTool('adres', this)"><div class="icon"><i class="fa-solid fa-location-dot"></i></div> Adres Sorgu</div>
+            <div class="nav-item" onclick="loadTool('gsm_tc', this)"><div class="icon"><i class="fa-solid fa-phone"></i></div> GSM (TC)</div>
+            <div class="nav-item" onclick="loadTool('gsm_gsm', this)"><div class="icon"><i class="fa-solid fa-phone-flip"></i></div> GSM → TC</div>
+
+            <div class="nav-cat-title">OPENARCHIVEX (AÇIK API)</div>
+            <div class="nav-item" onclick="loadTool('oax_status_v2', this)"><div class="icon"><i class="fa-solid fa-server"></i></div> Sistem Durumu</div>
+            <div class="nav-item" onclick="loadTool('oax_providers', this)"><div class="icon"><i class="fa-solid fa-database"></i></div> Sağlayıcılar</div>
+            <div class="nav-item" onclick="loadTool('oax_sources_v2', this)"><div class="icon"><i class="fa-solid fa-layer-group"></i></div> Kaynaklar</div>
+            <div class="nav-item" onclick="loadTool('oax_forum_overview', this)"><div class="icon"><i class="fa-solid fa-comments"></i></div> Forum Özeti</div>
+            
+            <div class="nav-cat-title">DİĞER</div>
             <div class="nav-item" onclick="loadTool('api_whois', this)"><div class="icon"><i class="fa-solid fa-globe"></i></div> WHOIS Sorgu</div>
             <div class="nav-item" onclick="loadTool('api_bin', this)"><div class="icon"><i class="fa-solid fa-credit-card"></i></div> BIN Sorgu</div>
             
@@ -86,7 +116,7 @@
     <main class="main">
         <header class="topbar">
             <button class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
-            <div class="broadcast" id="broadcast"><span class="dot"></span> Sistem çevrimiçi, duyurular bekleniyor...</div>
+            <div class="broadcast" id="broadcast"><span class="dot"></span> Sistem çevrimiçi...</div>
             <div class="live-clock" id="liveClock">00:00:00</div>
         </header>
         
@@ -101,9 +131,9 @@
             
             <div class="quick-access">
                 <div class="qa-btn" onclick="loadTool('adsoyad', null)"><i class="fa-solid fa-user"></i><span>Mernis</span></div>
-                <div class="qa-btn" onclick="loadTool('plaka_sorgu', null)"><i class="fa-solid fa-car"></i><span>Plaka</span></div>
-                <div class="qa-btn" onclick="loadTool('aile', null)"><i class="fa-solid fa-users"></i><span>Aile Sorgu</span></div>
-                <div class="qa-btn" onclick="loadTool('api_whois', null)"><i class="fa-solid fa-globe"></i><span>WHOIS</span></div>
+                <div class="qa-btn" onclick="loadTool('plaka_kod', null)"><i class="fa-solid fa-car"></i><span>Plaka</span></div>
+                <div class="qa-btn" onclick="loadTool('gsm_gsm', null)"><i class="fa-solid fa-phone-flip"></i><span>GSM → TC</span></div>
+                <div class="qa-btn" onclick="loadTool('eokul_tc', null)"><i class="fa-solid fa-school"></i><span>E-Okul</span></div>
             </div>
         </div>
 
@@ -113,37 +143,64 @@
                     <h2 id="qTitle" style="font-size:22px; font-weight:800;"><i class="fa-solid fa-terminal" style="color:var(--purple);"></i> Sorgu Terminali</h2>
                     <button onclick="loadTool('welcome', null)" style="background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid rgba(239,68,68,0.2); padding:8px 15px; border-radius:10px; cursor:pointer; font-weight:bold;">Kapat</button>
                 </div>
+                <p id="qDesc" style="color:#94a3b8; font-size:13px; margin-bottom:20px;"></p>
                 <form id="queryForm" onsubmit="event.preventDefault(); runQuery();">
                     <div id="qInputs"></div>
-                    <button type="submit" class="btn-submit" id="submitBtn" style="background:linear-gradient(135deg, var(--primary), var(--purple)); color:#fff; border:none; padding:16px; border-radius:12px; font-weight:800; width:100%; cursor:pointer; transition:.3s;">Sorguyu Başlat</button>
+                    <button type="submit" class="btn-submit" id="submitBtn">Sorguyu Başlat</button>
                 </form>
                 
-                <div id="resultContainer" style="display:none; margin-top:25px;">
-                    <div class="terminal-window" style="display:block;">
-                        <div class="terminal-header" style="background:#111; padding:10px 15px; border-bottom:1px solid #333; color:#555; font-size:11px; font-family:monospace; border-radius:12px 12px 0 0;">root@shopsphere:~/output.json</div>
-                        <div class="terminal-body" id="qResultsRaw" style="background:#000; padding:20px; font-family:monospace; font-size:13px; color:#a7f3d0; white-space:pre-wrap; border-radius:0 0 12px 12px; max-height:400px; overflow-y:auto;"></div>
-                    </div>
+                <div class="terminal-window" id="termWindow">
+                    <div class="terminal-header">root@shopsphere:~/output</div>
+                    <div class="terminal-body" id="qResultsRaw"></div>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        const IS_VIP = false; // İleride lazım olursa diye
         const $ = id => document.getElementById(id);
         const H = { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content };
 
-        // Arka plan animasyonu
         const c = $('cyber-bg'), ctx = c.getContext('2d'); let p = [];
         function resize() { c.width = innerWidth; c.height = innerHeight; } resize(); addEventListener('resize', resize);
         for(let i=0; i<40; i++) p.push({x:Math.random()*c.width, y:Math.random()*c.height, vx:(Math.random()-0.5)*0.5, vy:(Math.random()-0.5)*0.5});
         function draw() { ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle='rgba(99,102,241,0.5)'; p.forEach((pt, i) => { pt.x+=pt.vx; pt.y+=pt.vy; if(pt.x<0||pt.x>c.width) pt.vx*=-1; if(pt.y<0||pt.y>c.height) pt.vy*=-1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 2, 0, 7); ctx.fill(); }); requestAnimationFrame(draw); } draw();
-
-        // Saat
         setInterval(() => { $('liveClock').innerText = new Date().toLocaleTimeString('tr-TR'); }, 1000);
 
         function toggleMenu() { $('sidebar').classList.toggle('open'); }
         
+        const TOOLS = {
+            // E-Okul API
+            'papara_adsoyad': { title: 'Papara Sorgu (Ad Soyad)', desc: 'Papara hesabı sorgular.', fields: [{ id:'ad_soyad', label:'Ad Soyad' }] },
+            'papara_id': { title: 'Papara Sorgu (ID)', desc: 'Papara ID ile hesap sorgular.', fields: [{ id:'papara_id', label:'Papara ID' }] },
+            'turknet_tel': { title: 'Türknet Sorgu', desc: 'Telefon numarası ile Türknet abonesi sorgular.', fields: [{ id:'telefon', label:'Telefon (örn: 05xx...)' }] },
+            'cc_luhn': { title: 'CC Luhn Doğrulama', desc: 'Kredi kartı numarasının geçerli olup olmadığını kontrol eder.', fields: [{ id:'kart', label:'Kredi Kartı Numarası' }] },
+            'plaka_adsoyad': { title: 'Plaka Sorgu (Ad Soyad)', desc: 'Ad soyad ile plaka bulur.', fields: [{ id:'ad_soyad', label:'Ad Soyad' }] },
+            'plaka_kod': { title: 'Plaka Sorgu (Plaka)', desc: 'Plaka ile araç sahibini bulur.', fields: [{ id:'plaka', label:'Plaka Kodu' }] },
+            'secmen_soyad': { title: 'Seçmen Sorgu (Soyad)', desc: 'Soyad ile seçmen bilgilerini bulur.', fields: [{ id:'soyad', label:'Soyad' }] },
+            'secmen_tc': { title: 'Seçmen Sorgu (TC)', desc: 'TC ile seçmen bilgilerini bulur.', fields: [{ id:'tc', label:'TC Kimlik No' }] },
+            'eokul_tc': { title: 'E-Okul Sorgu (TC)', desc: 'TC ile E-Okul bilgilerini bulur.', fields: [{ id:'tc', label:'TC Kimlik No' }] },
+            'eokul_adsoyad': { title: 'E-Okul Sorgu (Ad Soyad)', desc: 'Ad soyad ile E-Okul bilgilerini bulur.', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
+            
+            // Violetpanel API
+            'adsoyadprox': { title: 'Proxy Mernis', desc: 'Proxy üzerinden Mernis sorgusu (İl opsiyonel).', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }, { id:'il', label:'İl (Opsiyonel)', required: false }] },
+            'adsoyad': { title: 'Mernis Sorgu', desc: 'Ad ve soyad ile TC bulun.', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
+            'aile': { title: 'Aile Çözümleri', desc: 'TC ile aile bilgilerini bulun.', fields:[{ id:'tc', label:'TC Kimlik No' }] },
+            'adres': { title: 'Adres Çözümleri', desc: 'TC ile güncel adres bulun.', fields:[{ id:'tc', label:'TC Kimlik No' }] },
+            'gsm_tc': { title: 'GSM Çözümleri (TC)', desc: 'TC ile telefon numarası bulun.', fields:[{ id:'tc', label:'TC Kimlik No' }] },
+            'gsm_gsm': { title: 'GSM → TC', desc: 'Telefon numarası ile TC bulun.', fields:[{ id:'gsm', label:'GSM Numarası' }] },
+            
+            // OpenArchiveX
+            'oax_status_v2': { title: 'Sistem Durumu (v2)', desc: 'OpenArchiveX v2 API durumu.', fields: [] },
+            'oax_providers': { title: 'Sağlayıcılar', desc: 'Veri sağlayıcıları listesi.', fields: [] },
+            'oax_sources_v2': { title: 'Tüm Kaynaklar', desc: 'Açık kaynakların listesi.', fields: [] },
+            'oax_forum_overview': { title: 'Forum Özeti', desc: 'Herkese açık forum gönderileri.', fields: [] },
+
+            // Diğer
+            'api_whois': { title: 'Domain WHOIS', desc: 'Alan adı sahibini bulun.', fields: [{ id:'domain', label:'Domain Adı' }] },
+            'api_bin': { title: 'BIN Sorgu', desc: 'Kart ilk 6 hane ile banka bulun.', fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi' }] }
+        };
+
         function loadTool(type, el) { 
             if(type === 'welcome') { 
                 document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); 
@@ -155,20 +212,16 @@
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); 
             $('view-query').classList.add('active'); 
             
-            const TOOLS = {
-                'adsoyad': { title: 'Mernis 2026', desc: 'Ad ve soyad ile TC bulun.', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
-                'aile': { title: 'Aile Çözümleri', desc: 'TC ile aile bilgilerini bulun.', fields:[{ id:'tc', label:'TC Kimlik No' }] },
-                'plaka_sorgu': { title: 'Plaka Sorgu', desc: 'Plaka ile araç sahibini bulun.', fields: [{ id:'plaka', label:'Plaka (örn: 41HU096)' }] },
-                'api_whois': { title: 'Domain WHOIS', desc: 'Alan adı sahibini bulun.', fields: [{ id:'domain', label:'Domain Adı' }] },
-                'api_bin': { title: 'BIN Sorgu', desc: 'Kart ilk 6 hane ile banka bulun.', fields: [{ id:'bin', label:'Kartın İlk 6 Hanesi' }] }
-            };
-            
             const tool = TOOLS[type]; if(!tool) return;
             $('qTitle').innerText = tool.title;
-            $('resultContainer').style.display = 'none';
+            $('qDesc').innerText = tool.desc;
+            $('termWindow').style.display = 'none';
             
             let html = ''; 
-            tool.fields.forEach(f => { html += `<div class="form-group"><label style="display:block; font-size:12px; color:#888; margin-bottom:5px;">${f.label}</label><input type="text" id="inp_${f.id}" style="width:100%; padding:15px; background:#000; border:1px solid #333; border-radius:10px; color:#fff;" required></div>`; }); 
+            tool.fields.forEach(f => { 
+                const req = f.required === false ? '' : 'required';
+                html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" ${req}></div>`; 
+            }); 
             $('qInputs').innerHTML = html; 
             window.currentType = type;
         }
@@ -181,20 +234,20 @@
                 payload[key] = input.value.trim();
             });
 
-            const btn = $('submitBtn');
+            const btn = $('submitBtn'), term = $('qResultsRaw');
             btn.disabled = true; btn.innerText = 'Bağlanıyor...';
-            $('resultContainer').style.display = 'block';
-            $('qResultsRaw').innerHTML = '<span style="color:#fbbf24;">> Sunucuya istek gönderiliyor...</span>';
+            $('termWindow').style.display = 'block';
+            term.innerHTML = '<span style="color:#fbbf24;">> Sunucuya istek gönderiliyor...</span>';
 
             try {
                 const res = await fetch('/api/sorgu', { method: 'POST', headers: H, body: JSON.stringify(payload) }).then(r => r.json());
                 if(res.success) {
-                    $('qResultsRaw').innerHTML = `<span style="color:#10b981;">> BAŞARILI</span>\n\n` + JSON.stringify(res.data, null, 2);
+                    term.innerHTML = `<span style="color:#10b981;">> BAŞARILI</span>\n\n` + JSON.stringify(res.data, null, 2);
                 } else {
-                    $('qResultsRaw').innerHTML = `<span style="color:#ef4444;">> HATA: ${res.error}</span>`;
+                    term.innerHTML = `<span style="color:#ef4444;">> HATA: ${res.error}</span>`;
                 }
             } catch(e) {
-                $('qResultsRaw').innerHTML = `<span style="color:#ef4444;">> Bağlantı hatası oluştu.</span>`;
+                term.innerHTML = `<span style="color:#ef4444;">> Bağlantı hatası oluştu.</span>`;
             }
             btn.disabled = false; btn.innerText = 'Sorguyu Başlat';
         }
