@@ -5,335 +5,438 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>ShopSphere | İstihbarat Merkezi</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root {
-            --bg: #05050a;
-            --card: rgba(20, 20, 30, 0.6);
-            --border: rgba(255, 255, 255, 0.08);
-            --primary: #6366f1;
-            --purple: #a855f7;
-            --success: #10b981;
-            --danger: #ef4444;
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
+        :root { 
+            --bg: #030305; --card: #0a0a0f; --text: #f8fafc; --border: rgba(255,255,255,0.06); 
+            --primary: #6366f1; --purple: #a855f7; --success: #10b981; --danger: #ef4444; --gold: #fbbf24; 
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
-        body { background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
         
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; pointer-events: none; }
-        
-        .app-container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; min-height: 100vh; }
+        /* ARKA PLAN ANİMASYONU */
+        #cyber-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.4; pointer-events: none; }
 
-        .topbar { display: flex; justify-content: space-between; align-items: center; background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 20px; padding: 15px 25px; }
-        .brand { display: flex; align-items: center; gap: 15px; }
-        .brand-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--purple)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; box-shadow: 0 0 20px rgba(168,85,247,0.4); }
-        .brand h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
-        .brand h1 span { color: var(--purple); }
+        /* SOL MENÜ (SIDEBAR) */
+        .sidebar { width: 290px; background: rgba(5, 5, 10, 0.95); backdrop-filter: blur(25px); position: fixed; height: 100vh; left: -290px; top: 0; transition: transform .4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1001; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        .sidebar.open { left: 0; box-shadow: 20px 0 50px rgba(0,0,0,0.8); }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(3px); z-index: 1000; display: none; }
+        .overlay.show { display: block; }
+
+        .logo-area { padding: 25px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); }
+        .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--purple)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; box-shadow: 0 0 20px rgba(99,102,241,0.4); }
+        .logo-area h2 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+        .logo-area h2 span { color: var(--purple); }
         
-        .user-area { display: flex; align-items: center; gap: 15px; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--purple); object-fit: cover; background: #000; }
-        .user-info { text-align: right; }
+        .user-profile { padding: 18px; margin: 15px; background: rgba(255,255,255,0.02); border-radius: 16px; display: flex; align-items: center; gap: 15px; border: 1px solid var(--border); }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--purple); object-fit: cover; background: #000; }
         .user-info h3 { font-size: 14px; font-weight: 700; }
-        .user-info p { font-size: 11px; color: var(--text-muted); }
-        .logout-btn { background: rgba(239,68,68,0.1); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); padding: 10px 15px; border-radius: 10px; cursor: pointer; transition: 0.3s; }
-        .logout-btn:hover { background: rgba(239,68,68,0.2); }
+        .user-info p { font-size: 11px; color: #94a3b8; margin-top: 4px; }
 
-        .search-area { position: relative; margin-bottom: 10px; }
-        .search-area input { width: 100%; padding: 18px 25px 18px 55px; background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 16px; color: #fff; font-size: 15px; transition: 0.3s; }
-        .search-area input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 20px rgba(99,102,241,0.2); }
-        .search-area i { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 18px; }
+        .sidebar-search { padding: 0 15px 10px; position: relative; }
+        .sidebar-search input { width: 100%; padding: 12px 15px 12px 40px; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 10px; color: #fff; font-size: 13px; }
+        .sidebar-search input:focus { outline: none; border-color: var(--primary); }
+        .sidebar-search i { position: absolute; left: 28px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 14px; }
 
-        .tool-category { margin-bottom: 20px; }
-        .cat-title { font-size: 13px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-        .cat-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        .nav-section { padding: 0 15px 30px; flex: 1; overflow-y: auto; }
+        .nav-section::-webkit-scrollbar { width: 3px; }
+        .nav-section::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
         
-        .grid-tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
-        .tool-card { background: var(--card); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 16px; padding: 20px; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; }
-        .tool-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--primary), transparent); opacity: 0; transition: 0.3s; }
-        .tool-card:hover { transform: translateY(-5px); border-color: rgba(99,102,241,0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .tool-card:hover::before { opacity: 1; }
-        .tool-icon { font-size: 24px; color: var(--purple); margin-bottom: 15px; }
-        .tool-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 5px; }
-        .tool-card p { font-size: 12px; color: var(--text-muted); }
+        .nav-cat-title { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 15px 0 10px 10px; }
+        .nav-item { display: flex; align-items: center; padding: 10px 15px; border-radius: 10px; color: #94a3b8; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: .2s; margin-bottom: 2px; border: 1px solid transparent; }
+        .nav-item:hover, .nav-item.active { background: rgba(99,102,241,0.1); color: #fff; border-color: rgba(99,102,241,0.2); transform: translateX(3px); }
+        .nav-item .icon { width: 20px; font-size: 14px; margin-right: 12px; text-align: center; }
 
-        .query-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: 0.3s; }
-        .query-overlay.active { display: flex; opacity: 1; }
-        .query-modal { background: #0f0f15; border: 1px solid var(--border); border-radius: 24px; width: 100%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); transition: 0.3s; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-        .query-overlay.active .query-modal { transform: scale(1); }
+        /* ANA İÇERİK */
+        .main { flex: 1; padding: 25px; width: 100%; transition: margin-left .4s; min-height: 100vh; position: relative; z-index: 1; }
         
-        .modal-header { padding: 20px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
-        .modal-header h2 { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-        .modal-header h2 i { color: var(--primary); }
-        .close-btn { background: rgba(255,255,255,0.05); border: none; color: #fff; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; transition: 0.3s; }
-        .close-btn:hover { background: var(--danger); }
+        .topbar { display: flex; justify-content: space-between; align-items: center; background: rgba(10, 10, 15, 0.8); backdrop-filter: blur(10px); padding: 15px 25px; border-radius: 20px; margin-bottom: 25px; border: 1px solid var(--border); }
+        .menu-btn { font-size: 22px; cursor: pointer; color: #fff; background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 8px 12px; border-radius: 10px; transition: .3s; }
+        .menu-btn:hover { background: rgba(255,255,255,0.1); }
         
-        .modal-body { padding: 25px; overflow-y: auto; flex: 1; }
+        .broadcast { font-size: 13px; color: #cbd5e1; font-weight: 500; display: flex; align-items: center; gap: 10px; flex: 1; margin-left: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .broadcast .dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 10px var(--success); animation: pulse 2s infinite; }
+        .live-clock { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--primary); background: rgba(99,102,241,0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(99,102,241,0.2); }
+        
+        .view { display: none; animation: fadeIn .4s ease; } .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+        /* HOŞ GELDİN & İSTATİSTİK */
+        .welcome-banner { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.05)); border: 1px solid rgba(168,85,247,0.2); border-radius: 20px; padding: 30px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .welcome-text h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; background: linear-gradient(to right, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .welcome-text p { color: #94a3b8; font-size: 14px; }
+        .welcome-icon { font-size: 60px; color: rgba(255,255,255,0.05); }
+        
+        .quick-access { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .qa-btn { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: .3s; }
+        .qa-btn:hover { transform: translateY(-3px); border-color: var(--primary); box-shadow: 0 10px 20px rgba(99,102,241,0.1); }
+        .qa-btn i { font-size: 24px; color: var(--purple); margin-bottom: 10px; display: block; }
+        .qa-btn span { font-size: 13px; font-weight: 700; color: #cbd5e1; }
+
+        /* SON SORGULAR (HAFIZA) */
+        .recent-queries { background: var(--card); border-radius: 16px; padding: 20px; border: 1px solid var(--border); margin-bottom: 25px; }
+        .recent-queries h3 { font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .rq-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; cursor: pointer; transition: .2s; }
+        .rq-item:hover { background: rgba(255,255,255,0.02); }
+        .rq-item:last-child { border-bottom: none; }
+        .rq-type { color: var(--primary); font-weight: 700; }
+        .rq-param { color: #cbd5e1; }
+        .rq-time { color: #64748b; font-size: 11px; }
+
+        /* SORGU EKRANI */
+        .panel { background: var(--card); border-radius: 20px; padding: 30px; border: 1px solid var(--border); max-width: 950px; margin: 0 auto; }
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; }
-        .form-group input { width: 100%; padding: 16px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 12px; color: #fff; font-size: 15px; }
-        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 15px rgba(99,102,241,0.1); }
-        
-        .btn-submit { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--purple)); border: none; border-radius: 12px; color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .form-group label { display: block; font-size: 12px; color: #888; margin-bottom: 8px; text-transform: uppercase; font-weight: 800; }
+        .form-group input { width: 100%; padding: 16px; background: #000; border: 1px solid #333; border-radius: 12px; color: #fff; font-size: 15px; transition: .3s; }
+        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 15px rgba(99,102,241,0.2); }
+        .btn-submit { background: linear-gradient(135deg, var(--primary), var(--purple)); color: #fff; border: none; padding: 16px; border-radius: 12px; font-weight: 800; width: 100%; font-size: 16px; cursor: pointer; transition: .3s; display: flex; justify-content: center; align-items: center; gap: 10px; }
         .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(168,85,247,0.3); }
         .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
+        
+        /* YÜKLENİYOR UYARISI */
+        .loading-notice { display: none; background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); color: var(--gold); padding: 12px; border-radius: 10px; font-size: 13px; margin-top: 15px; text-align: center; animation: pulse 2s infinite; }
 
+        /* SONUÇ ALANI */
         .result-area { margin-top: 25px; display: none; }
-        .result-tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .res-tab { background: none; border: none; color: var(--text-muted); font-weight: 700; font-size: 14px; cursor: pointer; padding: 8px 15px; border-radius: 8px; transition: 0.3s; }
-        .res-tab.active { background: rgba(255,255,255,0.05); color: #fff; }
+        .result-toolbar { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 10px 15px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .res-tabs { display: flex; gap: 5px; }
+        .res-tab { background: transparent; color: #94a3b8; border: none; padding: 8px 15px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: .2s; }
+        .res-tab.active { background: rgba(255,255,255,0.1); color: #fff; }
+        .action-buttons { display: flex; gap: 8px; }
+        .btn-mini { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: .2s; }
+        .btn-mini:hover { background: rgba(255,255,255,0.1); }
         
         .res-content { display: none; }
         .res-content.active { display: block; }
-        
-        .terminal-window { background: #000; border-radius: 12px; border: 1px solid #222; overflow: hidden; }
-        .terminal-header { background: #111; padding: 10px 15px; display: flex; gap: 8px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; }
-        .terminal-body { padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #a7f3d0; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
-        
-        .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        .data-table th, .data-table td { padding: 12px 15px; border-bottom: 1px solid var(--border); text-align: left; }
-        .data-table th { color: var(--text-muted); font-size: 12px; text-transform: uppercase; background: rgba(0,0,0,0.3); }
-        .data-table td { color: #fff; word-break: break-all; }
 
-        .loader { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 14px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: #000; }
+        .data-table th, .data-table td { padding: 14px 18px; border-bottom: 1px solid var(--border); text-align: left; }
+        .data-table th { background: rgba(255,255,255,0.02); color: #94a3b8; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 35%; }
+        .data-table td { color: #f8fafc; font-weight: 500; word-break: break-all; }
+        
+        .terminal-window { background: #000; border-radius: 12px; border: 1px solid #333; overflow: hidden; }
+        .terminal-header { background: #111; padding: 10px 15px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #333; }
+        .term-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .terminal-body { padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #a7f3d0; white-space: pre-wrap; max-height: 500px; overflow-y: auto; }
+
+        /* TOAST BİLDİRİM */
+        .toast-wrap { position: fixed; top: 20px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 15px 20px; border-radius: 12px; font-size: 14px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; animation: slideLeft .3s ease; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .toast.success { background: var(--success); } .toast.error { background: var(--danger); } .toast.warn { background: var(--gold); color: #000; }
+        @keyframes slideLeft { from { transform: translateX(100%); opacity: 0; } to { transform: none; opacity: 1; } }
+
+        @media (min-width: 992px) { 
+            .sidebar { left: 0; } 
+            .main { margin-left: 290px; width: calc(100% - 290px); } 
+            .menu-btn, .overlay { display: none !important; } 
+        }
     </style>
 </head>
 <body>
-    <canvas id="bg-canvas"></canvas>
+    <canvas id="cyber-bg"></canvas>
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    <div class="toast-wrap" id="toastWrap"></div>
 
-    <div class="app-container">
-        <header class="topbar">
-            <div class="brand">
-                <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                <h1>SHOP<span>SPHERE</span></h1>
-            </div>
-            <div class="user-area">
-                <div class="user-info">
-                    <h3>{{ username }}</h3>
-                    <p>Sistem Aktif</p>
-                </div>
-                <img src="{{ avatar }}" class="avatar" alt="Profil">
-                <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
-            </div>
-        </header>
-
-        <div class="search-area">
+    <!-- SOL MENÜ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo-area"><div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div><h2>SHOP<span>SPHERE</span></h2></div>
+        <div class="user-profile">
+            <img src="{{ avatar }}" class="avatar" alt="Profil">
+            <div class="user-info"><h3>{{ username }}</h3><p>Sistem Aktif</p></div>
+        </div>
+        
+        <div class="sidebar-search">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="searchInput" placeholder="Hangi aracı arıyorsun? (Örn: Mernis, Papara, E-Okul...)" onkeyup="filterTools()">
+            <input type="text" id="toolSearch" placeholder="Araç Ara..." onkeyup="filterMenu()">
         </div>
 
-        <main id="toolCatalog">
-            <div class="tool-category" data-cat="eokul">
-                <div class="cat-title"><i class="fa-solid fa-school"></i> E-OKUL & DİĞER</div>
-                <div class="grid-tools">
-                    <div class="tool-card" onclick="openQuery('papara_adsoyad')"><div class="tool-icon"><i class="fa-solid fa-wallet"></i></div><h4>Papara (Ad Soyad)</h4><p>İsimle Papara hesabı sorgula.</p></div>
-                    <div class="tool-card" onclick="openQuery('papara_id')"><div class="tool-icon"><i class="fa-solid fa-wallet"></i></div><h4>Papara (ID)</h4><p>Papara ID ile hesap sorgula.</p></div>
-                    <div class="tool-card" onclick="openQuery('turknet_tel')"><div class="tool-icon"><i class="fa-solid fa-wifi"></i></div><h4>Türknet Sorgu</h4><p>Telefon ile abone sorgula.</p></div>
-                    <div class="tool-card" onclick="openQuery('cc_luhn')"><div class="tool-icon"><i class="fa-solid fa-credit-card"></i></div><h4>CC Luhn</h4><p>Kredi kartı doğrulama testi.</p></div>
-                    <div class="tool-card" onclick="openQuery('plaka_adsoyad')"><div class="tool-icon"><i class="fa-solid fa-car"></i></div><h4>Plaka (İsim)</h4><p>Ad soyad ile plaka bul.</p></div>
-                    <div class="tool-card" onclick="openQuery('plaka_kod')"><div class="tool-icon"><i class="fa-solid fa-car"></i></div><h4>Plaka (Kod)</h4><p>Plaka ile araç sahibini bul.</p></div>
-                    <div class="tool-card" onclick="openQuery('secmen_soyad')"><div class="tool-icon"><i class="fa-solid fa-check-to-slot"></i></div><h4>Seçmen (Soyad)</h4><p>Soyad ile seçmen bul.</p></div>
-                    <div class="tool-card" onclick="openQuery('secmen_tc')"><div class="tool-icon"><i class="fa-solid fa-check-to-slot"></i></div><h4>Seçmen (TC)</h4><p>TC ile seçmen bul.</p></div>
-                    <div class="tool-card" onclick="openQuery('eokul_tc')"><div class="tool-icon"><i class="fa-solid fa-school"></i></div><h4>E-Okul (TC)</h4><p>TC ile E-Okul sorgula.</p></div>
-                    <div class="tool-card" onclick="openQuery('eokul_adsoyad')"><div class="tool-icon"><i class="fa-solid fa-school"></i></div><h4>E-Okul (İsim)</h4><p>Ad soyad ile E-Okul sorgula.</p></div>
+        <div class="nav-section" id="navSection">
+            <div class="nav-item active" onclick="loadTool('welcome', this)"><div class="icon"><i class="fa-solid fa-house"></i></div> Ana Sayfa</div>
+            
+            <div class="nav-cat-title">OPENARCHIVEX</div>
+            <div class="nav-item tool-item" onclick="loadTool('oax_status_v2', this)"><div class="icon"><i class="fa-solid fa-server"></i></div> Sistem Durumu</div>
+            <div class="nav-item tool-item" onclick="loadTool('oax_providers', this)"><div class="icon"><i class="fa-solid fa-network-wired"></i></div> Sağlayıcılar</div>
+            <div class="nav-item tool-item" onclick="loadTool('oax_sources_v2', this)"><div class="icon"><i class="fa-solid fa-layer-group"></i></div> Kaynaklar</div>
+            
+            <div class="nav-cat-title">E-OKUL & SORGULAR</div>
+            <div class="nav-item tool-item" onclick="loadTool('papara_adsoyad', this)"><div class="icon"><i class="fa-solid fa-wallet"></i></div> Papara (Ad Soyad)</div>
+            <div class="nav-item tool-item" onclick="loadTool('papara_id', this)"><div class="icon"><i class="fa-solid fa-wallet"></i></div> Papara (ID)</div>
+            <div class="nav-item tool-item" onclick="loadTool('turknet_tel', this)"><div class="icon"><i class="fa-solid fa-wifi"></i></div> Türknet</div>
+            <div class="nav-item tool-item" onclick="loadTool('cc_luhn', this)"><div class="icon"><i class="fa-solid fa-credit-card"></i></div> CC Luhn</div>
+            <div class="nav-item tool-item" onclick="loadTool('plaka_adsoyad', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka (İsim)</div>
+            <div class="nav-item tool-item" onclick="loadTool('plaka_kod', this)"><div class="icon"><i class="fa-solid fa-car"></i></div> Plaka (Kod)</div>
+            <div class="nav-item tool-item" onclick="loadTool('secmen_soyad', this)"><div class="icon"><i class="fa-solid fa-check-to-slot"></i></div> Seçmen (Soyad)</div>
+            <div class="nav-item tool-item" onclick="loadTool('secmen_tc', this)"><div class="icon"><i class="fa-solid fa-check-to-slot"></i></div> Seçmen (TC)</div>
+            <div class="nav-item tool-item" onclick="loadTool('eokul_tc', this)"><div class="icon"><i class="fa-solid fa-school"></i></div> E-Okul (TC)</div>
+            <div class="nav-item tool-item" onclick="loadTool('eokul_adsoyad', this)"><div class="icon"><i class="fa-solid fa-school"></i></div> E-Okul (İsim)</div>
+
+            <div class="nav-cat-title">İSTİHBARAT</div>
+            <div class="nav-item tool-item" onclick="loadTool('adsoyadprox', this)"><div class="icon"><i class="fa-solid fa-user-shield"></i></div> Proxy Mernis</div>
+            <div class="nav-item tool-item" onclick="loadTool('adsoyad', this)"><div class="icon"><i class="fa-solid fa-user"></i></div> Mernis</div>
+            <div class="nav-item tool-item" onclick="loadTool('aile', this)"><div class="icon"><i class="fa-solid fa-users"></i></div> Aile</div>
+            <div class="nav-item tool-item" onclick="loadTool('adres', this)"><div class="icon"><i class="fa-solid fa-location-dot"></i></div> Adres</div>
+            <div class="nav-item tool-item" onclick="loadTool('gsm_tc', this)"><div class="icon"><i class="fa-solid fa-phone"></i></div> GSM (TC)</div>
+            <div class="nav-item tool-item" onclick="loadTool('gsm_gsm', this)"><div class="icon"><i class="fa-solid fa-phone-flip"></i></div> GSM → TC</div>
+
+            <div class="nav-cat-title">DİĞER</div>
+            <div class="nav-item tool-item" onclick="loadTool('api_whois', this)"><div class="icon"><i class="fa-solid fa-globe"></i></div> WHOIS</div>
+            <div class="nav-item tool-item" onclick="loadTool('api_bin', this)"><div class="icon"><i class="fa-solid fa-credit-card"></i></div> BIN</div>
+            
+            <a href="/admin-panel-x9" class="nav-item" style="color:#fbbf24; margin-top:20px;"><div class="icon"><i class="fa-solid fa-shield-halved"></i></div> Admin Paneli</a>
+            <div class="nav-item" onclick="logout()" style="color:var(--danger);"><div class="icon"><i class="fa-solid fa-right-from-bracket"></i></div> Çıkış</div>
+        </div>
+    </aside>
+
+    <!-- ANA İÇERİK -->
+    <main class="main">
+        <header class="topbar">
+            <button class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+            <div class="broadcast"><span class="dot"></span> Sistem çevrimiçi...</div>
+            <div class="live-clock" id="liveClock">00:00:00</div>
+        </header>
+        
+        <!-- HOŞ GELDİN EKRANI -->
+        <div id="view-dashboard" class="view active">
+            <div class="welcome-banner">
+                <div class="welcome-text">
+                    <h2>Hoş Geldin, {{ username }}</h2>
+                    <p>Siber istihbarat ağına bağlandınız. Sistem durumu: <b style="color:var(--success);">Aktif</b>.</p>
                 </div>
+                <i class="fa-solid fa-shield-virus welcome-icon"></i>
+            </div>
+            
+            <div class="quick-access">
+                <div class="qa-btn" onclick="loadTool('adsoyad', null)"><i class="fa-solid fa-user"></i><span>Mernis</span></div>
+                <div class="qa-btn" onclick="loadTool('plaka_kod', null)"><i class="fa-solid fa-car"></i><span>Plaka</span></div>
+                <div class="qa-btn" onclick="loadTool('gsm_gsm', null)"><i class="fa-solid fa-phone-flip"></i><span>GSM → TC</span></div>
+                <div class="qa-btn" onclick="loadTool('eokul_tc', null)"><i class="fa-solid fa-school"></i><span>E-Okul</span></div>
             </div>
 
-            <div class="tool-category" data-cat="violet">
-                <div class="cat-title"><i class="fa-solid fa-user-secret"></i> İSTİHBARAT & SORGULAR</div>
-                <div class="grid-tools">
-                    <div class="tool-card" onclick="openQuery('adsoyadprox')"><div class="tool-icon"><i class="fa-solid fa-user-shield"></i></div><h4>Proxy Mernis</h4><p>Gelişmiş Mernis sorgusu.</p></div>
-                    <div class="tool-card" onclick="openQuery('adsoyad')"><div class="tool-icon"><i class="fa-solid fa-user"></i></div><h4>Mernis</h4><p>Ad soyad ile TC bul.</p></div>
-                    <div class="tool-card" onclick="openQuery('aile')"><div class="tool-icon"><i class="fa-solid fa-users"></i></div><h4>Aile Sorgu</h4><p>TC ile aile bilgileri.</p></div>
-                    <div class="tool-card" onclick="openQuery('adres')"><div class="tool-icon"><i class="fa-solid fa-location-dot"></i></div><h4>Adres Sorgu</h4><p>TC ile adres bul.</p></div>
-                    <div class="tool-card" onclick="openQuery('gsm_tc')"><div class="tool-icon"><i class="fa-solid fa-phone"></i></div><h4>GSM (TC)</h4><p>TC ile telefon bul.</p></div>
-                    <div class="tool-card" onclick="openQuery('gsm_gsm')"><div class="tool-icon"><i class="fa-solid fa-phone-flip"></i></div><h4>GSM → TC</h4><p>Telefon ile TC bul.</p></div>
-                </div>
+            <!-- SON SORGULAR -->
+            <div class="recent-queries" id="recentBox" style="display:none;">
+                <h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--purple);"></i> Son Sorgularım</h3>
+                <div id="recentList"></div>
             </div>
+        </div>
 
-            <div class="tool-category" data-cat="oax">
-                <div class="cat-title"><i class="fa-solid fa-database"></i> OPENARCHIVEX (AÇIK API)</div>
-                <div class="grid-tools">
-                    <div class="tool-card" onclick="openQuery('oax_status_v2')"><div class="tool-icon"><i class="fa-solid fa-server"></i></div><h4>Sistem Durumu</h4><p>API durumunu kontrol et.</p></div>
-                    <div class="tool-card" onclick="openQuery('oax_providers')"><div class="tool-icon"><i class="fa-solid fa-network-wired"></i></div><h4>Sağlayıcılar</h4><p>Veri sağlayıcıları listesi.</p></div>
-                    <div class="tool-card" onclick="openQuery('oax_sources_v2')"><div class="tool-icon"><i class="fa-solid fa-layer-group"></i></div><h4>Kaynaklar</h4><p>Tüm sızıntı kaynakları.</p></div>
-                    <div class="tool-card" onclick="openQuery('oax_forum_overview')"><div class="tool-icon"><i class="fa-solid fa-comments"></i></div><h4>Forum Özeti</h4><p>Public forum gönderileri.</p></div>
+        <!-- SORGU EKRANI -->
+        <div id="view-query" class="view">
+            <div class="panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:20px; margin-bottom:25px;">
+                    <h2 id="qTitle" style="font-size:22px; font-weight:800;"><i class="fa-solid fa-terminal" style="color:var(--purple);"></i> Sorgu</h2>
+                    <button onclick="loadTool('welcome', null)" style="background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid rgba(239,68,68,0.2); padding:8px 15px; border-radius:10px; cursor:pointer; font-weight:bold;">Kapat</button>
                 </div>
-            </div>
+                <p id="qDesc" style="color:#94a3b8; font-size:13px; margin-bottom:20px;"></p>
+                <form id="queryForm" onsubmit="event.preventDefault(); runQuery();">
+                    <div id="qInputs"></div>
+                    <button type="submit" class="btn-submit" id="submitBtn"><i class="fa-solid fa-bolt"></i> Sorguyu Başlat</button>
+                </form>
+                
+                <!-- YÜKLENİYOR UYARISI -->
+                <div class="loading-notice" id="loadingNotice">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Sunucu yanıtı bekleniyor... (E-Okul API'si uyanıyor olabilir, bu işlem 30-40 saniye sürebilir)
+                </div>
 
-            <div class="tool-category" data-cat="other">
-                <div class="cat-title"><i class="fa-solid fa-globe"></i> DİĞER ARAÇLAR</div>
-                <div class="grid-tools">
-                    <div class="tool-card" onclick="openQuery('api_whois')"><div class="tool-icon"><i class="fa-solid fa-magnifying-glass-location"></i></div><h4>WHOIS</h4><p>Domain sahibi sorgula.</p></div>
-                    <div class="tool-card" onclick="openQuery('api_bin')"><div class="tool-icon"><i class="fa-solid fa-credit-card"></i></div><h4>BIN Sorgu</h4><p>Kart BIN ile banka bul.</p></div>
-                </div>
-            </div>
-        </main>
-
-        <div class="query-overlay" id="queryOverlay">
-            <div class="query-modal">
-                <div class="modal-header">
-                    <h2 id="qTitle"><i class="fa-solid fa-terminal"></i> Sorgu</h2>
-                    <button class="close-btn" onclick="closeQuery()"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div class="modal-body">
-                    <form id="queryForm" onsubmit="event.preventDefault(); runQuery();">
-                        <div id="qInputs"></div>
-                        <button type="submit" class="btn-submit" id="submitBtn">Sorguyu Başlat</button>
-                    </form>
-                    
-                    <div class="result-area" id="resultArea">
-                        <div class="result-tabs">
-                            <button class="res-tab active" onclick="switchTab('formatted', this)"><i class="fa-solid fa-table"></i> Tablo</button>
-                            <button class="res-tab" onclick="switchTab('json', this)"><i class="fa-solid fa-code"></i> JSON</button>
+                <div class="result-area" id="resultArea">
+                    <div class="result-toolbar">
+                        <div class="res-tabs">
+                            <button type="button" class="res-tab active" onclick="switchResultTab('formatted', this)"><i class="fa-solid fa-table"></i> Tablo</button>
+                            <button type="button" class="res-tab" onclick="switchResultTab('json', this)"><i class="fa-solid fa-code"></i> JSON</button>
                         </div>
-                        
-                        <div id="tab-formatted" class="res-content active">
-                            <div style="background:rgba(0,0,0,0.2); border-radius:12px; border:1px solid #222; overflow:hidden;">
-                                <table class="data-table" id="resultTable"></table>
-                            </div>
+                        <div class="action-buttons">
+                            <button class="btn-mini" onclick="downloadPDF()"><i class="fa-solid fa-file-pdf" style="color:#ef4444;"></i> PDF</button>
+                            <button class="btn-mini" onclick="downloadCSV()"><i class="fa-solid fa-file-excel" style="color:#10b981;"></i> Excel</button>
+                            <button class="btn-mini" onclick="copyResult()"><i class="fa-solid fa-copy" style="color:#60a5fa;"></i> Kopyala</button>
                         </div>
-                        
-                        <div id="tab-json" class="res-content">
-                            <div class="terminal-window">
-                                <div class="terminal-header">
-                                    <div class="dot" style="background:#ff5f56"></div>
-                                    <div class="dot" style="background:#ffbd2e"></div>
-                                    <div class="dot" style="background:#27c93f"></div>
-                                </div>
-                                <div class="terminal-body" id="resultJson"></div>
+                    </div>
+
+                    <div id="res-formatted" class="res-content active">
+                        <table class="data-table" id="formattedTable"></table>
+                    </div>
+
+                    <div id="res-json" class="res-content">
+                        <div class="terminal-window">
+                            <div class="terminal-header">
+                                <div class="term-dot" style="background:#ff5f56"></div>
+                                <div class="term-dot" style="background:#ffbd2e"></div>
+                                <div class="term-dot" style="background:#27c93f"></div>
                             </div>
+                            <div class="terminal-body" id="qResultsRaw"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <script>
         const $ = id => document.getElementById(id);
         const H = { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content };
 
-        const canvas = $('bg-canvas'), ctx = canvas.getContext('2d'); let particles = [];
-        function resize() { canvas.width = innerWidth; canvas.height = innerHeight; } resize(); addEventListener('resize', resize);
-        for(let i=0; i<60; i++) particles.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, vx:(Math.random()-0.5)*0.3, vy:(Math.random()-0.5)*0.3});
-        function draw() {
-            ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle = 'rgba(168, 85, 247, 0.4)'; ctx.strokeStyle = 'rgba(99, 102, 241, 0.1)';
-            particles.forEach((p, i) => {
-                p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>canvas.width) p.vx*=-1; if(p.y<0||p.y>canvas.height) p.vy*=-1;
-                ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, 7); ctx.fill();
-                for(let j=i+1; j<particles.length; j++) {
-                    let dx=p.x-particles[j].x, dy=p.y-particles[j].y, d=Math.sqrt(dx*dx+dy*dy);
-                    if(d<150) { ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(particles[j].x,particles[j].y); ctx.stroke(); }
-                }
-            });
-            requestAnimationFrame(draw);
-        } draw();
+        // --- ARKA PLAN ---
+        const c = $('cyber-bg'), ctx = c.getContext('2d'); let p = [];
+        function resize() { c.width = innerWidth; c.height = innerHeight; } resize(); addEventListener('resize', resize);
+        for(let i=0; i<40; i++) p.push({x:Math.random()*c.width, y:Math.random()*c.height, vx:(Math.random()-0.5)*0.5, vy:(Math.random()-0.5)*0.5});
+        function draw() { ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle='rgba(99,102,241,0.5)'; p.forEach((pt, i) => { pt.x+=pt.vx; pt.y+=pt.vy; if(pt.x<0||pt.x>c.width) pt.vx*=-1; if(pt.y<0||pt.y>c.height) pt.vy*=-1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 2, 0, 7); ctx.fill(); }); requestAnimationFrame(draw); } draw();
+        
+        // --- SAAT ---
+        setInterval(() => { $('liveClock').innerText = new Date().toLocaleTimeString('tr-TR'); }, 1000);
 
-        function filterTools() {
-            const query = $('searchInput').value.toLowerCase();
-            document.querySelectorAll('.tool-card').forEach(card => {
-                const title = card.querySelector('h4').innerText.toLowerCase();
-                const desc = card.querySelector('p').innerText.toLowerCase();
-                card.style.display = (title.includes(query) || desc.includes(query)) ? 'block' : 'none';
-            });
-            document.querySelectorAll('.tool-category').forEach(cat => {
-                const visibleCards = Array.from(cat.querySelectorAll('.tool-card')).some(c => c.style.display !== 'none');
-                cat.style.display = visibleCards ? 'block' : 'none';
+        // --- MENÜ VE OVERLAY ---
+        function toggleMenu() { 
+            $('sidebar').classList.toggle('open'); 
+            $('overlay').classList.toggle('show');
+        }
+
+        // --- MENÜ ARAMA ---
+        function filterMenu() {
+            const query = $('toolSearch').value.toLowerCase();
+            document.querySelectorAll('.tool-item').forEach(item => {
+                item.style.display = item.innerText.toLowerCase().includes(query) ? 'flex' : 'none';
             });
         }
 
+        // --- TOAST BİLDİRİM ---
+        function toast(msg, type='success') {
+            const el = document.createElement('div');
+            el.className = `toast ${type}`;
+            el.innerHTML = `<i class="fa-solid ${type==='success'?'fa-check-circle':(type==='warn'?'fa-triangle-exclamation':'fa-exclamation-circle')}"></i> ${msg}`;
+            $('toastWrap').appendChild(el);
+            setTimeout(() => el.remove(), 4000);
+        }
+
+        // --- ARAÇLAR ---
         const TOOLS = {
-            'papara_adsoyad': { title: 'Papara Sorgu (Ad Soyad)', fields: [{ id:'ad_soyad', label:'Ad Soyad' }] },
-            'papara_id': { title: 'Papara Sorgu (ID)', fields: [{ id:'papara_id', label:'Papara ID' }] },
-            'turknet_tel': { title: 'Türknet Sorgu', fields: [{ id:'telefon', label:'Telefon' }] },
-            'cc_luhn': { title: 'CC Luhn Doğrulama', fields: [{ id:'kart', label:'Kredi Kartı No' }] },
-            'plaka_adsoyad': { title: 'Plaka Sorgu (İsim)', fields: [{ id:'ad_soyad', label:'Ad Soyad' }] },
-            'plaka_kod': { title: 'Plaka Sorgu (Plaka)', fields: [{ id:'plaka', label:'Plaka Kodu' }] },
-            'secmen_soyad': { title: 'Seçmen Sorgu (Soyad)', fields: [{ id:'soyad', label:'Soyad' }] },
-            'secmen_tc': { title: 'Seçmen Sorgu (TC)', fields: [{ id:'tc', label:'TC Kimlik No' }] },
-            'eokul_tc': { title: 'E-Okul Sorgu (TC)', fields: [{ id:'tc', label:'TC Kimlik No' }] },
-            'eokul_adsoyad': { title: 'E-Okul Sorgu (İsim)', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
-            'adsoyadprox': { title: 'Proxy Mernis', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }, { id:'il', label:'İl (Opsiyonel)', req: false }] },
-            'adsoyad': { title: 'Mernis Sorgu', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
-            'aile': { title: 'Aile Sorgu', fields: [{ id:'tc', label:'TC Kimlik No' }] },
-            'adres': { title: 'Adres Sorgu', fields: [{ id:'tc', label:'TC Kimlik No' }] },
-            'gsm_tc': { title: 'GSM Sorgu (TC)', fields: [{ id:'tc', label:'TC Kimlik No' }] },
-            'gsm_gsm': { title: 'GSM → TC', fields: [{ id:'gsm', label:'Telefon Numarası' }] },
-            'oax_status_v2': { title: 'OpenArchiveX Durum', fields: [] },
-            'oax_providers': { title: 'OpenArchiveX Sağlayıcılar', fields: [] },
-            'oax_sources_v2': { title: 'OpenArchiveX Kaynaklar', fields: [] },
-            'oax_forum_overview': { title: 'OpenArchiveX Forum', fields: [] },
-            'api_whois': { title: 'WHOIS Sorgu', fields: [{ id:'domain', label:'Domain' }] },
-            'api_bin': { title: 'BIN Sorgu', fields: [{ id:'bin', label:'Kart İlk 6 Hane' }] }
+            'papara_adsoyad': { title: 'Papara (Ad Soyad)', desc: 'İsimle Papara hesabı sorgula.', fields: [{ id:'ad_soyad', label:'Ad Soyad' }] },
+            'papara_id': { title: 'Papara (ID)', desc: 'Papara ID ile hesap sorgula.', fields: [{ id:'papara_id', label:'Papara ID' }] },
+            'turknet_tel': { title: 'Türknet Sorgu', desc: 'Telefon ile abone sorgula.', fields: [{ id:'telefon', label:'Telefon' }] },
+            'cc_luhn': { title: 'CC Luhn Doğrulama', desc: 'Kredi kartı doğrulama testi.', fields: [{ id:'kart', label:'Kredi Kartı No' }] },
+            'plaka_adsoyad': { title: 'Plaka (İsim)', desc: 'Ad soyad ile plaka bul.', fields: [{ id:'ad_soyad', label:'Ad Soyad' }] },
+            'plaka_kod': { title: 'Plaka (Kod)', desc: 'Plaka ile araç sahibini bul.', fields: [{ id:'plaka', label:'Plaka Kodu' }] },
+            'secmen_soyad': { title: 'Seçmen (Soyad)', desc: 'Soyad ile seçmen bul.', fields: [{ id:'soyad', label:'Soyad' }] },
+            'secmen_tc': { title: 'Seçmen (TC)', desc: 'TC ile seçmen bul.', fields: [{ id:'tc', label:'TC Kimlik No' }] },
+            'eokul_tc': { title: 'E-Okul (TC)', desc: 'TC ile E-Okul sorgula.', fields: [{ id:'tc', label:'TC Kimlik No' }] },
+            'eokul_adsoyad': { title: 'E-Okul (İsim)', desc: 'Ad soyad ile E-Okul sorgula.', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
+            'adsoyadprox': { title: 'Proxy Mernis', desc: 'Gelişmiş Mernis sorgusu.', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }, { id:'il', label:'İl (Opsiyonel)', req: false }] },
+            'adsoyad': { title: 'Mernis Sorgu', desc: 'Ad soyad ile TC bul.', fields: [{ id:'ad', label:'Ad' }, { id:'soyad', label:'Soyad' }] },
+            'aile': { title: 'Aile Sorgu', desc: 'TC ile aile bilgileri.', fields: [{ id:'tc', label:'TC Kimlik No' }] },
+            'adres': { title: 'Adres Sorgu', desc: 'TC ile adres bul.', fields: [{ id:'tc', label:'TC Kimlik No' }] },
+            'gsm_tc': { title: 'GSM (TC)', desc: 'TC ile telefon bul.', fields: [{ id:'tc', label:'TC Kimlik No' }] },
+            'gsm_gsm': { title: 'GSM → TC', desc: 'Telefon ile TC bul.', fields: [{ id:'gsm', label:'Telefon Numarası' }] },
+            'oax_status_v2': { title: 'OpenArchiveX Durum', desc: 'API durumunu kontrol et.', fields: [] },
+            'oax_providers': { title: 'OpenArchiveX Sağlayıcılar', desc: 'Veri sağlayıcıları listesi.', fields: [] },
+            'oax_sources_v2': { title: 'OpenArchiveX Kaynaklar', desc: 'Tüm sızıntı kaynakları.', fields: [] },
+            'api_whois': { title: 'WHOIS Sorgu', desc: 'Domain sahibi sorgula.', fields: [{ id:'domain', label:'Domain' }] },
+            'api_bin': { title: 'BIN Sorgu', desc: 'Kart BIN ile banka bul.', fields: [{ id:'bin', label:'Kart İlk 6 Hane' }] }
         };
 
-        let currentType = null;
+        let currentType = null, lastResult = null;
 
-        function openQuery(type) {
+        // --- HAFIZA (LOCALSTORAGE) ---
+        function saveRecent(type, title, param) {
+            let recents = JSON.parse(localStorage.getItem('recent_queries') || '[]');
+            recents.unshift({ type, title, param, time: new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) });
+            recents = recents.slice(0, 5); // Son 5
+            localStorage.setItem('recent_queries', JSON.stringify(recents));
+            renderRecents();
+        }
+
+        function renderRecents() {
+            let recents = JSON.parse(localStorage.getItem('recent_queries') || '[]');
+            if(recents.length === 0) { $('recentBox').style.display = 'none'; return; }
+            
+            $('recentBox').style.display = 'block';
+            $('recentList').innerHTML = recents.map(r => `
+                <div class="rq-item" onclick="quickRun('${r.type}', '${r.param}')">
+                    <div><span class="rq-type">${r.title}</span> <span class="rq-param">(${r.param})</span></div>
+                    <div class="rq-time">${r.time}</div>
+                </div>
+            `).join('');
+        }
+        renderRecents();
+
+        function quickRun(type, param) {
+            loadTool(type, null);
+            setTimeout(() => {
+                const firstInput = document.querySelector('#qInputs input');
+                if(firstInput) firstInput.value = param;
+            }, 100);
+        }
+
+        // --- EKRAN YÖNETİMİ ---
+        function loadTool(type, el) { 
+            if(type === 'welcome') { 
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); 
+                $('view-dashboard').classList.add('active'); 
+                if (el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
+                if(innerWidth < 992) toggleMenu();
+                return; 
+            }
+            if (el) { document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); 
+            $('view-query').classList.add('active'); 
+            if(innerWidth < 992) toggleMenu();
+            
             const tool = TOOLS[type]; if(!tool) return;
             currentType = type;
+            lastResult = null;
             
-            $('qTitle').innerHTML = `<i class="fa-solid fa-terminal"></i> ${tool.title}`;
+            $('qTitle').innerHTML = `<i class="fa-solid fa-terminal" style="color:var(--purple);"></i> ${tool.title}`;
+            $('qDesc').innerText = tool.desc;
             $('resultArea').style.display = 'none';
+            $('loadingNotice').style.display = 'none';
             
-            let html = '';
-            tool.fields.forEach(f => {
+            let html = ''; 
+            tool.fields.forEach(f => { 
                 const req = f.req === false ? '' : 'required';
-                html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" ${req} autocomplete="off"></div>`;
-            });
-            $('qInputs').innerHTML = html;
-            
-            $('queryOverlay').classList.add('active');
+                html += `<div class="form-group"><label>${f.label}</label><input type="text" id="inp_${f.id}" ${req} autocomplete="off"></div>`; 
+            }); 
+            $('qInputs').innerHTML = html; 
         }
-
-        function closeQuery() { $('queryOverlay').classList.remove('active'); }
-
-        function switchTab(tab, btn) {
-            document.querySelectorAll('.res-tab').forEach(t => t.classList.remove('active'));
-            btn.classList.add('active');
-            document.querySelectorAll('.res-content').forEach(c => c.classList.remove('active'));
-            if(tab === 'formatted') $('tab-formatted').classList.add('active');
-            else $('tab-json').classList.add('active');
-        }
-
-        async function runQuery() {
+        
+        // --- SORGU ÇALIŞTIRMA ---
+        async function runQuery() { 
             const payload = { type: currentType };
             document.querySelectorAll('#qInputs input').forEach(input => { payload[input.id.replace('inp_', '')] = input.value.trim(); });
 
             const btn = $('submitBtn');
-            btn.disabled = true; btn.innerHTML = '<span class="loader"></span> Sorgulanıyor...';
+            btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Sorgulanıyor...';
             
             $('resultArea').style.display = 'block';
-            $('resultTable').innerHTML = '<tr><td style="text-align:center; padding:30px; color:#94a3b8;">Sunucuya bağlanılıyor...</td></tr>';
-            $('resultJson').innerHTML = '<span style="color:#94a3b8;">> İstek gönderildi, bekleniyor...</span>';
+            $('loadingNotice').style.display = 'block'; // Yükleniyor uyarısını aç
+            $('formattedTable').innerHTML = '<tr><td colspan="2" style="text-align:center; padding:30px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Veri bekleniyor...</td></tr>';
+            $('qResultsRaw').innerHTML = '<span style="color:#94a3b8;">> Sunucuya istek gönderildi...</span>';
 
             try {
-                const res = await fetch('/api/sorgu', { method:'POST', headers:H, body:JSON.stringify(payload) }).then(r => r.json());
+                const res = await fetch('/api/sorgu', { method: 'POST', headers: H, body: JSON.stringify(payload) }).then(r => r.json());
                 
+                $('loadingNotice').style.display = 'none'; // Uyarıyı kapat
+
                 if(!res.success) {
-                    $('resultTable').innerHTML = `<tr><td style="color:#ef4444; text-align:center; padding:30px;"><i class="fa-solid fa-triangle-exclamation"></i> Hata: ${res.error}</td></tr>`;
-                    $('resultJson').innerHTML = `<span style="color:#ef4444;">> HATA: ${res.error}</span>`;
+                    $('formattedTable').innerHTML = `<tr><td colspan="2" style="color:#ef4444; text-align:center; padding:30px;"><i class="fa-solid fa-triangle-exclamation"></i> ${res.error}</td></tr>`;
+                    $('qResultsRaw').innerHTML = `<span style="color:#ef4444;">> HATA: ${res.error}</span>`;
+                    toast(res.error, 'error');
                 } else {
-                    // Tablo Render
-                    let tableHtml = '<thead><tr><th>Anahtar</th><th>Değer</th></tr></thead><tbody>';
+                    lastResult = res.data;
+                    toast('Sorgu başarılı!');
+                    
+                    // Tabloya Dök
+                    let tableHtml = '';
                     const obj = Array.isArray(res.data) ? res.data[0] : res.data;
                     
                     if(typeof obj === 'object' && obj !== null) {
                         for(let [k, v] of Object.entries(obj)) {
                             if(typeof v === 'object') v = JSON.stringify(v);
-                            tableHtml += `<tr><td style="color:#a5b4fc; font-weight:bold; width:30%;">${k}</td><td>${v}</td></tr>`;
+                            tableHtml += `<tr><th>${k}</th><td>${v}</td></tr>`;
                         }
                     } else {
                         tableHtml += `<tr><td colspan="2" style="text-align:center;">${res.data}</td></tr>`;
                     }
-                    tableHtml += '</tbody>';
-                    $('resultTable').innerHTML = tableHtml;
+                    $('formattedTable').innerHTML = tableHtml;
 
-                    // JSON Render
+                    // JSON'a Dök
                     const jsonStr = JSON.stringify(res.data, null, 2);
                     const coloredJson = jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
                         let cls = '#a855f7';
@@ -341,18 +444,69 @@
                         else if (/true|false/.test(match)) { cls = '#ef4444'; }
                         return `<span style="color:${cls}">${match}</span>`;
                     });
-                    $('resultJson').innerHTML = `<span style="color:#10b981;">> BAŞARILI</span>\n\n${coloredJson}`;
+                    $('qResultsRaw').innerHTML = `<span style="color:#10b981;">> BAŞARILI</span>\n\n${coloredJson}`;
+
+                    // Hafızaya Kaydet
+                    const tool = TOOLS[currentType];
+                    saveRecent(currentType, tool.title, payload[tool.fields[0]?.id] || 'Boş');
                 }
             } catch(e) {
-                $('resultTable').innerHTML = '<tr><td style="color:#ef4444; text-align:center; padding:30px;">Bağlantı hatası.</td></tr>';
-                $('resultJson').innerHTML = '<span style="color:#ef4444;">> Bağlantı hatası.</span>';
+                $('loadingNotice').style.display = 'none';
+                $('formattedTable').innerHTML = '<tr><td colspan="2" style="color:#ef4444; text-align:center; padding:30px;">Bağlantı hatası.</td></tr>';
+                $('qResultsRaw').innerHTML = '<span style="color:#ef4444;">> Bağlantı hatası.</span>';
+                toast('Sunucuya ulaşılamadı.', 'error');
             }
             
-            btn.disabled = false; btn.innerText = 'Sorguyu Başlat';
+            btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Sorguyu Başlat';
+        }
+
+        // --- SONUÇ SEKMELERİ ---
+        function switchResultTab(tab, btn) {
+            document.querySelectorAll('.res-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.res-content').forEach(c => c.classList.remove('active'));
+            if(tab === 'formatted') $('res-formatted').classList.add('active');
+            else $('res-json').classList.add('active');
+        }
+
+        // --- PDF, EXCEL, KOPYALA ---
+        function downloadPDF() {
+            if(!lastResult) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.setTextColor(99, 102, 241);
+            doc.text("ShopSphere Sorgu Raporu", 20, 20);
+            doc.setFontSize(10); doc.setTextColor(100, 100, 100);
+            doc.text("Tarih: " + new Date().toLocaleString('tr-TR'), 20, 28);
+            doc.text("Sorgu Tipi: " + TOOLS[currentType].title, 20, 34);
+            doc.setLineWidth(0.5); doc.setDrawColor(200, 200, 200); doc.line(20, 38, 190, 38);
+            doc.setFontSize(11); let yPos = 48;
+            const textLines = doc.splitTextToSize(JSON.stringify(lastResult, null, 2), 170);
+            textLines.forEach(line => {
+                if (yPos > 280) { doc.addPage(); yPos = 20; }
+                doc.setTextColor(50, 50, 50); doc.text(line, 20, yPos); yPos += 6;
+            });
+            doc.save(`sorgu_${Date.now()}.pdf`);
+            toast('PDF indiriliyor.');
+        }
+        
+        function downloadCSV() {
+            if(!lastResult) return;
+            const items = Array.isArray(lastResult) ? lastResult : [lastResult];
+            let csv = "\uFEFF"; let keys = new Set();
+            const flatten = (obj, prefix = '') => { const out = []; for (const [k, v] of Object.entries(obj)) { const key = prefix ? `${prefix}.${k}` : k; if (v && typeof v === 'object' && !Array.isArray(v)) out.push(...flatten(v, key)); else out.push([key, v]); } return out; };
+            items.forEach(it => flatten(it).forEach(([k]) => keys.add(k)));
+            keys = Array.from(keys); csv += keys.join(";") + "\n";
+            items.forEach(it => { const row = []; keys.forEach(k => { const flat = flatten(it).find(([key]) => key === k); let val = flat ? flat[1] : ""; if (typeof val === 'string') val = val.replace(/;/g, ","); row.push(val); }); csv += row.join(";") + "\n"; });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `sorgu_${Date.now()}.csv`; a.click();
+            toast('Excel indiriliyor.');
+        }
+
+        function copyResult() { 
+            if (lastResult) navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2)).then(() => toast('Panoya kopyalandı.')); 
         }
 
         async function logout() { await fetch('/api/logout', {method:'POST', headers:H}); location.href='/login'; }
-        document.addEventListener('keydown', e => { if(e.key === 'Escape') closeQuery(); });
     </script>
 </body>
 </html>
