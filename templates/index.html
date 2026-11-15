@@ -16,10 +16,8 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
         
-        /* ARKA PLAN ANİMASYONU */
         #cyber-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.4; pointer-events: none; }
 
-        /* SOL MENÜ (SIDEBAR) */
         .sidebar { width: 290px; background: rgba(5, 5, 10, 0.95); backdrop-filter: blur(25px); position: fixed; height: 100vh; left: -290px; top: 0; transition: transform .4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1001; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
         .sidebar.open { left: 0; box-shadow: 20px 0 50px rgba(0,0,0,0.8); }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(3px); z-index: 1000; display: none; }
@@ -49,7 +47,6 @@
         .nav-item:hover, .nav-item.active { background: rgba(99,102,241,0.1); color: #fff; border-color: rgba(99,102,241,0.2); transform: translateX(3px); }
         .nav-item .icon { width: 20px; font-size: 14px; margin-right: 12px; text-align: center; }
 
-        /* ANA İÇERİK */
         .main { flex: 1; padding: 25px; width: 100%; transition: margin-left .4s; min-height: 100vh; position: relative; z-index: 1; }
         
         .topbar { display: flex; justify-content: space-between; align-items: center; background: rgba(10, 10, 15, 0.8); backdrop-filter: blur(10px); padding: 15px 25px; border-radius: 20px; margin-bottom: 25px; border: 1px solid var(--border); }
@@ -63,7 +60,6 @@
         .view { display: none; animation: fadeIn .4s ease; } .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
-        /* HOŞ GELDİN & İSTATİSTİK */
         .welcome-banner { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.05)); border: 1px solid rgba(168,85,247,0.2); border-radius: 20px; padding: 30px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
         .welcome-text h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; background: linear-gradient(to right, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .welcome-text p { color: #94a3b8; font-size: 14px; }
@@ -75,7 +71,6 @@
         .qa-btn i { font-size: 24px; color: var(--purple); margin-bottom: 10px; display: block; }
         .qa-btn span { font-size: 13px; font-weight: 700; color: #cbd5e1; }
 
-        /* SON SORGULAR (HAFIZA) */
         .recent-queries { background: var(--card); border-radius: 16px; padding: 20px; border: 1px solid var(--border); margin-bottom: 25px; }
         .recent-queries h3 { font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
         .rq-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; cursor: pointer; transition: .2s; }
@@ -85,7 +80,6 @@
         .rq-param { color: #cbd5e1; }
         .rq-time { color: #64748b; font-size: 11px; }
 
-        /* SORGU EKRANI */
         .panel { background: var(--card); border-radius: 20px; padding: 30px; border: 1px solid var(--border); max-width: 950px; margin: 0 auto; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-size: 12px; color: #888; margin-bottom: 8px; text-transform: uppercase; font-weight: 800; }
@@ -95,10 +89,8 @@
         .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(168,85,247,0.3); }
         .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
         
-        /* YÜKLENİYOR UYARISI */
         .loading-notice { display: none; background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); color: var(--gold); padding: 12px; border-radius: 10px; font-size: 13px; margin-top: 15px; text-align: center; animation: pulse 2s infinite; }
 
-        /* SONUÇ ALANI */
         .result-area { margin-top: 25px; display: none; }
         .result-toolbar { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 10px 15px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .res-tabs { display: flex; gap: 5px; }
@@ -121,7 +113,6 @@
         .term-dot { width: 10px; height: 10px; border-radius: 50%; }
         .terminal-body { padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #a7f3d0; white-space: pre-wrap; max-height: 500px; overflow-y: auto; }
 
-        /* TOAST BİLDİRİM */
         .toast-wrap { position: fixed; top: 20px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
         .toast { padding: 15px 20px; border-radius: 12px; font-size: 14px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; animation: slideLeft .3s ease; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
         .toast.success { background: var(--success); } .toast.error { background: var(--danger); } .toast.warn { background: var(--gold); color: #000; }
@@ -139,7 +130,6 @@
     <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
     <div class="toast-wrap" id="toastWrap"></div>
 
-    <!-- SOL MENÜ -->
     <aside class="sidebar" id="sidebar">
         <div class="logo-area"><div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div><h2>SHOP<span>SPHERE</span></h2></div>
         <div class="user-profile">
@@ -189,7 +179,6 @@
         </div>
     </aside>
 
-    <!-- ANA İÇERİK -->
     <main class="main">
         <header class="topbar">
             <button class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
@@ -197,7 +186,6 @@
             <div class="live-clock" id="liveClock">00:00:00</div>
         </header>
         
-        <!-- HOŞ GELDİN EKRANI -->
         <div id="view-dashboard" class="view active">
             <div class="welcome-banner">
                 <div class="welcome-text">
@@ -214,14 +202,12 @@
                 <div class="qa-btn" onclick="loadTool('eokul_tc', null)"><i class="fa-solid fa-school"></i><span>E-Okul</span></div>
             </div>
 
-            <!-- SON SORGULAR -->
             <div class="recent-queries" id="recentBox" style="display:none;">
                 <h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--purple);"></i> Son Sorgularım</h3>
                 <div id="recentList"></div>
             </div>
         </div>
 
-        <!-- SORGU EKRANI -->
         <div id="view-query" class="view">
             <div class="panel">
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:20px; margin-bottom:25px;">
@@ -234,7 +220,6 @@
                     <button type="submit" class="btn-submit" id="submitBtn"><i class="fa-solid fa-bolt"></i> Sorguyu Başlat</button>
                 </form>
                 
-                <!-- YÜKLENİYOR UYARISI -->
                 <div class="loading-notice" id="loadingNotice">
                     <i class="fa-solid fa-circle-notch fa-spin"></i> Sunucu yanıtı bekleniyor... (E-Okul API'si uyanıyor olabilir, bu işlem 30-40 saniye sürebilir)
                 </div>
@@ -275,22 +260,18 @@
         const $ = id => document.getElementById(id);
         const H = { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content };
 
-        // --- ARKA PLAN ---
         const c = $('cyber-bg'), ctx = c.getContext('2d'); let p = [];
         function resize() { c.width = innerWidth; c.height = innerHeight; } resize(); addEventListener('resize', resize);
         for(let i=0; i<40; i++) p.push({x:Math.random()*c.width, y:Math.random()*c.height, vx:(Math.random()-0.5)*0.5, vy:(Math.random()-0.5)*0.5});
         function draw() { ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle='rgba(99,102,241,0.5)'; p.forEach((pt, i) => { pt.x+=pt.vx; pt.y+=pt.vy; if(pt.x<0||pt.x>c.width) pt.vx*=-1; if(pt.y<0||pt.y>c.height) pt.vy*=-1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 2, 0, 7); ctx.fill(); }); requestAnimationFrame(draw); } draw();
         
-        // --- SAAT ---
         setInterval(() => { $('liveClock').innerText = new Date().toLocaleTimeString('tr-TR'); }, 1000);
 
-        // --- MENÜ VE OVERLAY ---
         function toggleMenu() { 
             $('sidebar').classList.toggle('open'); 
             $('overlay').classList.toggle('show');
         }
 
-        // --- MENÜ ARAMA ---
         function filterMenu() {
             const query = $('toolSearch').value.toLowerCase();
             document.querySelectorAll('.tool-item').forEach(item => {
@@ -298,7 +279,6 @@
             });
         }
 
-        // --- TOAST BİLDİRİM ---
         function toast(msg, type='success') {
             const el = document.createElement('div');
             el.className = `toast ${type}`;
@@ -307,7 +287,6 @@
             setTimeout(() => el.remove(), 4000);
         }
 
-        // --- ARAÇLAR ---
         const TOOLS = {
             'papara_adsoyad': { title: 'Papara (Ad Soyad)', desc: 'İsimle Papara hesabı sorgula.', fields: [{ id:'ad_soyad', label:'Ad Soyad' }] },
             'papara_id': { title: 'Papara (ID)', desc: 'Papara ID ile hesap sorgula.', fields: [{ id:'papara_id', label:'Papara ID' }] },
@@ -334,11 +313,10 @@
 
         let currentType = null, lastResult = null;
 
-        // --- HAFIZA (LOCALSTORAGE) ---
         function saveRecent(type, title, param) {
             let recents = JSON.parse(localStorage.getItem('recent_queries') || '[]');
             recents.unshift({ type, title, param, time: new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) });
-            recents = recents.slice(0, 5); // Son 5
+            recents = recents.slice(0, 5);
             localStorage.setItem('recent_queries', JSON.stringify(recents));
             renderRecents();
         }
@@ -365,7 +343,6 @@
             }, 100);
         }
 
-        // --- EKRAN YÖNETİMİ ---
         function loadTool(type, el) { 
             if(type === 'welcome') { 
                 document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); 
@@ -396,7 +373,6 @@
             $('qInputs').innerHTML = html; 
         }
         
-        // --- SORGU ÇALIŞTIRMA ---
         async function runQuery() { 
             const payload = { type: currentType };
             document.querySelectorAll('#qInputs input').forEach(input => { payload[input.id.replace('inp_', '')] = input.value.trim(); });
@@ -405,14 +381,14 @@
             btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Sorgulanıyor...';
             
             $('resultArea').style.display = 'block';
-            $('loadingNotice').style.display = 'block'; // Yükleniyor uyarısını aç
+            $('loadingNotice').style.display = 'block';
             $('formattedTable').innerHTML = '<tr><td colspan="2" style="text-align:center; padding:30px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Veri bekleniyor...</td></tr>';
             $('qResultsRaw').innerHTML = '<span style="color:#94a3b8;">> Sunucuya istek gönderildi...</span>';
 
             try {
                 const res = await fetch('/api/sorgu', { method: 'POST', headers: H, body: JSON.stringify(payload) }).then(r => r.json());
                 
-                $('loadingNotice').style.display = 'none'; // Uyarıyı kapat
+                $('loadingNotice').style.display = 'none';
 
                 if(!res.success) {
                     $('formattedTable').innerHTML = `<tr><td colspan="2" style="color:#ef4444; text-align:center; padding:30px;"><i class="fa-solid fa-triangle-exclamation"></i> ${res.error}</td></tr>`;
@@ -422,7 +398,6 @@
                     lastResult = res.data;
                     toast('Sorgu başarılı!');
                     
-                    // Tabloya Dök
                     let tableHtml = '';
                     const obj = Array.isArray(res.data) ? res.data[0] : res.data;
                     
@@ -436,7 +411,6 @@
                     }
                     $('formattedTable').innerHTML = tableHtml;
 
-                    // JSON'a Dök
                     const jsonStr = JSON.stringify(res.data, null, 2);
                     const coloredJson = jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
                         let cls = '#a855f7';
@@ -446,7 +420,6 @@
                     });
                     $('qResultsRaw').innerHTML = `<span style="color:#10b981;">> BAŞARILI</span>\n\n${coloredJson}`;
 
-                    // Hafızaya Kaydet
                     const tool = TOOLS[currentType];
                     saveRecent(currentType, tool.title, payload[tool.fields[0]?.id] || 'Boş');
                 }
@@ -460,7 +433,6 @@
             btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Sorguyu Başlat';
         }
 
-        // --- SONUÇ SEKMELERİ ---
         function switchResultTab(tab, btn) {
             document.querySelectorAll('.res-tab').forEach(t => t.classList.remove('active'));
             btn.classList.add('active');
@@ -469,7 +441,6 @@
             else $('res-json').classList.add('active');
         }
 
-        // --- PDF, EXCEL, KOPYALA ---
         function downloadPDF() {
             if(!lastResult) return;
             const { jsPDF } = window.jspdf;
