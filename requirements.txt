@@ -1,4 +1,7 @@
-Flask==3.0.3
-Werkzeug==3.0.3
-requests==2.32.3
-gunicorn==22.0.0
+Flask
+Flask-SQLAlchemy
+Flask-Limiter
+Flask-Talisman
+argon2-cffi
+requests
+gunicorn
