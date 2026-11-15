@@ -21,7 +21,7 @@ DB_FILE = os.path.join(DB_DIR, "siber_karargah.db")
 @contextmanager
 def get_db():
     conn = sqlite3.connect(DB_FILE, timeout=30)
-    conn.row_factory = sqlite3.Row  # Verilere sözlük (dict) mantığıyla erişim sağlar
+    conn.row_factory = sqlite3.Row
     try:
         yield conn
     finally:
@@ -99,7 +99,6 @@ app.jinja_env.globals["csrf_token"] = csrf_token
 
 @app.before_request
 def check_maintenance():
-    # Bakım modu aktifse ve kullanıcı admin değilse siteyi kapat
     if get_setting("maintenance") == "1":
         if not session.get("admin") and request.endpoint not in ['admin_dashboard', 'admin_login_post']:
             if request.path.startswith('/api/'):
@@ -123,6 +122,15 @@ def login_page():
     if 'user_id' in session: 
         return redirect('/')
     return render_template('login.html')
+
+@app.route("/api/check_username", methods=["GET"])
+def api_check_username():
+    u = request.args.get("u", "").strip().lower()
+    if not u or len(u) < 3:
+        return jsonify({"available": False})
+    with get_db() as c:
+        user = c.execute("SELECT id FROM users WHERE username=?", (u,)).fetchone()
+    return jsonify({"available": user is None})
 
 @app.route("/api/login", methods=["POST"])
 def api_login():
@@ -151,14 +159,15 @@ def api_register():
     req = request.get_json(silent=True) or {}
     u = req.get("username", "").strip().lower()
     p = req.get("password", "").strip()
+    avatar = req.get("avatar", "").strip()
     
     if len(u) < 3 or len(p) < 6: 
         return jsonify({"success": False, "error": "Kullanıcı adı en az 3, şifre en az 6 karakter olmalıdır."})
         
     try:
         with get_db() as c:
-            c.execute("INSERT INTO users (username, password, created_at) VALUES (?,?,?)", 
-                      (u, generate_password_hash(p), datetime.now(timezone.utc).strftime("%Y-%m-%d")))
+            c.execute("INSERT INTO users (username, password, created_at, avatar) VALUES (?,?,?,?)", 
+                      (u, generate_password_hash(p), datetime.now(timezone.utc).strftime("%Y-%m-%d"), avatar))
             c.commit()
         return jsonify({"success": True})
     except sqlite3.IntegrityError:
@@ -213,8 +222,11 @@ def api_sorgu():
 
         elif q_type == "adsoyadprox":
             url = f"https://violetpanel.cc/furkanapi/adsoyadproxapi.php?ad={urllib.parse.quote(req.get('ad', ''))}&soyad={urllib.parse.quote(req.get('soyad', ''))}"
-            if req.get('il'): 
-                url += f"&il={urllib.parse.quote(req.get('il'))}"
+            il_val = req.get('il', '').strip()
+            if il_val:
+                url += f"&il={urllib.parse.quote(il_val)}"
+            else:
+                url += "&il="
         elif q_type == "adsoyad":
             url = f"https://violetpanel.cc/furkanapi/adsoyadapi.php?ad={urllib.parse.quote(req.get('ad', ''))}&soyad={urllib.parse.quote(req.get('soyad', ''))}"
         elif q_type == "aile":
@@ -245,7 +257,6 @@ def api_sorgu():
         else:
             return jsonify({"success": False, "error": "Bilinmeyen sorgu tipi."})
 
-        # İsteği Gönder
         r = requests.get(url, headers=headers, timeout=30)
         
         if r.status_code == 200:
@@ -265,7 +276,7 @@ def api_sorgu():
             return jsonify({"success": False, "error": "Dış API boş yanıt döndürdü."})
 
     except requests.exceptions.Timeout:
-        return jsonify({"success": False, "error": "Dış API zaman aşımına uğradı. Sunucu şu an yanıt veremiyor."})
+        return jsonify({"success": False, "error": "Dış API zaman aşımına uğradı. Sunucu uyanıyor olabilir, lütfen tekrar deneyin."})
     except requests.exceptions.RequestException:
         return jsonify({"success": False, "error": "Dış API sunucusuna erişilemedi."})
     except Exception as e:
@@ -287,7 +298,7 @@ def admin_dashboard():
 
     with get_db() as c:
         users = c.execute("""
-            SELECT id, username, password, banned, created_at, 
+            SELECT id, username, password, banned, created_at, avatar,
             (SELECT COUNT(*) FROM logs WHERE logs.user_id = users.id) as log_count, vip 
             FROM users ORDER BY id DESC
         """).fetchall()
